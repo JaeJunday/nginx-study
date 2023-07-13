@@ -1,14 +1,13 @@
-#include <iostream>
-#include <sys/types.h>
-#include <sys/event.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <fstream>
-#include <signal.h>
-#include <fcntl.h>
-
+#include <iostream>     // cout
+#include <sys/types.h>  // socket, bind
+#include <sys/event.h>  // kqueue
+#include <sys/socket.h> // socket
+#include <netinet/in.h> // sockaddr_in
+#include <unistd.h>     // read, write
+#include <arpa/inet.h>  // inet
+#include <fstream>      // ifstream
+#include <signal.h>     // signal
+#include <fcntl.h>      // fcntl
 #define MAX_EVENTS 10
 #define BACKLOG 5
 
@@ -37,6 +36,8 @@ int main() {
         perror("Socket creation failed");
         exit(EXIT_FAILURE);
     }
+    fcntl(server_fd, F_SETFL, O_NONBLOCK);
+
 	int optval = 1;
 	setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
     fcntl(server_fd, F_SETFL, O_NONBLOCK);
@@ -124,11 +125,11 @@ int main() {
                     std::string buf;
                     std::string result;
                     std::ifstream file;
-                    file.open("index_copy.html", std::ifstream::in);
+                    file.open("index.html", std::ifstream::in);
 					// std::string a = "HTTP/1.1 200 OK\r\nContent-Length:5\r\n\r\nHELLO";
 					// "HTTP/1.1 200 OK\r\nContent-Length:5\r\n\r\nHELLO";
                     result += "HTTP/1.1 200 OK\r\n";
-                    result += "Content-Length:187\r\n";
+                    result += "Content-Length:254\r\n";
                     result += "Content-Type: text/html\r\n";
 					result += "Connection: close\r\n";
                     result += "Server: MyServer\r\n";
