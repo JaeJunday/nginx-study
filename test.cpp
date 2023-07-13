@@ -135,12 +135,12 @@ int main() {
                     std::string buf;
                     std::string result;
                     std::ifstream file;
-                    file.open("index_copy.html", std::ifstream::in);
+                    file.open("index.html", std::ifstream::in);
 					// std::string a = "HTTP/1.1 200 OK\r\nContent-Length:5\r\n\r\nHELLO";
 
 					// "HTTP/1.1 200 OK\r\nContent-Length:5\r\n\r\nHELLO";
                     result += "HTTP/1.1 200 OK\r\n";
-                    result += "Content-Length:187\r\n";
+                    result += "Content-Length:254\r\n";
                     result += "Content-Type: text/html\r\n";
 					result += "Connection: close\r\n";
                     result += "Server: MyServer\r\n";
