@@ -164,7 +164,6 @@ int main() {
             }
         }
     }
-    // 아 ~ 아 ~
 	close(client_fd);
     close(server_fd);
     close(kq);
