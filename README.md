@@ -1,7 +1,7 @@
 # Webserv
 
-|Tag name            | Description |
-|:---|:---|
+| Tag name           | Description |
+|:-------------------|:------------|
 |**Feat**            |새로운 기능을 추가|
 |**Fix**             |버그 수정|
 |**Design**          |CSS 등 사용자 UI 디자인 변경|
