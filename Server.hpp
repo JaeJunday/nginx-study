@@ -1,14 +1,17 @@
 #pragma once
 
-#include "Location.hpp"
 #include <iostream>
 #include <string>
 #include <map>
 #include <vector>
-
+struct Location 
+{
+	const std::string _path;
+};
 class Server {
 private:
-    std::map<const std::string&, std::vector<std::string>>	_property;
+	std::string& 		_serverName;
+	std::string&		_listen;
 	std::vector<Location>									_location;
 public:
 	void	setProperty(const std::string& key, std::vector<std::string>& value);

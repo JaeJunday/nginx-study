@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Server.hpp"
-#include "Location.hpp"
 #include <iostream>
 #include <string>
 #include <stack>
@@ -16,6 +15,7 @@ public:
     void pushStack(const std::string& input);
     void popStack();
 };
+
 // exception 
 // 서버, 로케이션 스트링 넣음
 // 열린괄호 넣으면 열린괄호 넣음
