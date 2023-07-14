@@ -31,11 +31,11 @@ class Server {
 		std::string					_clientMaxBodySize;
 		std::vector<Location>		_location;
 	public:
-		void setServerName(const std::vector<std::string>& serverName);
-		const std::vector<std::string>& getServerName() const;
+		void setServerName(const std::string& serverName);
+		const std::string& getServerName() const;
 
-		void setErrorPage(const std::vector<std::string>& errorPage);
-		const std::vector<std::string>& getErrorPage() const;
+		void setErrorPage(const std::string& errorPage);
+		const std::string& getErrorPage() const;
 
 		void setListen(const std::string& listen);
 		const std::string& getListen() const;
@@ -46,6 +46,6 @@ class Server {
 		void setClientMaxBodySize(const std::string& clientMaxBodySize);
 		const std::string& getClientMaxBodySize() const;
 
-		void setLocation(const std::vector<Location>& location);
-		const std::vector<Location>& getLocation() const;
+		void setLocation(const std::string& location);
+		const std::string& getLocation() const;
 };

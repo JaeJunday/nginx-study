@@ -6,13 +6,12 @@
 #include <stack>
 #include <fstream>
 
-
 class Operation;
 
 class Configuration
 {
 	private:
-		Operation&					_operation;
+		Operation&	_operation;
 		enum E_SERVER_KEY
 		{
 			NAME = 0,
@@ -31,16 +30,16 @@ class Configuration
 		bool                    _serverFlag;
 		unsigned int            _count;
 	public:
-		Configuration(); // Default Constructor
-		Configuration(const Operation& operation);// operation Constructor;
+		// Configuration(); // Default Constructor
+		Configuration(Operation& operation);// operation Constructor;
 		~Configuration(); // Destructor
 		Configuration(const Configuration& other); // Copy Constructor
 		Configuration& operator=(const Configuration& other); // Assignment Operator
 
 		void parsing(const std::string& filePath);
 		void push(const std::string& input);
-		void pop();
-		void setConfigValue(const std::string& key, const std::string& value, const std::string& line);
+		void pop(const Server& server);
+		void setConfigValue(const std::string& key, const std::string& value, const std::string& line, Server& server);
 };
 
 // exception 

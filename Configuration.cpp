@@ -1,11 +1,16 @@
 #include "Configuration.hpp"
+#include "Server.hpp"
+#include "Operation.hpp"
 #include <sstream> // 헤더 추가
-
 // OCF
 
-Configuration::Configuration() : _locationFlag(false), _serverFlag(false), _count(0)
+// Configuration::Configuration() : _operation(NULL), _locationFlag(false), _serverFlag(false), _count(0)
+// {
+//     // Default Constructor Implementation
+// }
+
+Configuration::Configuration(Operation& operation) : _operation(operation), _locationFlag(false), _serverFlag(false), _count(0)
 {
-    // Default Constructor Implementation
 }
 
 Configuration::~Configuration()
@@ -14,7 +19,8 @@ Configuration::~Configuration()
 }
 
 Configuration::Configuration(const Configuration& other)
-    : _locationFlag(other._locationFlag),
+    : _operation(other._operation),
+      _locationFlag(other._locationFlag),
       _serverFlag(other._serverFlag),
       _count(other._count),
       _parenticts(other._parenticts)
@@ -25,6 +31,7 @@ Configuration::Configuration(const Configuration& other)
 Configuration& Configuration::operator=(const Configuration& other)
 {
     if (this != &other) {
+        // _operation = other._operation; // const 여서 안됨 - kyeonkim
         _locationFlag = other._locationFlag;
         _serverFlag = other._serverFlag;
         _count = other._count;
@@ -42,6 +49,7 @@ void Configuration::parsing(const std::string& filePath)
 	// std::vector<Server> servers;
 
     file.open(filePath);
+    Server server; // 잘못됨. 한 줄 부를 때마다 서버가 만들어짐 - kyeonkim
     while(file.eof() == false) 
     {
         std::string line; 
@@ -55,20 +63,20 @@ void Configuration::parsing(const std::string& filePath)
             if (word.empty() == true)
                 break;
             else if (word == "server" || word == "location" || word == "{")
-                push(word); 
+                push(word);
             else if (word == "}")
-                pop();
+                pop(server);
             else if (i == KEY)
                 configKey = word;
             else if (i >= VALUE)
-                setConfigValue(configKey, word, line);
+                setConfigValue(configKey, word, line, server);
                 // 세미콜론은 값을 넣을때 같이 처리한다 한번만 line검사하면 됨
         }
     }
     file.close();
 }
 
-void Configuration::pop() 
+void Configuration::pop(const Server& server) 
 {
     std::string str;
 
@@ -84,7 +92,10 @@ void Configuration::pop()
     if (str != "server" && str != "location")
         throw std::logic_error("Error: server or location is not exist");
     if (str == "server")
+    {
+        _operation.setServer(server);
         _serverFlag = false;
+    }
     else if (str == "location")
         _locationFlag = false;
     _count -= 1;
@@ -117,7 +128,7 @@ void Configuration::push(const std::string& input)
 }
 
 
-void Configuration::setConfigValue(const std::string& key, const std::string& value)
+void Configuration::setConfigValue(const std::string& key, const std::string& value, const std::string& line, Server& server)
 {
     static std::string serverDirective[] = {
         "server_name", "listen", "error_page", "index", 
@@ -131,18 +142,36 @@ void Configuration::setConfigValue(const std::string& key, const std::string& va
         if (key == serverDirective[i])
             break;
     }
-    if (i == length)
-        throw std::logic_error("Error: Invalid key");
+    // if (i == length) // default 로 넣음 - kyeonkim
+    //         throw std::logic_error("Error: Invalid key");
     switch (i)
     {
         case NAME:
         {
-            
+            server.setServerName(value);
+            break;
         }
         case LISTEN:
+        {
+            server.setListen(value);
+            break;
+        }
         case ERROR:
+        {
+            server.setErrorPage(value);
+            break;
+        }
         case INDEX:
+        {
+            server.setIndex(value);
+            break;
+        }
         case MAXBODYSIZE:
+        {
+            server.setClientMaxBodySize(value);
+            break;
+        }
         default:
+            throw std::logic_error("Error: Invalid key");
     }
 }
