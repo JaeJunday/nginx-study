@@ -6,27 +6,37 @@
 #include <stack>
 #include <fstream>
 
-enum E_KEY_VALUE
-{
-    KEY = 0,
-    VALUE
-};
+
 class Configuration
 {
-private:
-	std::stack<std::string> _parenticts;
-	bool                    _locationFlag;
-	bool                    _serverFlag;
-	unsigned int            _count;
-public:
-	Configuration(); // Default Constructor
-	~Configuration(); // Destructor
-	Configuration(const Configuration& other); // Copy Constructor
-	Configuration& operator=(const Configuration& other); // Assignment Operator
+	private:
+		enum E_SERVER_KEY
+		{
+			NAME = 0,
+			LISTEN,
+			ERROR,
+			INDEX,
+			MAXBODYSIZE,
+		};
+		enum E_KEY_VALUE
+		{
+			KEY = 0,
+			VALUE
+		};
+		std::stack<std::string> _parenticts;
+		bool                    _locationFlag;
+		bool                    _serverFlag;
+		unsigned int            _count;
+	public:
+		Configuration(); // Default Constructor
+		~Configuration(); // Destructor
+		Configuration(const Configuration& other); // Copy Constructor
+		Configuration& operator=(const Configuration& other); // Assignment Operator
 
-	void parsing(const std::string& filePath);
-	void push(const std::string& input);
-	void pop();
+		void parsing(const std::string& filePath);
+		void push(const std::string& input);
+		void pop();
+		void setConfigValue(const std::string& key, const std::string& value, const std::string& line);
 };
 
 // exception 

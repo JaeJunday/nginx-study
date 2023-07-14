@@ -39,7 +39,7 @@ Configuration& Configuration::operator=(const Configuration& other)
 void Configuration::parsing(const std::string& filePath)
 {
     std::ifstream	file;
-	std::vector<Server> servers;	
+	std::vector<Server> servers;
 
     file.open(filePath);
     while(file.eof() == false) 
@@ -49,6 +49,7 @@ void Configuration::parsing(const std::string& filePath)
         //split line for space
         std::istringstream iss(line); // istringstream을 사용하여 문자열을 공백으로 자름
         std::string word;
+        std::string configKey;
         for (int i = 0; iss >> word; i++) // 단어마다 반복
         {
             if (word.empty() == true)
@@ -56,8 +57,11 @@ void Configuration::parsing(const std::string& filePath)
             else if (word == "server" || word == "location" || word == "{")
                 push(word); 
             else if (word == "}")
-                pop();    
+                pop();
+            else if (i == KEY)
+                configKey = word;
             else if (i >= VALUE)
+                setConfigValue(configKey, word, line);
                 // 세미콜론은 값을 넣을때 같이 처리한다 한번만 line검사하면 됨
         }
     }
@@ -110,4 +114,35 @@ void Configuration::push(const std::string& input)
             _locationFlag = true;   
     }
     _parenticts.push(input);
+}
+
+
+void Configuration::setConfigValue(const std::string& key, const std::string& value)
+{
+    static std::string serverDirective[] = {
+        "server_name", "listen", "error_page", "index", 
+        "client_max_body_size"
+    };
+    size_t i;
+    size_t length = sizeof(serverDirective) / sizeof(std::string);
+    
+    for (i = 0; i < length; i++)
+    {
+        if (key == serverDirective[i])
+            break;
+    }
+    if (i == length)
+        throw std::logic_error("Error: Invalid key");
+    switch (i)
+    {
+        case NAME:
+        {
+            
+        }
+        case LISTEN:
+        case ERROR:
+        case INDEX:
+        case MAXBODYSIZE:
+        default:
+    }
 }
