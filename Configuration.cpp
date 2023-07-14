@@ -34,7 +34,7 @@ Configuration& Configuration::operator=(const Configuration& other)
     return *this;
 }
 
-//==============================================================================
+//OCF ==============================================================================
 
 void Configuration::parsing(const std::string& filePath)
 {
@@ -47,21 +47,20 @@ void Configuration::parsing(const std::string& filePath)
         std::string line; 
         getline(file, line);
         //split line for space
-
         std::istringstream iss(line); // istringstream을 사용하여 문자열을 공백으로 자름
         std::string word;
-        while (iss >> word) // 단어마다 반복
+        for (int i = 0; iss >> word; i++) // 단어마다 반복
         {
             if (word.empty() == true)
                 break;
-            // refactoring 예정
             else if (word == "server" || word == "location" || word == "{")
                 push(word); 
             else if (word == "}")
-                pop();
-            // 이제 단어를 사용하여 필요한 작업을 수행할 수 있습니다.
-            // 예를 들어, 단어를 벡터에 저장하거나 다른 처리를 할 수 있습니다.
+                pop();    
+            if (i >= VALUE)
+                // 세미콜론은 값을 넣을때 같이 처리한다 한번만 line검사하면 됨
         }
+됨
     }
     file.close();
 }
@@ -95,7 +94,6 @@ void Configuration::push(const std::string& input)
     {
         if (_serverFlag == true || _locationFlag == true)
             throw std::logic_error("Error: Server is already exist");
-        _serverFlag = true;
         ++_count;
     }
     if (input == "location")
@@ -104,6 +102,13 @@ void Configuration::push(const std::string& input)
             throw std::logic_error("Error: Location is already exist");
         _locationFlag = true;
         ++_count;
+    }
+    if (input == "{")
+    {
+        if (_parenticts.top() == "server")
+            _serverFlag = true;
+        else if (_parenticts.top() == "location")
+            _locationFlag = true;   
     }
     _parenticts.push(input);
 }

@@ -6,6 +6,11 @@
 #include <stack>
 #include <fstream>
 
+enum E_KEY_VALUE
+{
+    KEY = 0,
+    VALUE
+};
 class Configuration
 {
 private:
@@ -50,4 +55,11 @@ public:
 //서버 밖에 로케이션 서버가 꺼져있는지 
 
 // server 조건식인 경우
-// { 시작전에 문자열이 들어온다 -> error
+// if (serverFlag == on)
+//  '{' 시작전에 문자열이 들어온다 -> error
+
+// to do  ##########################################################################3
+
+// location 조건식인 경우
+// if (location == on)
+// 문자열이 있어야 하나?? 
