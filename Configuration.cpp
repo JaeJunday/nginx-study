@@ -17,16 +17,14 @@ void Configuration::parsing(const std::string& filePath)
         std::string word;
         while (iss >> word) // 단어마다 반복
         {
+            if (word.empty() == true)
+                break;
+            else if (word == '{')
+                setStack(push);
+            else if (word == '}')
+                setStack(pop);
             // 이제 단어를 사용하여 필요한 작업을 수행할 수 있습니다.
             // 예를 들어, 단어를 벡터에 저장하거나 다른 처리를 할 수 있습니다.
-            if (word == "server")
-			{
-				servers.push_back(Server());
-			}
-			if (word == "location")
-			{
-				
-			}
         }
     }
     file.close();
