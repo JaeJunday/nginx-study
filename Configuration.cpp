@@ -55,38 +55,10 @@ void Configuration::parsing(const std::string& filePath)
             if (word.empty() == true)
                 break;
             // refactoring 예정
-            else if (word == "server")
-            {
-                if (_serverFlag == true)
-                    throw std::runtime_error("Error: Server is already exist");
-                else if (_locationFlag == true)
-                    throw std::runtime_error("Error: Location is already exist");
-                else
-                {
-                    _serverFlag = true;
-                    ++_count;
-                    push("server");
-                }
-            }
-            else if (word == "location")
-            {
-                if (_locationFlag == true)
-                    throw std::runtime_error("Error: Location is already exist");
-                else if (_serverFlag == false)
-                    throw std::runtime_error("Error: Server is not exist");
-                else
-                {
-                    _locationFlag = true;
-                    ++_count;
-                    push("location");
-                }
-            }
-            else if (word == "{")
-                push("{"); 
+            else if (word == "server" || word == "location" || word == "{")
+                push(word); 
             else if (word == "}")
-            {
                 pop();
-            }
             // 이제 단어를 사용하여 필요한 작업을 수행할 수 있습니다.
             // 예를 들어, 단어를 벡터에 저장하거나 다른 처리를 할 수 있습니다.
         }
@@ -117,8 +89,21 @@ void Configuration::pop()
     _parenticts.pop();
 }
 
-void Configuration::push(const std::string& input) 
+void Configuration::push(const std::string& input)
 {
-
+    if (input == "server")
+    {
+        if (_serverFlag == true || _locationFlag == true)
+            throw std::logic_error("Error: Server is already exist");
+        _serverFlag = true;
+        ++_count;
+    }
+    if (input == "location")
+    {
+        if (_locationFlag == true || _serverFlag == false)
+            throw std::logic_error("Error: Location is already exist");
+        _locationFlag = true;
+        ++_count;
+    }
+    _parenticts.push(input);
 }
-
