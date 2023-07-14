@@ -17,4 +17,5 @@ public:
 
     void setServer(const Server& server);
     // Server& getServer(size_t index);
+    void start();
 };

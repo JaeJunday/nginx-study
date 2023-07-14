@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "Configuration.hpp"
+#include "Operation.hpp"
 
 int main(int argc, char **argv)
 {
@@ -8,8 +9,10 @@ int main(int argc, char **argv)
         std::cout << "Error: Invalid number of arguments" << std::endl;
         return 1;
     }
-	std::vector<Server> servers;
-    Configuration config;
+    Operation operation;
+    Configuration config(operation);
     config.parsing(argv[1]);
+
+    operation.start();
     return 0;
 }
