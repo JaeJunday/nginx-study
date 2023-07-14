@@ -10,16 +10,16 @@ class Operation;
 
 struct Location
 {
-	const std::string	_path;
-	const std::string	_root;
-	const std::string	_index;
-	const std::string	_autoindex;
-	const std::string	_upload;
-	const std::string	_py;
-	const std::string	_php;
-	const std::string	_clientMaxBodySize; // 본문 사이즈 제한
-	const std::string	_limitExcept; // 메서드 제한
-	const std::string	_tryFiles;
+	std::string	_path;
+	std::string	_root;
+	std::string	_index;
+	std::string	_autoindex;
+	std::string	_upload;
+	std::string	_py;
+	std::string	_php;
+	std::string	_clientMaxBodySize; // 본문 사이즈 제한
+	std::string	_limitExcept; // 메서드 제한
+	std::string	_tryFiles;
 };
 
 class Server {
@@ -31,11 +31,16 @@ class Server {
 		std::string					_clientMaxBodySize;
 		std::vector<Location>		_location;
 	public:
+		Server();
+		Server(const Server& other);
+		Server& operator=(const Server& other);
+		~Server();
+
 		void setServerName(const std::string& serverName);
-		const std::string& getServerName() const;
+		const std::string& getServerName(int index) const;
 
 		void setErrorPage(const std::string& errorPage);
-		const std::string& getErrorPage() const;
+		const std::string& getErrorPage(int index) const;
 
 		void setListen(const std::string& listen);
 		const std::string& getListen() const;
@@ -46,6 +51,6 @@ class Server {
 		void setClientMaxBodySize(const std::string& clientMaxBodySize);
 		const std::string& getClientMaxBodySize() const;
 
-		void setLocation(const std::string& location);
-		const std::string& getLocation() const;
+		void setLocation(const Location& location);
+		const Location& getLocation(int index) const;
 };

@@ -1,19 +1,51 @@
 #include "Server.hpp"
 
-void Server::setServerName(const std::vector<std::string>& serverName) {
-    _serverName = serverName;
+Server::Server()
+{
 }
 
-const std::vector<std::string>& Server::getServerName() const {
-    return _serverName;
+Server::Server(const Server& other)
+    : _serverName(other._serverName),
+      _errorPage(other._errorPage),
+      _listen(other._listen),
+      _index(other._index),
+      _clientMaxBodySize(other._clientMaxBodySize),
+      _location(other._location)
+{
 }
 
-void Server::setErrorPage(const std::vector<std::string>& errorPage) {
-    _errorPage = errorPage;
+Server& Server::operator=(const Server& other)
+{
+    if (this != &other)
+    {
+        _serverName = other._serverName;
+        _errorPage = other._errorPage;
+        _listen = other._listen;
+        _index = other._index;
+        _clientMaxBodySize = other._clientMaxBodySize;
+        _location = other._location;
+    }
+    return *this;
 }
 
-const std::vector<std::string>& Server::getErrorPage() const {
-    return _errorPage;
+Server::~Server()
+{
+}
+
+void Server::setServerName(const std::string& serverName) {
+	_serverName.push_back(serverName);
+}
+
+const std::string& Server::getServerName(int index) const {
+    return _serverName[index];
+}
+
+void Server::setErrorPage(const std::string& errorPage) {
+    _errorPage.push_back(errorPage);
+}
+
+const std::string& Server::getErrorPage(int index) const {
+    return _errorPage[index];
 }
 
 void Server::setListen(const std::string& listen) {
@@ -40,10 +72,10 @@ const std::string& Server::getClientMaxBodySize() const {
     return _clientMaxBodySize;
 }
 
-void Server::setLocation(const std::vector<Location>& location) {
-    _location = location;
+void Server::setLocation(const Location& location) {
+    _location.push_back(location);
 }
 
-const std::vector<Location>& Server::getLocation() const {
-    return _location;
+const Location& Server::getLocation(int index) const {
+    return _location[index];
 }

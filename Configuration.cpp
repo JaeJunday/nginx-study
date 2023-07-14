@@ -49,7 +49,8 @@ void Configuration::parsing(const std::string& filePath)
 	// std::vector<Server> servers;
 
     file.open(filePath);
-    Server server; // 잘못됨. 한 줄 부를 때마다 서버가 만들어짐 - kyeonkim
+    Server server;
+    Location location;
     while(file.eof() == false) 
     {
         std::string line; 
@@ -65,18 +66,18 @@ void Configuration::parsing(const std::string& filePath)
             else if (word == "server" || word == "location" || word == "{")
                 push(word);
             else if (word == "}")
-                pop(server);
+                pop(server, location);
             else if (i == KEY)
                 configKey = word;
             else if (i >= VALUE)
-                setConfigValue(configKey, word, line, server);
+                setConfigValue(configKey, word, line, server, location);
                 // 세미콜론은 값을 넣을때 같이 처리한다 한번만 line검사하면 됨
         }
     }
     file.close();
 }
 
-void Configuration::pop(const Server& server) 
+void Configuration::pop(Server& server, Location& location) 
 {
     std::string str;
 
@@ -94,10 +95,15 @@ void Configuration::pop(const Server& server)
     if (str == "server")
     {
         _operation.setServer(server);
+        std::memset(&server, 0, sizeof(server));
         _serverFlag = false;
     }
     else if (str == "location")
+    {
+        server.setLocation(location);
+        std::memset(&location, 0, sizeof(location));
         _locationFlag = false;
+    }
     _count -= 1;
     _parenticts.pop();
 }
@@ -128,50 +134,83 @@ void Configuration::push(const std::string& input)
 }
 
 
-void Configuration::setConfigValue(const std::string& key, const std::string& value, const std::string& line, Server& server)
+void Configuration::setConfigValue(const std::string& key, const std::string& value, const std::string& line, Server& server, Location& location)
 {
-    static std::string serverDirective[] = {
-        "server_name", "listen", "error_page", "index", 
-        "client_max_body_size"
-    };
     size_t i;
-    size_t length = sizeof(serverDirective) / sizeof(std::string);
-    
-    for (i = 0; i < length; i++)
+    size_t length;
+
+    if (_serverFlag == true && _locationFlag == true)
     {
-        if (key == serverDirective[i])
-            break;
+        // set location
+        static std::string locationDirective[] =
+        {
+        "path", "root", "index", "autoindex", "upload", 
+        "py", "php", "client_max_body_size", "limit_except",
+        "try_files"
+        };
+        length = sizeof(locationDirective) / sizeof(std::string);
+        
+        for (i = 0; i < length; i++)
+        {
+            if (key == locationDirective[i])
+                break;
+        }
+        switch (i)
+        {
+            case PATH:
+                location._path = value; break;
+            case ROOT:
+                location._root = value; break;
+            case L_INDEX:
+                location._index = value; break;
+            case AUTOINDEX:
+                location._autoindex = value; break;
+            case UPLOAD:
+                location._upload = value; break;
+            case PY:
+                location._py = value; break;
+            case PHP:
+                location._php = value; break;
+            case CLIENT_MAX_BODY_SIZE:
+                location._clientMaxBodySize = value; break;
+            case LIMIT_EXCEPT:
+                location._limitExcept = value; break;
+            case TRY_FILES:
+                location._tryFiles = value; break;
+            default:
+                throw std::logic_error("Error: Invalid key");
+        }
     }
-    // if (i == length) // default 로 넣음 - kyeonkim
-    //         throw std::logic_error("Error: Invalid key");
-    switch (i)
+    else if (_serverFlag == true && _locationFlag == false)
     {
-        case NAME:
+        static std::string serverDirective[] = {
+            "server_name", "listen", "error_page", "index", 
+            "client_max_body_size",   
+        };
+        size_t i;
+        size_t length = sizeof(serverDirective) / sizeof(std::string);
+        
+        for (i = 0; i < length; i++)
         {
-            server.setServerName(value);
-            break;
+            if (key == serverDirective[i])
+                break;
         }
-        case LISTEN:
+        // if (i == length) // default 로 넣음 - kyeonkim
+        //         throw std::logic_error("Error: Invalid key");
+        switch (i)
         {
-            server.setListen(value);
-            break;
+            case NAME:
+                server.setServerName(value); break;
+            case LISTEN:
+                server.setListen(value); break;
+            case ERROR:
+                server.setErrorPage(value); break;
+            case INDEX:
+                server.setIndex(value); break;
+            case MAXBODYSIZE:
+                server.setClientMaxBodySize(value); break;
+            default:
+                throw std::logic_error("Error: Invalid key");
         }
-        case ERROR:
-        {
-            server.setErrorPage(value);
-            break;
-        }
-        case INDEX:
-        {
-            server.setIndex(value);
-            break;
-        }
-        case MAXBODYSIZE:
-        {
-            server.setClientMaxBodySize(value);
-            break;
-        }
-        default:
-            throw std::logic_error("Error: Invalid key");
     }
 }

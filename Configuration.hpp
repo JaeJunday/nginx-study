@@ -20,6 +20,19 @@ class Configuration
 			INDEX,
 			MAXBODYSIZE,
 		};
+		enum E_LOCATION_KEY
+		{
+			PATH = 0,
+			ROOT,
+			L_INDEX,
+			AUTOINDEX,
+			UPLOAD,
+			PY,
+			PHP,
+			CLIENT_MAX_BODY_SIZE,
+			LIMIT_EXCEPT,
+			TRY_FILES
+		};
 		enum E_KEY_VALUE
 		{
 			KEY = 0,
@@ -38,8 +51,8 @@ class Configuration
 
 		void parsing(const std::string& filePath);
 		void push(const std::string& input);
-		void pop(const Server& server);
-		void setConfigValue(const std::string& key, const std::string& value, const std::string& line, Server& server);
+		void pop(Server& server, Location& location);
+		void setConfigValue(const std::string& key, const std::string& value, const std::string& line, Server& server, Location& location);	
 };
 
 // exception 
