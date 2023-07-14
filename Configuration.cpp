@@ -39,7 +39,7 @@ Configuration& Configuration::operator=(const Configuration& other)
 void Configuration::parsing(const std::string& filePath)
 {
     std::ifstream	file;
-	std::vector<Server> servers;
+	// std::vector<Server> servers;
 
     file.open(filePath);
     while(file.eof() == false) 

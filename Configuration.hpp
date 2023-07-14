@@ -7,9 +7,12 @@
 #include <fstream>
 
 
+class Operation;
+
 class Configuration
 {
 	private:
+		Operation&					_operation;
 		enum E_SERVER_KEY
 		{
 			NAME = 0,
@@ -29,6 +32,7 @@ class Configuration
 		unsigned int            _count;
 	public:
 		Configuration(); // Default Constructor
+		Configuration(const Operation& operation);// operation Constructor;
 		~Configuration(); // Destructor
 		Configuration(const Configuration& other); // Copy Constructor
 		Configuration& operator=(const Configuration& other); // Assignment Operator
