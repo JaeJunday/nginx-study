@@ -57,10 +57,9 @@ void Configuration::parsing(const std::string& filePath)
                 push(word); 
             else if (word == "}")
                 pop();    
-            if (i >= VALUE)
+            else if (i >= VALUE)
                 // 세미콜론은 값을 넣을때 같이 처리한다 한번만 line검사하면 됨
         }
-됨
     }
     file.close();
 }
