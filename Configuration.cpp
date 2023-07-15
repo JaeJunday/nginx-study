@@ -2,6 +2,7 @@
 #include "Server.hpp"
 #include "Operation.hpp"
 #include <sstream> // 헤더 추가
+#include <stdexcept>
 // OCF
 
 // Configuration::Configuration() : _operation(NULL), _locationFlag(false), _serverFlag(false), _count(0)
@@ -129,6 +130,8 @@ void Configuration::push(const std::string& input)
             _serverFlag = true;
         else if (_parenticts.top() == "location")
             _locationFlag = true;   
+        else
+            throw std::logic_error("Error: { is not pair");
     }
     _parenticts.push(input);
 }
