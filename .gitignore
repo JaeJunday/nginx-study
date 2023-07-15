@@ -1,7 +1,14 @@
+#vscode configration file  
 .vscode
 
+#build output
 a.out
 
+#object files
 *.o
 
+#precompiled headers
 *.gch
+
+#Sensitive information
+.env
