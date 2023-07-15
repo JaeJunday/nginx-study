@@ -5,12 +5,12 @@
 #include <stdexcept>
 // OCF
 
-// Configuration::Configuration() : _operation(NULL), _locationFlag(false), _serverFlag(false), _count(0)
+// Configuration::Configuration() : _operation(NULL), _locationFlag(false), _serverFlag(false), _blockCount(0)
 // {
 //     // Default Constructor Implementation
 // }
 
-Configuration::Configuration(Operation& operation) : _operation(operation), _locationFlag(false), _serverFlag(false), _count(0)
+Configuration::Configuration(Operation& operation) : _operation(operation), _locationFlag(false), _serverFlag(false), _blockCount(0)
 {
 }
 
@@ -23,7 +23,7 @@ Configuration::Configuration(const Configuration& other)
     : _operation(other._operation),
       _locationFlag(other._locationFlag),
       _serverFlag(other._serverFlag),
-      _count(other._count),
+      _blockCount(other._blockCount),
       _parenticts(other._parenticts)
 {
     // Copy Constructor Implementation
@@ -35,7 +35,7 @@ Configuration& Configuration::operator=(const Configuration& other)
         // _operation = other._operation; // const 여서 안됨 - kyeonkim
         _locationFlag = other._locationFlag;
         _serverFlag = other._serverFlag;
-        _count = other._count;
+        _blockCount = other._blockCount;
         _parenticts = other._parenticts;
     }
     // Assignment Operator Implementation
@@ -105,7 +105,7 @@ void Configuration::pop(Server& server, Location& location)
         std::memset(&location, 0, sizeof(location));
         _locationFlag = false;
     }
-    _count -= 1;
+    _blockCount -= 1;
     _parenticts.pop();
 }
 
@@ -115,14 +115,14 @@ void Configuration::push(const std::string& input)
     {
         if (_serverFlag == true || _locationFlag == true)
             throw std::logic_error("Error: Server is already exist");
-        ++_count;
+        ++_blockCount;
     }
     if (input == "location")
     {
         if (_locationFlag == true || _serverFlag == false)
             throw std::logic_error("Error: Location is already exist");
         _locationFlag = true;
-        ++_count;
+        ++_blockCount;
     }
     if (input == "{")
     {

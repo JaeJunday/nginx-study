@@ -11,7 +11,6 @@ class Operation;
 class Configuration
 {
 	private:
-		Operation&	_operation;
 		enum E_SERVER_KEY
 		{
 			NAME = 0,
@@ -38,10 +37,11 @@ class Configuration
 			KEY = 0,
 			VALUE
 		};
+		Operation&	_operation;
 		std::stack<std::string> _parenticts;
 		bool                    _locationFlag;
 		bool                    _serverFlag;
-		unsigned int            _count;
+		unsigned int            _blockCount;
 	public:
 		// Configuration(); // Default Constructor
 		Configuration(Operation& operation);// operation Constructor;
