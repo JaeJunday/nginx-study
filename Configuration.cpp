@@ -41,15 +41,15 @@ Configuration& Configuration::operator=(const Configuration& other)
     // Assignment Operator Implementation
     return *this;
 }
-
-//OCF ==============================================================================
+//OCF =============================================================================================
 
 void Configuration::parsing(const std::string& filePath)
 {
     std::ifstream	file;
-	// std::vector<Server> servers;
 
     file.open(filePath);
+    if (file.is_open() == false)
+        throw std::logic_error("Error: File is not exist");
     Server server;
     Location location;
     while(file.eof() == false) 
