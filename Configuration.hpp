@@ -41,6 +41,7 @@ class Configuration
 		std::stack<std::string> _parenticts;
 		bool                    _locationFlag;
 		bool                    _serverFlag;
+		bool					_pathFlag;
 		unsigned int            _blockCount;
 
 		Configuration(const Configuration& other); // Copy Constructor
@@ -53,5 +54,6 @@ class Configuration
 		void parsing(const std::string& filePath);
 		void push(const std::string& input);
 		void pop(Server& server, Location& location);
-		void setConfigValue(const std::string& key, const std::string& value, const std::string& line, Server& server, Location& location);	
+		void setConfigValue(const std::string& key, const std::string& value, Server& server, Location& location);	
+		std::vector<std::string> getToken(const std::string& line, std::string seq);
 };
