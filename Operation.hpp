@@ -7,9 +7,9 @@
 
 class Operation {
 private:
-    std::vector<Server> servers;
-
 public:
+    std::vector<Server> _servers;
+
     Operation();
     Operation(const Operation& other);
     Operation& operator=(const Operation& other);
