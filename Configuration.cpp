@@ -32,7 +32,6 @@ Configuration::Configuration(const Configuration& other)
 Configuration& Configuration::operator=(const Configuration& other)
 {
     if (this != &other) {
-        // _operation = other._operation; // const 여서 안됨 - kyeonkim
         _locationFlag = other._locationFlag;
         _serverFlag = other._serverFlag;
         _blockCount = other._blockCount;
@@ -198,8 +197,6 @@ void Configuration::setConfigValue(const std::string& key, const std::string& va
             if (key == serverDirective[i])
                 break;
         }
-        // if (i == length) // default 로 넣음 - kyeonkim
-        //         throw std::logic_error("Error: Invalid key");
         switch (i)
         {
             case NAME:
