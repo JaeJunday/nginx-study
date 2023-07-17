@@ -5,6 +5,7 @@
 #include <sstream> // 헤더 추가
 #include <stdexcept>
 #include <string>
+#include <tuple>
 // OCF
 
 // Configuration::Configuration() : _operation(NULL), _locationFlag(false), _serverFlag(false), _blockCount(0)
@@ -24,11 +25,11 @@ Configuration::~Configuration()
 
 Configuration::Configuration(const Configuration& other)
     : _operation(other._operation),
+      _parenticts(other._parenticts),
       _locationFlag(other._locationFlag),
       _serverFlag(other._serverFlag),
       _pathFlag(other._pathFlag),
-      _blockCount(other._blockCount),
-      _parenticts(other._parenticts)
+      _blockCount(other._blockCount)
 {
     // Copy Constructor Implementation
 }
@@ -38,7 +39,7 @@ Configuration& Configuration::operator=(const Configuration& other)
     if (this != &other) {
         _locationFlag = other._locationFlag;
         _serverFlag = other._serverFlag;
-        _pathFlag(other._pathFlag),
+        _pathFlag = other._pathFlag,
         _blockCount = other._blockCount;
         _parenticts = other._parenticts;
     }
@@ -56,49 +57,43 @@ void Configuration::parsing(const std::string& filePath)
         throw std::logic_error("Error: File is not exist");
     Server server;
     Location location;
+    std::vector<std::string> totalLine;
     while(file.eof() == false) 
     {
-        // line : str str; str str str; str;
-        std::string line; 
-        getline(file, line);
-        //line.find(";");
-
+        // line : str str; str str str; str; str/n
+        std::string line;
+        getline(file, line);        
+        // ;str; str
         //split line for space
-        std::vector<std::string> token = getToken(line, "/r/t/n/v {}");
-        for (int i = 0; i < token.size(); i++)
+        // location path test case - kyeonkim(0717)
+        // test 1.
+            // location /{
+        // test 2.
+            // location 
+            // / {
+        // test 3.
+            // location
+            // (empty line)
+            // /{
+        std::vector<std::string> token = getToken(line, "/r/t/n/v{ };");
+
+///////////             세미콜론 검사 ///////////////
+
+/////////////////////////////////////////////
+
+        for (size_t i = 0; i < token.size(); i++)
         {
             if (token[i].empty() == true)
                 break;
-            else if (token[i] == "server") //|| token[i] == "location" || token[i] == "{")
+            else if (_pathFlag == true && token[i] != "{" && token[i] != "}")
+                location._path += token[i];
+            else if (token[i] == "server" || token[i] == "location" || token[i] == "{")
                 push(token[i]);
-            // else if (token[i] == "location")
-            //     push(token[i]);
-            // else if (token[i] == "{")
-            //     push(token[i]
             else if (token[i] == "}")
                 pop(server, location);
             else if (i >= VALUE)
                 setConfigValue(token[KEY], token[i], server, location);
         }
-
-        // std::istringstream iss(line); // istringstream을 사용하여 문자열을 공백으로 자름
-        // std::string word;
-        // std::string configKey;
-        // for (int i = 0; iss >> word; i++) // 단어마다 반복
-        // {
-        //     if (word.empty() == true)
-        //         break;
-        //     else if (word == "server" || word == "location")// || word == "{")
-//                push(token[i]);
-
-        //     else if (word == "}")
-        //         pop(server, location);
-        //     else if (i == KEY)
-        //         configKey = word;
-        //     else if (i >= VALUE)
-        //         setConfigValue(configKey, word, line, server, location);
-        //         // 세미콜론은 값을 넣을때 같이 처리한다 한번만 line검사하면 됨
-        // }
     }
     file.close();
 }
@@ -110,9 +105,9 @@ std::vector<std::string> Configuration::getToken(const std::string& line, std::s
 
 // abc{}abcd acd
     const char *str = line.c_str();
-    for(int i = 0; i < line.size(); i++)
+    for(size_t i = 0; i < line.size(); i++)
     {
-        if (str[i] == '{' || str[i] == '}')
+        if (str[i] == '{' || str[i] == '}' || str[i] == ';')
         {
             result.push_back(std::string(str[i], 1));
             continue;
@@ -148,7 +143,10 @@ void Configuration::push(const std::string& input)
         if (_parenticts.top() == "server")
             _serverFlag = true;
         else if (_parenticts.top() == "location")
+        {
             _locationFlag = true;   
+            _pathFlag = false;
+        }
         else
             throw std::logic_error("Error: { is not pair");
     }
@@ -181,14 +179,13 @@ void Configuration::pop(Server& server, Location& location)
         server.setLocation(location);
         std::memset(&location, 0, sizeof(location));
         _locationFlag = false;
-        _pathFlag = false;
     }
     _blockCount -= 1;
     _parenticts.pop();
 }
 
 
-void Configuration::setConfigValue(const std::string& key, const std::string& value, const std::string& line, Server& server, Location& location)
+void Configuration::setConfigValue(const std::string& key, const std::string& value, Server& server, Location& location)
 {
     size_t i;
     size_t length;
@@ -198,7 +195,7 @@ void Configuration::setConfigValue(const std::string& key, const std::string& va
         // set location
         static std::string locationDirective[] =
         {
-        "path", "root", "index", "autoindex", "upload", 
+        "root", "index", "autoindex", "upload", 
         "py", "php", "client_max_body_size", "limit_except",
         "try_files"
         };
@@ -211,8 +208,8 @@ void Configuration::setConfigValue(const std::string& key, const std::string& va
         }
         switch (i)
         {
-            case PATH:
-                location._path = value; break;
+            // case PATH:
+            //     location._path = value; break;
             case ROOT:
                 location._root = value; break;
             case L_INDEX:
@@ -249,8 +246,6 @@ void Configuration::setConfigValue(const std::string& key, const std::string& va
             if (key == serverDirective[i])
                 break;
         }
-        // if (i == length) // default 로 넣음 - kyeonkim
-        //         throw std::logic_error("Error: Invalid key");
         switch (i)
         {
             case NAME:

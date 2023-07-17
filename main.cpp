@@ -13,6 +13,12 @@ int main(int argc, char **argv)
     Configuration config(operation);
     config.parsing(argv[1]);
 
+//////////test line ///////////
+
+    std::cout << operation._servers[0].getServerName(0) << std::endl;
+    std::cout << operation._servers[0].getErrorPage(0) << std::endl;
+    std::cout << operation._servers[0].getListen() << std::endl;
+
     operation.start();
     return 0;
 }

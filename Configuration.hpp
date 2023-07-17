@@ -21,8 +21,8 @@ class Configuration
 		};
 		enum E_LOCATION_KEY
 		{
-			PATH = 0,
-			ROOT,
+			// PATH = 0,
+			ROOT = 0,
 			L_INDEX,
 			AUTOINDEX,
 			UPLOAD,

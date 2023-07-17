@@ -4,25 +4,25 @@ Operation::Operation() {}
 
 Operation::Operation(const Operation& other) 
 {
-    servers = other.servers;
+    _servers = other._servers;
 }
 
 Operation& Operation::operator=(const Operation& other) 
 {
     if (this != &other) {
-        servers = other.servers;
+        _servers = other._servers;
     }
     return *this;
 }
 
 Operation::~Operation() 
 {
-    servers.clear();
+    _servers.clear();
 }
 
 void Operation::setServer(const Server& server) 
 {
-    servers.push_back(server);
+    _servers.push_back(server);
 }
 
 void Operation::start() {

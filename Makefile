@@ -1,8 +1,7 @@
 NAME = ./webserv
 SRCS = main.cpp \
-		Config.cpp \
+		Configuration.cpp \
 		Server.cpp \
-		Location.cpp \
 		Operation.cpp
 
 OBJS = $(SRCS:.cpp=.o)
@@ -11,6 +10,7 @@ OBJS_FILES = $(addprefix $(OBJ_DIR),$(OBJS))
 
 CXX = c++
 CXXFLAGS = -std=c++98 -Wall -Wextra -Werror 
+
 
 all: $(NAME)
 
