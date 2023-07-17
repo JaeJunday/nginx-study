@@ -60,31 +60,15 @@ void Configuration::parsing(const std::string& filePath)
     std::vector<std::string> totalLine;
     while(file.eof() == false) 
     {
-        // line : str str; str str str; str; str/n
         std::string line;
         getline(file, line);        
-        // ;str; str
-        //split line for space
-        // location path test case - kyeonkim(0717)
-        // test 1.
-            // location /{
-        // test 2.
-            // location 
-            // / {
-        // test 3.
-            // location
-            // (empty line)
-            // /{
-        std::vector<std::string> token = getToken(line, "/r/t/n/v{ };");
 
-///////////             세미콜론 검사 ///////////////
-
-/////////////////////////////////////////////
-
+        std::vector<std::string> token = getToken(line, " {};");
+/* 세미콜론 검사 필요 */
         for (size_t i = 0; i < token.size(); i++)
         {
             if (token[i].empty() == true)
-                break;
+                continue;
             else if (_pathFlag == true && token[i] != "{" && token[i] != "}")
                 location._path += token[i];
             else if (token[i] == "server" || token[i] == "location" || token[i] == "{")
@@ -98,30 +82,59 @@ void Configuration::parsing(const std::string& filePath)
     file.close();
 }
 
-std::vector<std::string> Configuration::getToken(const std::string& line, std::string seq)
+//"       abc      abc      "        >>>>>>>>>>> don't work.
+
+
+std::vector<std::string> Configuration::getToken(const std::string& str, const std::string& delimiters) 
 {
     std::vector<std::string> result;
-    std::string tmp = "";
+    size_t start = 0;
+    size_t end = 0;
 
-// abc{}abcd acd
-    const char *str = line.c_str();
-    for(size_t i = 0; i < line.size(); i++)
-    {
-        if (str[i] == '{' || str[i] == '}' || str[i] == ';')
-        {
-            result.push_back(std::string(str[i], 1));
-            continue;
-        }
-        if (seq.find(str[i]) != std::string::npos) // 구분자가 없을 떈
-            tmp += str[i];
-        else // 구분자가 있을 땐
-        {
-            result.push_back(tmp);
-            tmp = "";
-        }
+    while (end != std::string::npos) {
+        end = str.find(delimiters, start);
+        if (end != start) 
+            result.push_back(str.substr(start, (end == std::string::npos) ? std::string::npos : end - start));
+        if (end == std::string::npos) 
+            break;
+        if (str[end] == '{' || str[end] == '}' || str[end] == ';')
+            result.push_back(std::string(str, end, 1));
+        start = end + 1;
     }
     return result;
 }
+
+
+// std::vector<std::string> Configuration::getToken(const std::string& line, std::string seq)
+// {
+//     std::vector<std::string> result;
+//     std::string tmp;
+
+//     for(size_t i = 0; i < line.size(); i++)
+//     {
+//         //구분자일때
+//         if (seq.find(line[i]) >= 0)
+//         {
+//             result.push_back(std::string(line, i, 1));
+//             continue;
+//         }
+//         /////////////////////
+
+//         bool flag = 0;
+//         if (isspace(line[i]) && flag == true)
+//         {
+//             result.push_back(tmp);
+//             flag = 0;
+//         }
+//         else if (!isspace(line[i]))
+//         {
+//             tmp += line[i];
+//             flag = 1;
+//         }
+//     }
+//     return result;
+// }
+
 
 void Configuration::push(const std::string& input)
 {
@@ -246,6 +259,8 @@ void Configuration::setConfigValue(const std::string& key, const std::string& va
             if (key == serverDirective[i])
                 break;
         }
+        std::cout << "here!!!" << std::endl;
+        std::cout <<"key : " << key << ", value : " << value << std::endl;
         switch (i)
         {
             case NAME:

@@ -1,12 +1,12 @@
 #include "Server.hpp"
 
 Server::Server()
-    : _serverName(0),
-      _errorPage(0),
-      _listen(0),
-      _index(0),
-      _clientMaxBodySize(0),
-      _location(0)
+     //_serverName(0),
+      //_errorPage(0),
+      //_listen(0),
+      //_index(0),
+      //_clientMaxBodySize(0)
+      //_location(0)
 {
 }
 

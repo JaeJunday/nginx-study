@@ -55,5 +55,5 @@ class Configuration
 		void push(const std::string& input);
 		void pop(Server& server, Location& location);
 		void setConfigValue(const std::string& key, const std::string& value, Server& server, Location& location);	
-		std::vector<std::string> getToken(const std::string& line, std::string seq);
+		std::vector<std::string> getToken(const std::string& str, const std::string& delimiters);
 };
