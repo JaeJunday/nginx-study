@@ -25,8 +25,8 @@ Configuration::~Configuration()
 
 Configuration::Configuration(const Configuration& other)
     : _operation(other._operation),
+      _bracket(other._bracket),
       _status(other._status),
-      _parenticts(other._parenticts),
       _locationFlag(other._locationFlag),
       _serverFlag(other._serverFlag),
       _pathFlag(other._pathFlag),
@@ -43,20 +43,20 @@ Configuration& Configuration::operator=(const Configuration& other)
         _serverFlag = other._serverFlag;
         _pathFlag = other._pathFlag;
         _blockCount = other._blockCount;
-        _parenticts = other._parenticts;
+        _bracket = other._bracket;
     }
     // Assignment Operator Implementation
     return *this;
 }
 //OCF =============================================================================================
 
-void test_printVector(const std::vector &vectorLine)
+static void test_printVector(const std::vector<std::string> &vectorLine)
 {
-    for (int i = 0; i < vectorLine.size(); i++)
+    for (size_t i = 0; i < vectorLine.size(); i++)
         std::cout << vectorLine[i] << std::endl;
 }
 
-std::vector<std::string> Configuration::getVectorLine() const
+std::vector<std::string> Configuration::getVectorLine(const std::string& filePath) const
 {
     std::ifstream	file;
 
@@ -67,29 +67,36 @@ std::vector<std::string> Configuration::getVectorLine() const
     std::string totalLine;
     std::string line;
 
-    while (file.eof())
+    while (file.eof() == false)
     {
         getline(file, line);
         totalLine += line;
-    }
+    } 
     vectorLine = getToken(totalLine, "\t\r\v\n {};");
     file.close();
-
-    test_printVector(vectorLine); // To be deleted - kyeonkim
-
+    // test_printVector(vectorLine); // To be deleted - kyeonkim
     return vectorLine;
 }
 
+// void setCheckList(vectorLine, checkList)
+// {
 
-    
+// }
+
 void Configuration::parsing(const std::string& filePath)
 {
-    std::vector vectorLine = getVectorLine();
+    std::vector<std::string> vectorLine = getVectorLine(filePath);
     Server server;
     Location location;
+    int checkList[vectorLine.size()]; 
+    memset(checkList, 0, sizeof(int));
 
+    // checkList = setCheckList(vectorLine, checkList);
+    // checkDupdirective(vectorLine, checkList);
+    // chcekSemicolon(vectorLine, checkList);
     
-
+    
+   
     /* To be deleted - kyeonkim
     // while(file.eof() == false) 
     // {
@@ -113,7 +120,7 @@ void Configuration::parsing(const std::string& filePath)
     */
 }
 
-std::vector<std::string> Configuration::getToken(const std::string& str, const std::string& delimiters) 
+std::vector<std::string> Configuration::getToken(std::string& str, const std::string& delimiters) const 
 {
     std::vector<std::string> result;
     size_t start = 0;
@@ -181,9 +188,9 @@ void Configuration::push(const std::string& input)
     }
     if (input == "{")
     {
-        if (_parenticts.top() == "server")
+        if (_bracket.top() == "server")
             _serverFlag = true;
-        else if (_parenticts.top() == "location")
+        else if (_bracket.top() == "location")
         {
             _locationFlag = true;   
             _pathFlag = false;
@@ -191,22 +198,22 @@ void Configuration::push(const std::string& input)
         else
             throw std::logic_error("Error: { is not pair");
     }
-    _parenticts.push(input);
+    _bracket.push(input);
 }
 
 void Configuration::pop(Server& server, Location& location) 
 {
     std::string str;
 
-    if (_parenticts.empty() == true)
+    if (_bracket.empty() == true)
         throw std::logic_error("Error: } is not pair");
     // first pop
-    str = _parenticts.top();
+    str = _bracket.top();
     if (str != "{")
         throw std::logic_error("Error: { is not exist");
-    _parenticts.pop();
+    _bracket.pop();
     // second pop
-    str = _parenticts.top();
+    str = _bracket.top();
     if (str != "server" && str != "location")
         throw std::logic_error("Error: server or location is not exist");
     if (str == "server")
@@ -222,7 +229,7 @@ void Configuration::pop(Server& server, Location& location)
         _locationFlag = false;
     }
     _blockCount -= 1;
-    _parenticts.pop();
+    _bracket.pop();
 }
 
 
