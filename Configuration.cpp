@@ -5,7 +5,8 @@
 #include <sstream> // 헤더 추가
 #include <stdexcept>
 #include <string>
-#include <tuple>
+#include <iomanip>
+#include "enum.hpp"
 // OCF
 
 // Configuration::Configuration() : _operation(NULL), _locationFlag(false), _serverFlag(false), _blockCount(0)
@@ -14,7 +15,7 @@
 // }
 
 Configuration::Configuration(Operation& operation) 
-: _operation(operation), _status(false), _locationFlag(false), _serverFlag(false), _pathFlag(false), _blockCount(0)
+: _operation(operation), _state(state::SERVER), _locationFlag(false), _serverFlag(false), _pathFlag(false), _blockCount(0)
 {
 }
 
@@ -26,7 +27,8 @@ Configuration::~Configuration()
 Configuration::Configuration(const Configuration& other)
     : _operation(other._operation),
       _bracket(other._bracket),
-      _status(other._status),
+      _state(other._state),
+    //   _status(other._status),
       _locationFlag(other._locationFlag),
       _serverFlag(other._serverFlag),
       _pathFlag(other._pathFlag),
@@ -38,7 +40,8 @@ Configuration::Configuration(const Configuration& other)
 Configuration& Configuration::operator=(const Configuration& other)
 {
     if (this != &other) {
-        _status = other._status;
+        // _status = other._status;
+        _state = other._state;
         _locationFlag = other._locationFlag;
         _serverFlag = other._serverFlag;
         _pathFlag = other._pathFlag;
@@ -50,10 +53,23 @@ Configuration& Configuration::operator=(const Configuration& other)
 }
 //OCF =============================================================================================
 
-static void test_printVector(const std::vector<std::string> &vectorLine)
+static void test_printVector(const std::vector<std::string> &token)
 {
-    for (size_t i = 0; i < vectorLine.size(); i++)
-        std::cout << vectorLine[i] << std::endl;
+    std::cout << token.size() << std::endl;
+    for (size_t i = 0; i < token.size(); i++)
+        std::cout << token[i];
+}
+
+static void test_printCheckList(int *checklist, size_t size)
+{
+    for (size_t i = 0; i < size; i++)
+        std::cout << " : " << checklist[i] << std::endl;
+}
+
+static void test_print(const std::vector<std::string> &token, int *checklist)
+{
+    for (size_t i = 0; i < token.size(); i++)
+        std::cout << std::setw(15) << token[i] << " : " << checklist[i] << std::endl;
 }
 
 std::vector<std::string> Configuration::getVectorLine(const std::string& filePath) const
@@ -63,7 +79,7 @@ std::vector<std::string> Configuration::getVectorLine(const std::string& filePat
     file.open(filePath);
     if (file.is_open() == false)
         throw std::logic_error("Error: File is not exist");
-    std::vector<std::string> vectorLine;
+    std::vector<std::string> token;
     std::string totalLine;
     std::string line;
 
@@ -72,30 +88,76 @@ std::vector<std::string> Configuration::getVectorLine(const std::string& filePat
         getline(file, line);
         totalLine += line;
     } 
-    vectorLine = getToken(totalLine, "\t\r\v\n {};");
+    token = getToken(totalLine, "\t\r\v\n {};");
     file.close();
-    // test_printVector(vectorLine); // To be deleted - kyeonkim
-    return vectorLine;
+    // test_printVector(token); // To be deleted - kyeonkim
+    return token;
 }
 
-// void setCheckList(vectorLine, checkList)
-// {
-
-// }
+void Configuration::setCheckList(std::vector<std::string> &token, int *checklist)
+{
+	for (size_t i = 0; i < token.size(); i++)
+	{
+		if (token[i] == "server")
+			checklist[i] = token::SERVER;
+        else if (token[i] == "location" && (_state == state::KEY || _state == state::SEMICOLON || _state == state::CLOSE_BRACKET))
+        {
+            checklist[i] = token::LOCATION;
+            _state = state::LOCATION;
+        }
+        else if (token[i] == "{" && (_state == state::PATH || _state == state::SERVER))
+        {
+			checklist[i] = token::OPEN_BRACKET;
+            _state = state::KEY;
+        }
+        else if (token[i] == "}") //&& _state == state::SEMICOLON)
+		{
+            if (_state == state::CLOSE_BRACKET)
+                _state = state::SERVER;
+            else if (_state == state::SEMICOLON)
+                _state = state::CLOSE_BRACKET;
+			checklist[i] = token::CLOSE_BRACKET;
+		}
+		else if (token[i] == ";" && _state == state::VALUE)
+		{
+			checklist[i] = token::SEMICOLON;
+            _state = state::KEY;
+		}
+        else
+        {
+			if (_state == state::PATH || _state == state::LOCATION)
+			{
+				checklist[i] = token::PATH;
+                _state = state::PATH;
+			}
+            else if (token[i] != ";" && _state == state::KEY)
+            {
+				checklist[i] = token::KEY;
+                _state = state::VALUE;
+            }
+            else if (_state == state::VALUE)
+				checklist[i] = token::VALUE;
+            else
+                throw std::logic_error("Error: Token is Invalid");
+        }
+	}
+}
 
 void Configuration::parsing(const std::string& filePath)
 {
-    std::vector<std::string> vectorLine = getVectorLine(filePath);
+    std::vector<std::string> token = getVectorLine(filePath);
     Server server;
     Location location;
-    int checkList[vectorLine.size()]; 
+
+    // test_printVector(token);
+    int checkList[token.size()];
     memset(checkList, 0, sizeof(int));
 
-    // checkList = setCheckList(vectorLine, checkList);
-    // checkDupdirective(vectorLine, checkList);
-    // chcekSemicolon(vectorLine, checkList);
-    
-    
+    setCheckList(token, checkList);
+	// test_printCheckList(checkList, token.size());
+	test_print(token, checkList);
+    // checkDupdirective(token, checkList);
+    // chcekSemicolon(token, checkList);
    
     /* To be deleted - kyeonkim
     // while(file.eof() == false) 
@@ -127,7 +189,7 @@ std::vector<std::string> Configuration::getToken(std::string& str, const std::st
     size_t end = 0;
 
     while (end != std::string::npos) {
-        end = str.find(delimiters, start);
+        end = str.find_first_of(delimiters, start);
         if (end != start) 
             result.push_back(str.substr(start, (end == std::string::npos) ? std::string::npos : end - start));
         if (end == std::string::npos) 
@@ -232,7 +294,7 @@ void Configuration::pop(Server& server, Location& location)
     _bracket.pop();
 }
 
-
+/*
 void Configuration::setConfigValue(const std::string& key, const std::string& value, Server& server, Location& location)
 {
     size_t i;
@@ -313,3 +375,4 @@ void Configuration::setConfigValue(const std::string& key, const std::string& va
         }
     }
 }
+*/
