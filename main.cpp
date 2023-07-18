@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     {
         Operation operation;
         Configuration config(operation);
-    std::string filename = "conf/default.conf";
+    std::string filename = "conf/default.copy.conf";
         config.parsing(filename); 
     } 
     catch(std::exception &e) 
