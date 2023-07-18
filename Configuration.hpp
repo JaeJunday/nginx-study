@@ -21,7 +21,6 @@ class Configuration
 		};
 		enum E_LOCATION_KEY
 		{
-			// PATH = 0,
 			ROOT = 0,
 			L_INDEX,
 			AUTOINDEX,
@@ -32,13 +31,19 @@ class Configuration
 			LIMIT_EXCEPT,
 			TRY_FILES
 		};
-		enum E_KEY_VALUE
+		enum E_CHECK_TOKEN
 		{
-			KEY = 0,
+			SERVER = 1,
+			LOCATION,
+			PATH,
+			BRACKET,
+			SEMI,
+			KEY,
 			VALUE
-		};
+		}
 		Operation&	_operation;
 		std::stack<std::string> _parenticts;
+		int 					_status;
 		bool                    _locationFlag;
 		bool                    _serverFlag;
 		bool					_pathFlag;
@@ -55,5 +60,6 @@ class Configuration
 		void push(const std::string& input);
 		void pop(Server& server, Location& location);
 		void setConfigValue(const std::string& key, const std::string& value, Server& server, Location& location);	
+		std::vector<std::string> getVectorLine() const;
 		std::vector<std::string> getToken(const std::string& str, const std::string& delimiters);
 };

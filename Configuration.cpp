@@ -14,7 +14,7 @@
 // }
 
 Configuration::Configuration(Operation& operation) 
-: _operation(operation), _locationFlag(false), _serverFlag(false), _pathFlag(false), _blockCount(0)
+: _operation(operation), _status(false), _locationFlag(false), _serverFlag(false), _pathFlag(false), _blockCount(0)
 {
 }
 
@@ -25,6 +25,7 @@ Configuration::~Configuration()
 
 Configuration::Configuration(const Configuration& other)
     : _operation(other._operation),
+      _status(other._status),
       _parenticts(other._parenticts),
       _locationFlag(other._locationFlag),
       _serverFlag(other._serverFlag),
@@ -37,9 +38,10 @@ Configuration::Configuration(const Configuration& other)
 Configuration& Configuration::operator=(const Configuration& other)
 {
     if (this != &other) {
+        _status = other._status;
         _locationFlag = other._locationFlag;
         _serverFlag = other._serverFlag;
-        _pathFlag = other._pathFlag,
+        _pathFlag = other._pathFlag;
         _blockCount = other._blockCount;
         _parenticts = other._parenticts;
     }
@@ -48,42 +50,68 @@ Configuration& Configuration::operator=(const Configuration& other)
 }
 //OCF =============================================================================================
 
-void Configuration::parsing(const std::string& filePath)
+void test_printVector(const std::vector &vectorLine)
+{
+    for (int i = 0; i < vectorLine.size(); i++)
+        std::cout << vectorLine[i] << std::endl;
+}
+
+std::vector<std::string> Configuration::getVectorLine() const
 {
     std::ifstream	file;
 
     file.open(filePath);
     if (file.is_open() == false)
         throw std::logic_error("Error: File is not exist");
-    Server server;
-    Location location;
-    std::vector<std::string> totalLine;
-    while(file.eof() == false) 
-    {
-        std::string line;
-        getline(file, line);        
+    std::vector<std::string> vectorLine;
+    std::string totalLine;
+    std::string line;
 
-        std::vector<std::string> token = getToken(line, " {};");
-/* 세미콜론 검사 필요 */
-        for (size_t i = 0; i < token.size(); i++)
-        {
-            if (token[i].empty() == true)
-                continue;
-            else if (_pathFlag == true && token[i] != "{" && token[i] != "}")
-                location._path += token[i];
-            else if (token[i] == "server" || token[i] == "location" || token[i] == "{")
-                push(token[i]);
-            else if (token[i] == "}")
-                pop(server, location);
-            else if (i >= VALUE)
-                setConfigValue(token[KEY], token[i], server, location);
-        }
+    while (file.eof())
+    {
+        getline(file, line);
+        totalLine += line;
     }
+    vectorLine = getToken(totalLine, "\t\r\v\n {};");
     file.close();
+
+    test_printVector(vectorLine); // To be deleted - kyeonkim
+
+    return vectorLine;
 }
 
-//"       abc      abc      "        >>>>>>>>>>> don't work.
 
+    
+void Configuration::parsing(const std::string& filePath)
+{
+    std::vector vectorLine = getVectorLine();
+    Server server;
+    Location location;
+
+    
+
+    /* To be deleted - kyeonkim
+    // while(file.eof() == false) 
+    // {
+    //     std::string line;
+    //     getline(file, line);        
+    //     std::vector<std::string> token = getToken(line, " {};");
+    //     for (size_t i = 0; i < token.size(); i++)
+    //     {
+    //         if (token[i].empty() == true)
+    //             continue;
+    //         else if (_pathFlag == true && token[i] != "{" && token[i] != "}")
+    //             location._path += token[i];
+    //         else if (token[i] == "server" || token[i] == "location" || token[i] == "{")
+    //             push(token[i]);
+    //         else if (token[i] == "}")
+    //             pop(server, location);
+    //         else if (i >= VALUE)
+    //             setConfigValue(token[KEY], token[i], server, location);
+    //     }
+    // }
+    */
+}
 
 std::vector<std::string> Configuration::getToken(const std::string& str, const std::string& delimiters) 
 {
