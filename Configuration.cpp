@@ -95,7 +95,10 @@ void Configuration::setCheckList(std::vector<std::string> &token, int *checklist
 	for (size_t i = 0; i < token.size(); i++)
 	{
 		if (token[i] == "server")
+        {
 			checklist[i] = token::SERVER;
+            _tokenState = state::SERVER;
+        }
         else if (token[i] == "location" && (_tokenState == state::KEY || _tokenState == state::SEMICOLON || _tokenState == state::CLOSE_BRACKET))
         {
             checklist[i] = token::LOCATION;
@@ -147,9 +150,12 @@ void Configuration::checkSyntax(int *checkList, int size)
     for(int i = 0; i < size; i++)
     { 
         cur = checkList[i];
-        if (prev == cur && 
-			!(prev == token::PATH || prev == token::CLOSE_BRACKET || prev == token::VALUE)) // 5,8,3 이 아니면
+        if (prev == cur && !(prev == token::PATH || prev == token::CLOSE_BRACKET || prev == token::VALUE))
             std::logic_error("Error: Token Duplicate error");
+        if (prev == token::VALUE && (cur == token::LOCATION || cur == token::CLOSE_BRACKET))
+            throw std::logic_error("Error: Token Semicolon error");
+        if (prev == token::KEY && cur == token::SEMICOLON)
+            throw std::logic_error("Error: Token Semicolon error");
         switch (cur)
         {
             case token::SERVER : 
@@ -160,16 +166,11 @@ void Configuration::checkSyntax(int *checkList, int size)
                 push(cur); break;
             case token::CLOSE_BRACKET :
                 pop(); break;
-            case token::SEMICOLON :
-            {
-                if (prev == token::KEY)
-                    throw std::logic_error("Error: Token Semicolon error");
-            }
         }
         prev = checkList[i];
     }
-    // if (_blockCount != 0)
-    //     throw std::logic_error("Error: Token Bracket not pair");
+    if (_blockCount != 0)
+        throw std::logic_error("Error: Token Bracket not pair");
 }
 
 void Configuration::parsing(const std::string& filePath)
@@ -184,9 +185,9 @@ void Configuration::parsing(const std::string& filePath)
     memset(checkList, 0, sizeof(int));
 
     setCheckList(token, checkList);
+    //중괄호 검사, 문법 검사?
 	test_print(token, checkList);
     checkSyntax(checkList, size);
-    //중괄호 검사
     //세미콜론 검사
 	//중복 검사
 
@@ -240,34 +241,23 @@ std::vector<std::string> Configuration::getToken(std::string& str, const std::st
     return result;
 }
 
+// _stackState 초기값 : 0
 void Configuration::push(int input)
 {
-    if (input == stack::SERVER)
+    if (input == token::SERVER)
     {
 		if (_stackState == stack::SERVER)
             throw std::logic_error("Error: Server is already exist");
 		_stackState = stack::SERVER;
         ++_blockCount;
     }
-    if (input == stack::LOCATION)
+    if (input == token::LOCATION)
     {
         if (_stackState == stack::LOCATION)
             throw std::logic_error("Error: Location is already exist");
 		_stackState = stack::LOCATION;
         ++_blockCount;
     }
-    // if (input == stack::OPEN_BRACKET)
-    // {
-    //     if (_bracket.top() == token::SERVER)
-    //         _serverFlag = true;
-    //     else if (_bracket.top() == token::LOCATION)
-    //     {
-    //         _locationFlag = true;   
-    //         _pathFlag = false;
-    //     }
-    //     else
-    //         throw std::logic_error("Error: { is not pair");
-    // }
     _bracket.push(input);
 }
 
@@ -277,18 +267,17 @@ void Configuration::pop()
         throw std::logic_error("Error: } is not pair");
     int top = _bracket.top();
     // first pop
-    if (top != stack::OPEN_BRACKET)
+    if (top != token::OPEN_BRACKET)
         throw std::logic_error("Error: { is not exist");
     _bracket.pop();
+
     // second pop
     top = _bracket.top();
-    if (top !=  stack::SERVER && top != stack::LOCATION)
+    if (top != token::SERVER && top != token::LOCATION)
         throw std::logic_error("Error: server or location is not exist");
-    if (top == stack::SERVER)
-        // _serverFlag = false;
+    if (top == token::SERVER)
 		_stackState = 0;
-    else if (top == stack::LOCATION)
-        // _locationFlag = false;
+    else if (top == token::LOCATION)
 		_stackState = stack::SERVER;
     _blockCount -= 1;
     _bracket.pop();
