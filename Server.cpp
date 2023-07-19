@@ -57,7 +57,7 @@ void Server::setValue(int index, std::string& value)
     }
 }
 
-std::string Server::getValue(int index) const
+const std::string Server::getValue(int index) const
 {
     switch (index)
     {

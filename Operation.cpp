@@ -34,7 +34,6 @@ void Operation::start() {
     sk.server_addr.sin_family = AF_INET;
     sk.server_addr.sin_addr.s_addr = INADDR_ANY;
 
-    double a = strtod(port.c_str(), NULL);
-    int tmp = static_cast<int>(a);
-    sk.server_addr.sin_port = htons(tmp);
+    double addr = strtod(port.c_str(), NULL);
+    sk.server_addr.sin_port = htons(static_cast<int>(addr));
 }
