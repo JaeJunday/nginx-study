@@ -21,25 +21,26 @@ class Configuration
 		int 			_stackState;
 		unsigned int	_blockCount;
 
-		Configuration(const Configuration& other); // Copy Constructor
-		Configuration& operator=(const Configuration& other); // Assignment Operator
+		Configuration(const Configuration& other);
+		Configuration& operator=(const Configuration& other);
 		Configuration();
 	public:
-		Configuration(Operation& operation);// operation Constructor;
-		~Configuration(); // Destructor
+		Configuration(Operation& operation);
+		~Configuration();
 
-		void checkSamePath();
-		void setValue(std::vector<std::string> &token, int *checklist);
-		int	 findServerKey(const std::string& token) const;
-		int	 findLocationKey(const std::string& token) const;
-		void checkSameKey(std::vector<std::string> &token, int *checklist);
-		void checkSyntax(int *checkList, int size);
 		void parsing(const std::string& filePath);
-		void push(int input);
-		void pop();
-		void setCheckList(std::vector<std::string> &vectorLine, int *checklist);
-		void setConfigValue(const std::string& key, const std::string& value, Server& server, Location& location);
-		void setLocationValue(Location& location, int index, std::string& value);
 		std::vector<std::string> getVectorLine(const std::string& filePath) const;
 		std::vector<std::string> getToken(std::string& str, const std::string& delimiters) const;
+		void setCheckList(std::vector<std::string> &vectorLine, int *checklist);
+		void checkSyntax(int *checkList, int size);
+		void checkSameKey(std::vector<std::string> &token, int *checklist);
+		void checkSamePath();
+		//
+		void setValue(std::vector<std::string> &token, int *checklist);
+		int	 findLocationKey(const std::string& token) const;
+		int	 findServerKey(const std::string& token) const;
+		void push(int input);
+		void pop();
+		void setConfigValue(const std::string& key, const std::string& value, Server& server, Location& location);
+		void setLocationValue(Location& location, int index, std::string& value);
 };
