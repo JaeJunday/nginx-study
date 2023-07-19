@@ -29,9 +29,23 @@ namespace location
     };
 }
 
+namespace state
+{
+	enum AUTOMATA
+	{
+		SERVER = 1,
+        LOCATION = 2,
+        PATH = 3,
+        KEY = 4,
+        VALUE = 5,
+        SEMICOLON = 6,
+        CLOSE_BRACKET = 7
+	};
+}
+
 namespace token
 {
-    enum TOKEN
+    enum CKECK_LIST
     {
         SERVER = 1,
         LOCATION = 2,
@@ -44,16 +58,13 @@ namespace token
     };
 }
 
-namespace state
+namespace stack
 {
-	enum STATE
-	{
-		SERVER = 1,
+    enum STACK
+    {
+        SERVER = 1,
         LOCATION = 2,
-        PATH = 3,
-        KEY = 4,
-        VALUE = 5,
-        SEMICOLON = 6,
-        CLOSE_BRACKET = 7
-	};
+        OPEN_BRACKET = 4,
+        CLOSE_BRACKET = 5,
+    };
 }
