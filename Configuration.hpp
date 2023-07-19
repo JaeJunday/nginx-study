@@ -1,10 +1,15 @@
 #pragma once
 
 #include "Server.hpp"
+#include "Operation.hpp"
+
 #include <iostream>
-#include <string>
-#include <stack>
 #include <fstream>
+#include <string>
+#include <exception>
+#include <stack>
+#include <vector>
+#include <map>
 
 class Operation;
 class Configuration
@@ -13,23 +18,18 @@ class Configuration
 		Operation&		_operation;
 		std::stack<int>	_bracket;
 		int 			_tokenState;
-		// bool			_locationFlag;
-		// bool			_serverFlag;
-		// bool			_pathFlag;
 		int 			_stackState;
 		unsigned int	_blockCount;
-		int				_serverTable[server::SIZE];
-		int				_locationTable[location::SIZE];
 
 		Configuration(const Configuration& other); // Copy Constructor
 		Configuration& operator=(const Configuration& other); // Assignment Operator
-		// Configuration(); // Default Constructor
+		Configuration();
 	public:
 		Configuration(Operation& operation);// operation Constructor;
 		~Configuration(); // Destructor
 
 		void checkSamePath();
-	void setValue(std::vector<std::string> &token, int *checklist);
+		void setValue(std::vector<std::string> &token, int *checklist);
 		int	 findServerKey(const std::string& token) const;
 		int	 findLocationKey(const std::string& token) const;
 		void checkSameKey(std::vector<std::string> &token, int *checklist);

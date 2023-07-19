@@ -1,29 +1,10 @@
 #include "Configuration.hpp"
-#include "Server.hpp"
-#include "Operation.hpp"
-#include <cstddef>
-#include <sstream> // 헤더 추가
-#include <stdexcept>
-#include <string>
-#include <iomanip>
-#include "enum.hpp"
-// OCF
-
-// Configuration::Configuration() : _operation(NULL), _locationFlag(false), _serverFlag(false), _blockCount(0)
-// {
-//     // Default Constructor Implementation
-// }
 
 Configuration::Configuration(Operation& operation) 
-: _operation(operation), _tokenState(state::SERVER), _stackState(0), _blockCount(0)
-{
-    memset(_serverTable, 0, sizeof(_serverTable));
-    memset(_locationTable, 0, sizeof(_locationTable));
-}
+: _operation(operation), _tokenState(state::SERVER), _stackState(0), _blockCount(0){}
 
 Configuration::~Configuration()
 {
-    // Destructor Implementation
 }
 
 Configuration::Configuration(const Configuration& other)
@@ -33,34 +14,17 @@ Configuration::Configuration(const Configuration& other)
 	  _stackState(other._stackState),
       _blockCount(other._blockCount)
 {
-    // Copy Constructor Implementation
 }
 
 Configuration& Configuration::operator=(const Configuration& other)
 {
     if (this != &other) {
-        // _status = other._status;
         _tokenState = other._tokenState;
 		_stackState = other._stackState;
         _blockCount = other._blockCount;
         _bracket = other._bracket;
     }
-    // Assignment Operator Implementation
     return *this;
-}
-//OCF =============================================================================================
-
-static void test_printVector(const std::vector<std::string> &token)
-{
-    std::cout << token.size() << std::endl;
-    for (size_t i = 0; i < token.size(); ++i)
-        std::cout << token[i] << std::endl;
-}
-
-static void test_printCheckList(int *checklist, size_t size)
-{
-    for (size_t i = 0; i < size; ++i)
-        std::cout << checklist[i] << std::endl;
 }
 
 static void test_print(const std::vector<std::string> &token, int *checklist)
@@ -88,7 +52,6 @@ std::vector<std::string> Configuration::getVectorLine(const std::string& filePat
     } 
     token = getToken(totalLine, "\t\r\v\n {};");
     file.close();
-    // test_printVector(token); // To be deleted - kyeonkim
     return token;
 }
 
@@ -246,18 +209,20 @@ void Configuration::checkSameKey(std::vector<std::string> &token, int *checklist
 { 
     int state = state::SERVER;
     int index;
-    
+    int serverTable[server::SIZE];
+    int locationTable[location::SIZE];
+     
     for (size_t i = 0; i < token.size(); ++i)
     {
         if (checklist[i] == token::SERVER)
         {
             state = state::SERVER;
-            memset(_serverTable, 0, sizeof(_serverTable));
+            memset(serverTable, 0, sizeof(serverTable));
         }
         else if (checklist[i] == token::LOCATION)
         {
             state = state::LOCATION;
-            memset(_locationTable, 0, sizeof(_locationTable));
+            memset(locationTable, 0, sizeof(locationTable));
         }
         else if (checklist[i] == token::KEY)
         {
@@ -266,18 +231,18 @@ void Configuration::checkSameKey(std::vector<std::string> &token, int *checklist
                 index = findServerKey(token[i]);
                 if (index == -1)
                     throw std::logic_error("Error: Invalid key");
-                if (_serverTable[index] > 0)
+                if (serverTable[index] > 0)
                     throw std::logic_error("Error: Same Server Key error");
-                _serverTable[index] = 1;
+                serverTable[index] = 1;
             }
             else if (state == state::LOCATION)
             {
                 index = findLocationKey(token[i]);
                 if (index == -1)
                     throw std::logic_error("Error: Invalid key");
-                if (_locationTable[index] > 0)
+                if (locationTable[index] > 0)
                     throw std::logic_error("Error: Same Location Key error");
-                _locationTable[index] = 1;
+                locationTable[index] = 1;
             }
         }
     }
@@ -389,35 +354,10 @@ void Configuration::parsing(const std::string& filePath)
    memset(checkList, 0, sizeof(checkList));
 
     setCheckList(token, checkList);
-	// test_print(token, checkList);
     checkSyntax(checkList, size);
     checkSameKey(token, checkList);
     setValue(token, checkList);
     checkSamePath();
-    // setValue(token);
-	// test_printCheckList(checkList, token.size());
-    std::cout << "Done.\n" << std::endl;
-   
-    /* To be deleted - kyeonkim
-    // while(file.eof() == false) 
-    // { //     std::string line;
-    //     getline(file, line);        
-    //     std::vector<std::string> token = getToken(line, " {};");
-    //     for (size_t i = 0; i < token.size(); ++i)
-    //     {
-    //         if (token[i].empty() == true)
-    //             continue;
-    //         else if (_pathFlag == true && token[i] != "{" && token[i] != "}")
-    //             location._path += token[i];
-    //         else if (token[i] == "server" || token[i] == "location" || token[i] == "{")
-    //             push(token[i]);
-    //         else if (token[i] == "}")
-    //             pop(server, location);
-    //         else if (i >= VALUE)
-    //             setConfigValue(token[KEY], token[i], server, location);
-    //     }
-    // }
-    */
 }
 
 std::vector<std::string> Configuration::getToken(std::string& str, const std::string& delimiters) const 
@@ -443,7 +383,6 @@ std::vector<std::string> Configuration::getToken(std::string& str, const std::st
     return result;
 }
 
-// _stackState 초기값 : 0
 void Configuration::push(int input)
 {
     if (input == token::SERVER)
@@ -468,12 +407,9 @@ void Configuration::pop()
     if (_bracket.empty() == true)
         throw std::logic_error("Error: } is not pair");
     int top = _bracket.top();
-    // first pop
     if (top != token::OPEN_BRACKET)
         throw std::logic_error("Error: { is not exist");
     _bracket.pop();
-
-    // second pop
     top = _bracket.top();
     if (top != token::SERVER && top != token::LOCATION)
         throw std::logic_error("Error: server or location is not exist");
@@ -484,86 +420,3 @@ void Configuration::pop()
     _blockCount -= 1;
     _bracket.pop();
 }
-
-/*
-void Configuration::setConfigValue(const std::string& key, const std::string& value, Server& server, Location& location)
-{
-    size_t i;
-    size_t length;
-
-    if (_serverFlag == true && _locationFlag == true)
-    {
-        // set location
-        static std::string locationDirective[] =
-        {
-        "root", "index", "autoindex", "upload", 
-        "py", "php", "client_max_body_size", "limit_except",
-        "try_files"
-        };
-        length = sizeof(locationDirective) / sizeof(std::string);
-        
-        for (i = 0; i < length; ++i)
-        {
-            if (key == locationDirective[i])
-                break;
-        }
-        switch (i)
-        {
-            // case PATH:
-            //     location._path = value; break;
-            case ROOT:
-                location._root = value; break;
-            case L_INDEX:
-                location._index = value; break;
-            case AUTOINDEX:
-                location._autoindex = value; break;
-            case UPLOAD:
-                location._upload = value; break;
-            case PY:
-                location._py = value; break;
-            case PHP:
-                location._php = value; break;
-            case CLIENT_MAX_BODY_SIZE:
-                location._clientMaxBodySize = value; break;
-            case LIMIT_EXCEPT:
-                location._limitExcept = value; break;
-            case TRY_FILES:
-                location._tryFiles = value; break;
-            default:
-                throw std::logic_error("Error: Invalid key");
-        }
-    }
-    else if (_serverFlag == true && _locationFlag == false)
-    {
-        static std::string serverDirective[] = {
-            "server_name", "listen", "error_page", "index", 
-            "client_max_body_size",   
-        };
-        size_t i;
-        size_t length = sizeof(serverDirective) / sizeof(std::string);
-        
-        for (i = 0; i < length; ++i)
-        {
-            if (key == serverDirective[i])
-                break;
-        }
-        std::cout << "here!!!" << std::endl;
-        std::cout <<"key : " << key << ", value : " << value << std::endl;
-        switch (i)
-        {
-            case NAME:
-                server.setServerName(value); break;
-            case LISTEN:
-                server.setListen(value); break;
-            case ERROR:
-                server.setErrorPage(value); break;
-            case INDEX:
-                server.setIndex(value); break;
-            case MAXBODYSIZE:
-                server.setClientMaxBodySize(value); break;
-            default:
-                throw std::logic_error("Error: Invalid key");
-        }
-    }
-}
-*/
