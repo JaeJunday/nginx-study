@@ -354,8 +354,9 @@ void Configuration::setValue(std::vector<std::string> &token, int *checklist)
         }
         else if (checklist[i] == token::PATH)
         {
-            
+            location._path = token[i];
         }
+
     }
 }
 
