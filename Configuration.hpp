@@ -28,7 +28,8 @@ class Configuration
 		Configuration(Operation& operation);// operation Constructor;
 		~Configuration(); // Destructor
 
-		void setValue(std::vector<std::string> &token, int *checklist);
+		void checkSamePath();
+	void setValue(std::vector<std::string> &token, int *checklist);
 		int	 findServerKey(const std::string& token) const;
 		int	 findLocationKey(const std::string& token) const;
 		void checkSameKey(std::vector<std::string> &token, int *checklist);

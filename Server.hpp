@@ -48,5 +48,6 @@ class Server {
 		// const std::string& getValue(int index) const;
 		void setLocation(const Location& location);
 		const Location& getLocation(int index) const;
+		int getLocationSize() const;
 		
 };

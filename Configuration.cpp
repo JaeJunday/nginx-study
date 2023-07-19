@@ -360,6 +360,27 @@ void Configuration::setValue(std::vector<std::string> &token, int *checklist)
     }
 }
 
+void Configuration::checkSamePath()
+{
+    int size = _operation._servers.size();
+    int locationSize;
+    std::pair<std::map<std::string, char>::iterator, bool> result;
+    std::string key;
+
+    for (int i = 0; i < size; ++i)
+    {
+        std::map<std::string, char> checker;
+        locationSize = _operation._servers[i].getLocationSize(); 
+        for (int j = 0; j < locationSize; ++j)
+        {
+            key = _operation._servers[i].getLocation(j)._path;
+            result = checker.insert(std::make_pair(key, '0')); 
+            if (result.second == false)
+                throw std::logic_error("Error: path duplicate");
+        }
+    }
+}
+
 void Configuration::parsing(const std::string& filePath)
 {
     std::vector<std::string> token = getVectorLine(filePath);
@@ -372,6 +393,7 @@ void Configuration::parsing(const std::string& filePath)
     checkSyntax(checkList, size);
     checkSameKey(token, checkList);
     setValue(token, checkList);
+    checkSamePath();
     // setValue(token);
 	// test_printCheckList(checkList, token.size());
     std::cout << "Done.\n" << std::endl;

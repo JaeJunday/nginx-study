@@ -85,3 +85,7 @@ void Server::setLocation(const Location& location) {
 const Location& Server::getLocation(int index) const {
     return _location[index];
 }
+
+int Server::getLocationSize() const {
+    return _location.size();
+}
