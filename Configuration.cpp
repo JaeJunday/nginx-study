@@ -242,7 +242,7 @@ int Configuration::findLocationKey(const std::string& key) const
     return (res);
 }
 
-void Configuration::CheckDupDirective(std::vector<std::string> &token, int *checklist)
+void Configuration::checkSameKey(std::vector<std::string> &token, int *checklist)
 { 
     int state = state::SERVER;
     int index;
@@ -250,9 +250,15 @@ void Configuration::CheckDupDirective(std::vector<std::string> &token, int *chec
     for (size_t i = 0; i < token.size(); i++)
     {
         if (checklist[i] == token::SERVER)
+        {
             state = state::SERVER;
+            memset(_serverTable, 0, sizeof(_serverTable));
+        }
         else if (checklist[i] == token::LOCATION)
+        {
             state = state::LOCATION;
+            memset(_locationTable, 0, sizeof(_locationTable));
+        }
         else if (checklist[i] == token::KEY)
         {
             if (state == state::SERVER)
@@ -262,7 +268,7 @@ void Configuration::CheckDupDirective(std::vector<std::string> &token, int *chec
                     throw std::logic_error("Error: Invalid key");
                 if (_serverTable[index] > 0)
                     throw std::logic_error("Error: Same Server Key error");
-                _serverTable[index] = i;
+                _serverTable[index] = 1;
             }
             else if (state == state::LOCATION)
             {
@@ -271,34 +277,68 @@ void Configuration::CheckDupDirective(std::vector<std::string> &token, int *chec
                     throw std::logic_error("Error: Invalid key");
                 if (_locationTable[index] > 0)
                     throw std::logic_error("Error: Same Location Key error");
-                _locationTable[index] = i;
+                _locationTable[index] = 1;
             }
         }
     }
 }
 
+void Configuration::setValue(std::vector<std::string> &token, int *checklist) const
+{
+    int state = state::SERVER;
+    int index;
+    Server server;
+    Location location;
+
+    for (size_t i = 0; i < token.size(); i++)
+    {
+        if (checklist[i] == token::SERVER)
+        {
+            state = state::SERVER;
+        }
+        else if (checklist[i] == token::LOCATION)
+        {
+            state = state::LOCATION;
+        }
+        else if (checklist[i] == token::KEY)
+        {
+            if (state == state::SERVER)
+            {
+                index = findServerKey(token[i]);
+                server.setValue(index, token[i]);
+            }
+            else if (state == state::LOCATION)
+            {
+                index = findLocationKey(token[i]);
+                *(&location + (sizeof(std::string) * index)) = token[i];
+            }
+        }
+    }
+}
+
+// void Configuration::setValue(std::vector<std::string>& token)
+// {
+    
+// }
+
 void Configuration::parsing(const std::string& filePath)
 {
     std::vector<std::string> token = getVectorLine(filePath);
-    Server server;
-    Location location;
 	int	size = token.size();
     int checkList[size];
    memset(checkList, 0, sizeof(checkList));
 
     setCheckList(token, checkList);
 	// test_print(token, checkList);
-    //중괄호 검사, 문법 검사, 세미콜론 검사 done
     checkSyntax(checkList, size);
-	//중복 검사
-    CheckDupDirective(token, checkList);
-
+    checkSameKey(token, checkList);
+    setValue(token, checkList);
+    // setValue(token);
 	// test_printCheckList(checkList, token.size());
    
     /* To be deleted - kyeonkim
     // while(file.eof() == false) 
-    // {
-    //     std::string line;
+    // { //     std::string line;
     //     getline(file, line);        
     //     std::vector<std::string> token = getToken(line, " {};");
     //     for (size_t i = 0; i < token.size(); i++)

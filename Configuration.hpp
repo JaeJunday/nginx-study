@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Server.hpp"
-#include "enum.hpp"
 #include <iostream>
 #include <string>
 #include <stack>
@@ -21,6 +20,7 @@ class Configuration
 		unsigned int	_blockCount;
 		int				_serverTable[server::SIZE];
 		int				_locationTable[location::SIZE];
+	
 
 		Configuration(const Configuration& other); // Copy Constructor
 		Configuration& operator=(const Configuration& other); // Assignment Operator
@@ -29,9 +29,10 @@ class Configuration
 		Configuration(Operation& operation);// operation Constructor;
 		~Configuration(); // Destructor
 
+		void setValue(std::vector<std::string> &token, int *checklist) const;
 		int	 findServerKey(const std::string& token) const;
 		int	 findLocationKey(const std::string& token) const;
-		void CheckDupDirective(std::vector<std::string> &token, int *checklist);
+		void CheckDupDirective(std::vector<std::string> &token, int *checklist) const;
 		void checkSyntax(int *checkList, int size);
 		void parsing(const std::string& filePath);
 		void push(int input);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "enum.hpp"
 #include <iostream>
 #include <locale>
 #include <string>
@@ -37,21 +38,8 @@ class Server {
 		Server& operator=(const Server& other);
 		~Server();
 
-		void setServerName(const std::string& serverName);
-		const std::string& getServerName(int index) const;
-
-		void setErrorPage(const std::string& errorPage);
-		const std::string& getErrorPage(int index) const;
-
-		void setListen(const std::string& listen);
-		const std::string& getListen() const;
-
-		void setIndex(const std::string& index);
-		const std::string& getIndex() const;
-
-		void setClientMaxBodySize(const std::string& clientMaxBodySize);
-		const std::string& getClientMaxBodySize() const;
-
+		void setValue(int index, std::string& value);
+		const std::string& getValue(int index) const;
 		void setLocation(const Location& location);
-		const Location& getLocation(int index) const;
+		const Location& Server::getLocation(int index) const;
 };

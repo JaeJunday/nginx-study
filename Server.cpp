@@ -38,50 +38,48 @@ Server::~Server()
 {
 }
 
-void Server::setServerName(const std::string& serverName) {
-	_serverName.push_back(serverName);
+void Server::setValue(int index, std::string& value)
+{
+    switch (index)
+    {
+        case server::NAME:
+            _serverName.push_back(value);
+        case server::ROOT:
+            _root = value;
+        case server::LISTEN:
+            _listen = value;
+        case server::ERROR:
+            _errorPage.push_back(value);
+        case server::INDEX:
+            _index = value;
+        case server::MAXBODYSIZE:
+            _clientMaxBodySize = value;
+    }
 }
 
-const std::string& Server::getServerName(int index) const {
-    return _serverName[index];
-}
-
-void Server::setErrorPage(const std::string& errorPage) {
-    _errorPage.push_back(errorPage);
-}
-
-const std::string& Server::getErrorPage(int index) const {
-    return _errorPage[index];
-}
-
-void Server::setListen(const std::string& listen) {
-    _listen = listen;
-}
-
-const std::string& Server::getListen() const {
-    return _listen;
-}
-
-void Server::setIndex(const std::string& index) {
-    _index = index;
-}
-
-const std::string& Server::getIndex() const {
-    return _index;
-}
-
-void Server::setClientMaxBodySize(const std::string& clientMaxBodySize) {
-    _clientMaxBodySize = clientMaxBodySize;
-}
-
-const std::string& Server::getClientMaxBodySize() const {
-    return _clientMaxBodySize;
+const std::string& Server::getValue(int index) const
+{
+    switch (index)
+    {
+        case server::NAME:
+            return (_serverName[index]);
+        case server::ROOT:
+            return (_root);
+        case server::LISTEN:
+            return (_listen);
+        case server::ERROR:
+            return _serverName[index];
+            return (_errorPage[index]);
+        case server::INDEX:
+            return (_index);
+        case server::MAXBODYSIZE:
+            return (_clientMaxBodySize);
+    }
 }
 
 void Server::setLocation(const Location& location) {
     _location.push_back(location);
 }
-
 const Location& Server::getLocation(int index) const {
     return _location[index];
 }
