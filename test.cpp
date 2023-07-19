@@ -82,7 +82,7 @@ int main() {
             close(kq);
             exit(EXIT_FAILURE);
         }
-        for (int i = 0; i < nev; i++) {
+        for (int i = 0; i < nev; ++i) {
             if (events[i].ident == (uintptr_t)server_fd) {
                 // 새로운 연결 요청 수락
                 client_len = sizeof(client_addr);

@@ -53,20 +53,20 @@ Configuration& Configuration::operator=(const Configuration& other)
 static void test_printVector(const std::vector<std::string> &token)
 {
     std::cout << token.size() << std::endl;
-    for (size_t i = 0; i < token.size(); i++)
+    for (size_t i = 0; i < token.size(); ++i)
         std::cout << token[i] << std::endl;
 }
 
 static void test_printCheckList(int *checklist, size_t size)
 {
-    for (size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < size; ++i)
         std::cout << checklist[i] << std::endl;
 }
 
 static void test_print(const std::vector<std::string> &token, int *checklist)
 {
 	std::cout << "| 1 SERVER | 2 LOCATION | 3 PATH | 4 OPEN_BRACKET |\n| 5 CLOSE_BRACKET | 6 SEMICOLON | 7 KEY | 8 VALUE |\n\n";
-    for (size_t i = 0; i < token.size(); i++)
+    for (size_t i = 0; i < token.size(); ++i)
         std::cout << checklist[i] << " === " << token[i] << std::endl;
 }
 
@@ -94,7 +94,7 @@ std::vector<std::string> Configuration::getVectorLine(const std::string& filePat
 
 void Configuration::setCheckList(std::vector<std::string> &token, int *checklist)
 {
-	for (size_t i = 0; i < token.size(); i++)
+	for (size_t i = 0; i < token.size(); ++i)
 	{
 		if (token[i] == "server")
         {
@@ -149,7 +149,7 @@ void Configuration::checkSyntax(int *checkList, int size)
     int prev = 1;
 	int cur;
 	
-    for(int i = 0; i < size; i++)
+    for(int i = 0; i < size; ++i)
     { 
         cur = checkList[i];
         if (prev == cur && !(prev == token::PATH || prev == token::CLOSE_BRACKET || prev == token::VALUE))
@@ -182,7 +182,7 @@ int Configuration::findServerKey(const std::string& key) const
     size_t i;
     size_t length = sizeof(serverDirective) / sizeof(std::string);
         
-    for (i = 0; i < length; i++)
+    for (i = 0; i < length; ++i)
     {
         if (key == serverDirective[i])
             break;
@@ -213,7 +213,7 @@ int Configuration::findLocationKey(const std::string& key) const
     size_t i;
     size_t length = sizeof(locationDirective) / sizeof(std::string);
         
-    for (i = 0; i < length; i++)
+    for (i = 0; i < length; ++i)
     {
         if (key == locationDirective[i])
             break;
@@ -247,7 +247,7 @@ void Configuration::checkSameKey(std::vector<std::string> &token, int *checklist
     int state = state::SERVER;
     int index;
     
-    for (size_t i = 0; i < token.size(); i++)
+    for (size_t i = 0; i < token.size(); ++i)
     {
         if (checklist[i] == token::SERVER)
         {
@@ -315,7 +315,7 @@ void Configuration::setValue(std::vector<std::string> &token, int *checklist)
     Server server;
     Location location;
 
-    for (size_t i = 0; i < token.size(); i++)
+    for (size_t i = 0; i < token.size(); ++i)
     {
         if (checklist[i] == token::CLOSE_BRACKET && state == state::SERVER)
             _operation._servers.push_back(server);
@@ -343,7 +343,7 @@ void Configuration::setValue(std::vector<std::string> &token, int *checklist)
                 while (checklist[i] != token::SEMICOLON)
                 {
                     server.setValue(index, token[i]);
-                    i++;
+                    ++i;
                 }
             }
             else if (state == state::LOCATION)
@@ -381,7 +381,7 @@ void Configuration::parsing(const std::string& filePath)
     // { //     std::string line;
     //     getline(file, line);        
     //     std::vector<std::string> token = getToken(line, " {};");
-    //     for (size_t i = 0; i < token.size(); i++)
+    //     for (size_t i = 0; i < token.size(); ++i)
     //     {
     //         if (token[i].empty() == true)
     //             continue;
@@ -480,7 +480,7 @@ void Configuration::setConfigValue(const std::string& key, const std::string& va
         };
         length = sizeof(locationDirective) / sizeof(std::string);
         
-        for (i = 0; i < length; i++)
+        for (i = 0; i < length; ++i)
         {
             if (key == locationDirective[i])
                 break;
@@ -520,7 +520,7 @@ void Configuration::setConfigValue(const std::string& key, const std::string& va
         size_t i;
         size_t length = sizeof(serverDirective) / sizeof(std::string);
         
-        for (i = 0; i < length; i++)
+        for (i = 0; i < length; ++i)
         {
             if (key == serverDirective[i])
                 break;
