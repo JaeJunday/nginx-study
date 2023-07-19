@@ -23,12 +23,6 @@ struct Location
 	std::string	_tryFiles;
 	//void operator=(std::string& value);
 };
-/*
-void Location::operator=(std::string& value)
-{
-	*this = value; 
-}
-*/
 class Server {
 	private:
 		std::vector<std::string>	_serverName;
@@ -49,5 +43,4 @@ class Server {
 		void setLocation(const Location& location);
 		const Location& getLocation(int index) const;
 		int getLocationSize() const;
-		
 };

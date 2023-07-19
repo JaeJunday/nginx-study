@@ -37,9 +37,10 @@ class Configuration
 		void checkSamePath();
 		//
 		void setValue(std::vector<std::string> &token, int *checklist);
-		int	 findServerKey(const std::string& token) const;
 		int	 findLocationKey(const std::string& token) const;
-		void setLocationValue(Location& location, int index, std::string& value);
+		int	 findServerKey(const std::string& token) const;
 		void push(int input);
 		void pop();
+		void setConfigValue(const std::string& key, const std::string& value, Server& server, Location& location);
+		void setLocationValue(Location& location, int index, std::string& value);
 };

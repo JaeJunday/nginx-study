@@ -191,7 +191,8 @@ void Configuration::checkSameKey(std::vector<std::string> &token, int *checklist
 
 void Configuration::checkSamePath()
 {
-    int size = _operation._servers.size();
+    std::vector<Server> servers = _operation.getServers();
+    int size = servers.size();
     int locationSize;
     std::pair<std::map<std::string, char>::iterator, bool> result;
     std::string key;
@@ -199,10 +200,10 @@ void Configuration::checkSamePath()
     for (int i = 0; i < size; ++i)
     {
         std::map<std::string, char> checker;
-        locationSize = _operation._servers[i].getLocationSize(); 
+        locationSize = servers[i].getLocationSize(); 
         for (int j = 0; j < locationSize; ++j)
         {
-            key = _operation._servers[i].getLocation(j)._path;
+            key = servers[i].getLocation(j)._path;
             result = checker.insert(std::make_pair(key, '0')); 
             if (result.second == false)
                 throw std::logic_error("Error: path duplicate");
@@ -220,7 +221,7 @@ void Configuration::setValue(std::vector<std::string> &token, int *checklist)
     for (size_t i = 0; i < token.size(); ++i)
     {
         if (checklist[i] == token::CLOSE_BRACKET && state == state::SERVER)
-            _operation._servers.push_back(server);
+            _operation.setServer(server);
         else if (checklist[i] == token::CLOSE_BRACKET && state == state::LOCATION)
         {
             server.setLocation(location);
