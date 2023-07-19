@@ -3,35 +3,20 @@
 Configuration::Configuration(Operation& operation) 
 : _operation(operation), _tokenState(state::SERVER), _stackState(0), _blockCount(0){}
 
-Configuration::~Configuration()
-{
-}
+Configuration::~Configuration(){}
 
-Configuration::Configuration(const Configuration& other)
-    : _operation(other._operation),
-      _bracket(other._bracket),
-      _tokenState(other._tokenState),
-	  _stackState(other._stackState),
-      _blockCount(other._blockCount)
+void Configuration::parsing(const std::string& filePath)
 {
-}
+    std::vector<std::string> token = getVectorLine(filePath);
+	int	size = token.size();
+    int checkList[size];
+    memset(checkList, 0, sizeof(checkList));
 
-Configuration& Configuration::operator=(const Configuration& other)
-{
-    if (this != &other) {
-        _tokenState = other._tokenState;
-		_stackState = other._stackState;
-        _blockCount = other._blockCount;
-        _bracket = other._bracket;
-    }
-    return *this;
-}
-
-static void test_print(const std::vector<std::string> &token, int *checklist)
-{
-	std::cout << "| 1 SERVER | 2 LOCATION | 3 PATH | 4 OPEN_BRACKET |\n| 5 CLOSE_BRACKET | 6 SEMICOLON | 7 KEY | 8 VALUE |\n\n";
-    for (size_t i = 0; i < token.size(); ++i)
-        std::cout << checklist[i] << " === " << token[i] << std::endl;
+    setCheckList(token, checkList);
+    checkSyntax(checkList, size);
+    checkSameKey(token, checkList);
+    setValue(token, checkList);
+    checkSamePath();
 }
 
 std::vector<std::string> Configuration::getVectorLine(const std::string& filePath) const
@@ -53,6 +38,29 @@ std::vector<std::string> Configuration::getVectorLine(const std::string& filePat
     token = getToken(totalLine, "\t\r\v\n {};");
     file.close();
     return token;
+}
+
+std::vector<std::string> Configuration::getToken(std::string& str, const std::string& delimiters) const 
+{
+    std::vector<std::string> result;
+    size_t start = 0;
+    size_t end = 0;
+
+    while (end != std::string::npos) {
+        end = str.find_first_of(delimiters, start);
+        if (end != start) 
+        {
+            std::string tmp = str.substr(start, (end == std::string::npos) ? std::string::npos : end - start);
+            if (tmp.empty() == false)
+                result.push_back(tmp);
+        }
+        if (end == std::string::npos) 
+            break;
+        if (str[end] == '{' || str[end] == '}' || str[end] == ';')
+            result.push_back(std::string(str, end, 1));
+        start = end + 1;
+    }
+    return result;
 }
 
 void Configuration::setCheckList(std::vector<std::string> &token, int *checklist)
@@ -111,7 +119,7 @@ void Configuration::checkSyntax(int *checkList, int size)
 {
     int prev = 1;
 	int cur;
-	
+
     for(int i = 0; i < size; ++i)
     { 
         cur = checkList[i];
@@ -138,80 +146,13 @@ void Configuration::checkSyntax(int *checkList, int size)
         throw std::logic_error("Error: Token Bracket not pair");
 }
 
-int Configuration::findServerKey(const std::string& key) const
-{
-    std::string serverDirective[] = {"server_name", "root", "listen", "error_page", "index", "client_max_body_size"};
-    int res = -1;
-    size_t i;
-    size_t length = sizeof(serverDirective) / sizeof(std::string);
-        
-    for (i = 0; i < length; ++i)
-    {
-        if (key == serverDirective[i])
-            break;
-    }
-    switch (i)
-    {
-        case server::NAME:
-            return (server::NAME);
-        case server::ROOT:
-            return (server::ROOT);
-        case server::LISTEN:
-            return (server::LISTEN);
-        case server::ERROR:
-            return (server::ERROR);
-        case server::INDEX:
-            return (server::INDEX);
-        case server::MAXBODYSIZE:
-            return (server::MAXBODYSIZE);
-    }
-    return (res);
-}
-
-int Configuration::findLocationKey(const std::string& key) const
-{
-    static std::string locationDirective[] =
-    {"root", "index", "autoindex", "upload", "py", "php", "client_max_body_size", "limit_except","try_files"};
-    int res = -1;
-    size_t i;
-    size_t length = sizeof(locationDirective) / sizeof(std::string);
-        
-    for (i = 0; i < length; ++i)
-    {
-        if (key == locationDirective[i])
-            break;
-    }
-    switch (i)
-    {
-        case location::ROOT:
-            return (location::ROOT);
-        case location::INDEX:
-            return (location::INDEX);
-        case location::AUTOINDEX:
-            return (location::AUTOINDEX);
-        case location::UPLOAD:
-            return (location::UPLOAD);
-        case location::PY:
-            return (location::PY);
-        case location::PHP:
-            return (location::PHP);
-        case location::CLIENT_MAX_BODY_SIZE:
-            return (location::CLIENT_MAX_BODY_SIZE);
-        case location::LIMIT_EXCEPT:
-            return (location::LIMIT_EXCEPT);
-        case location::TRY_FILES:
-            return (location::TRY_FILES);
-    }
-    return (res);
-}
-
 void Configuration::checkSameKey(std::vector<std::string> &token, int *checklist)
 { 
     int state = state::SERVER;
     int index;
     int serverTable[server::SIZE];
     int locationTable[location::SIZE];
-     
+
     for (size_t i = 0; i < token.size(); ++i)
     {
         if (checklist[i] == token::SERVER)
@@ -248,28 +189,24 @@ void Configuration::checkSameKey(std::vector<std::string> &token, int *checklist
     }
 }
 
-void Configuration::setLocationValue(Location& location, int index, std::string& value)
+void Configuration::checkSamePath()
 {
-    switch (index)
+    int size = _operation._servers.size();
+    int locationSize;
+    std::pair<std::map<std::string, char>::iterator, bool> result;
+    std::string key;
+
+    for (int i = 0; i < size; ++i)
     {
-        case location::ROOT:
-            location._root = value; break;
-        case location::INDEX:
-            location._index = value; break;
-        case location::AUTOINDEX:
-            location._autoindex = value; break;
-        case location::UPLOAD:
-            location._upload = value; break;
-        case location::PY:
-            location._py = value; break;
-        case location::PHP:
-            location._php = value; break;
-        case location::CLIENT_MAX_BODY_SIZE:
-            location._clientMaxBodySize = value; break;
-        case location::LIMIT_EXCEPT:
-            location._limitExcept = value; break;
-        case location::TRY_FILES:
-            location._tryFiles = value; break;
+        std::map<std::string, char> checker;
+        locationSize = _operation._servers[i].getLocationSize(); 
+        for (int j = 0; j < locationSize; ++j)
+        {
+            key = _operation._servers[i].getLocation(j)._path;
+            result = checker.insert(std::make_pair(key, '0')); 
+            if (result.second == false)
+                throw std::logic_error("Error: path duplicate");
+        }
     }
 }
 
@@ -325,62 +262,96 @@ void Configuration::setValue(std::vector<std::string> &token, int *checklist)
     }
 }
 
-void Configuration::checkSamePath()
+int Configuration::findServerKey(const std::string& key) const
 {
-    int size = _operation._servers.size();
-    int locationSize;
-    std::pair<std::map<std::string, char>::iterator, bool> result;
-    std::string key;
+    std::string serverDirective[] = {"server_name", "root", "listen", "error_page", "index", "client_max_body_size"};
+    int res = -1;
+    size_t i;
+    size_t length = sizeof(serverDirective) / sizeof(std::string);
 
-    for (int i = 0; i < size; ++i)
+    for (i = 0; i < length; ++i)
     {
-        std::map<std::string, char> checker;
-        locationSize = _operation._servers[i].getLocationSize(); 
-        for (int j = 0; j < locationSize; ++j)
-        {
-            key = _operation._servers[i].getLocation(j)._path;
-            result = checker.insert(std::make_pair(key, '0')); 
-            if (result.second == false)
-                throw std::logic_error("Error: path duplicate");
-        }
-    }
-}
-
-void Configuration::parsing(const std::string& filePath)
-{
-    std::vector<std::string> token = getVectorLine(filePath);
-	int	size = token.size();
-    int checkList[size];
-   memset(checkList, 0, sizeof(checkList));
-
-    setCheckList(token, checkList);
-    checkSyntax(checkList, size);
-    checkSameKey(token, checkList);
-    setValue(token, checkList);
-    checkSamePath();
-}
-
-std::vector<std::string> Configuration::getToken(std::string& str, const std::string& delimiters) const 
-{
-    std::vector<std::string> result;
-    size_t start = 0;
-    size_t end = 0;
-
-    while (end != std::string::npos) {
-        end = str.find_first_of(delimiters, start);
-        if (end != start) 
-        {
-            std::string tmp = str.substr(start, (end == std::string::npos) ? std::string::npos : end - start);
-            if (tmp.empty() == false)
-                result.push_back(tmp);
-        }
-        if (end == std::string::npos) 
+        if (key == serverDirective[i])
             break;
-        if (str[end] == '{' || str[end] == '}' || str[end] == ';')
-            result.push_back(std::string(str, end, 1));
-        start = end + 1;
     }
-    return result;
+    switch (i)
+    {
+        case server::NAME:
+            return (server::NAME);
+        case server::ROOT:
+            return (server::ROOT);
+        case server::LISTEN:
+            return (server::LISTEN);
+        case server::ERROR:
+            return (server::ERROR);
+        case server::INDEX:
+            return (server::INDEX);
+        case server::MAXBODYSIZE:
+            return (server::MAXBODYSIZE);
+    }
+    return (res);
+}
+
+int Configuration::findLocationKey(const std::string& key) const
+{
+    static std::string locationDirective[] =
+    {"root", "index", "autoindex", "upload", "py", "php", "client_max_body_size", "limit_except","try_files"};
+    int res = -1;
+    size_t i;
+    size_t length = sizeof(locationDirective) / sizeof(std::string);
+
+    for (i = 0; i < length; ++i)
+    {
+        if (key == locationDirective[i])
+            break;
+    }
+    switch (i)
+    {
+        case location::ROOT:
+            return (location::ROOT);
+        case location::INDEX:
+            return (location::INDEX);
+        case location::AUTOINDEX:
+            return (location::AUTOINDEX);
+        case location::UPLOAD:
+            return (location::UPLOAD);
+        case location::PY:
+            return (location::PY);
+        case location::PHP:
+            return (location::PHP);
+        case location::CLIENT_MAX_BODY_SIZE:
+            return (location::CLIENT_MAX_BODY_SIZE);
+        case location::LIMIT_EXCEPT:
+            return (location::LIMIT_EXCEPT);
+        case location::TRY_FILES:
+            return (location::TRY_FILES);
+    }
+    return (res);
+}
+
+void Configuration::setLocationValue(Location& location, int index, std::string& value)
+{
+    switch (index)
+    {
+        case location::ROOT:
+            location._root = value; break;
+        case location::INDEX:
+            location._index = value; break;
+        case location::AUTOINDEX:
+            location._autoindex = value; break;
+        case location::UPLOAD:
+            location._upload = value; break;
+        case location::PY:
+            location._py = value; break;
+        case location::PHP:
+            location._php = value; break;
+        case location::CLIENT_MAX_BODY_SIZE:
+            location._clientMaxBodySize = value; break;
+        case location::LIMIT_EXCEPT:
+            location._limitExcept = value; break;
+        case location::TRY_FILES:
+            location._tryFiles = value; break;
+    }
 }
 
 void Configuration::push(int input)
