@@ -15,7 +15,7 @@
 // }
 
 Configuration::Configuration(Operation& operation) 
-: _operation(operation), _state(state::SERVER), _locationFlag(false), _serverFlag(false), _pathFlag(false), _blockCount(0)
+: _operation(operation), _tokenState(state::SERVER), _stackState(0), _blockCount(0)
 {
 }
 
@@ -27,11 +27,8 @@ Configuration::~Configuration()
 Configuration::Configuration(const Configuration& other)
     : _operation(other._operation),
       _bracket(other._bracket),
-      _state(other._state),
-    //   _status(other._status),
-      _locationFlag(other._locationFlag),
-      _serverFlag(other._serverFlag),
-      _pathFlag(other._pathFlag),
+      _tokenState(other._tokenState),
+	  _stackState(other._stackState),
       _blockCount(other._blockCount)
 {
     // Copy Constructor Implementation
@@ -41,10 +38,8 @@ Configuration& Configuration::operator=(const Configuration& other)
 {
     if (this != &other) {
         // _status = other._status;
-        _state = other._state;
-        _locationFlag = other._locationFlag;
-        _serverFlag = other._serverFlag;
-        _pathFlag = other._pathFlag;
+        _tokenState = other._tokenState;
+		_stackState = other._stackState;
         _blockCount = other._blockCount;
         _bracket = other._bracket;
     }
@@ -57,19 +52,20 @@ static void test_printVector(const std::vector<std::string> &token)
 {
     std::cout << token.size() << std::endl;
     for (size_t i = 0; i < token.size(); i++)
-        std::cout << token[i];
+        std::cout << token[i] << std::endl;
 }
 
 static void test_printCheckList(int *checklist, size_t size)
 {
     for (size_t i = 0; i < size; i++)
-        std::cout << " : " << checklist[i] << std::endl;
+        std::cout << checklist[i] << std::endl;
 }
 
 static void test_print(const std::vector<std::string> &token, int *checklist)
 {
+	std::cout << "| 1 SERVER | 2 LOCATION | 3 PATH | 4 OPEN_BRACKET |\n| 5 CLOSE_BRACKET | 6 SEMICOLON | 7 KEY | 8 VALUE |\n\n";
     for (size_t i = 0; i < token.size(); i++)
-        std::cout << std::setw(15) << token[i] << " : " << checklist[i] << std::endl;
+        std::cout << checklist[i] << " === " << token[i] << std::endl;
 }
 
 std::vector<std::string> Configuration::getVectorLine(const std::string& filePath) const
@@ -100,42 +96,42 @@ void Configuration::setCheckList(std::vector<std::string> &token, int *checklist
 	{
 		if (token[i] == "server")
 			checklist[i] = token::SERVER;
-        else if (token[i] == "location" && (_state == state::KEY || _state == state::SEMICOLON || _state == state::CLOSE_BRACKET))
+        else if (token[i] == "location" && (_tokenState == state::KEY || _tokenState == state::SEMICOLON || _tokenState == state::CLOSE_BRACKET))
         {
             checklist[i] = token::LOCATION;
-            _state = state::LOCATION;
+            _tokenState = state::LOCATION;
         }
-        else if (token[i] == "{" && (_state == state::PATH || _state == state::SERVER))
+        else if (token[i] == "{" && (_tokenState == state::PATH || _tokenState == state::SERVER))
         {
 			checklist[i] = token::OPEN_BRACKET;
-            _state = state::KEY;
+            _tokenState = state::KEY;
         }
-        else if (token[i] == "}") //&& _state == state::SEMICOLON)
+        else if (token[i] == "}")
 		{
-            if (_state == state::CLOSE_BRACKET)
-                _state = state::SERVER;
-            else if (_state == state::SEMICOLON)
-                _state = state::CLOSE_BRACKET;
+            if (_tokenState == state::CLOSE_BRACKET)
+                _tokenState = state::SERVER;
+            else if (_tokenState == state::SEMICOLON)
+                _tokenState = state::CLOSE_BRACKET;
 			checklist[i] = token::CLOSE_BRACKET;
 		}
-		else if (token[i] == ";" && _state == state::VALUE)
+		else if (token[i] == ";" && _tokenState == state::VALUE)
 		{
 			checklist[i] = token::SEMICOLON;
-            _state = state::KEY;
+            _tokenState = state::KEY;
 		}
         else
         {
-			if (_state == state::PATH || _state == state::LOCATION)
+			if (_tokenState == state::PATH || _tokenState == state::LOCATION)
 			{
 				checklist[i] = token::PATH;
-                _state = state::PATH;
+                _tokenState = state::PATH;
 			}
-            else if (token[i] != ";" && _state == state::KEY)
+            else if (token[i] != ";" && _tokenState == state::KEY)
             {
 				checklist[i] = token::KEY;
-                _state = state::VALUE;
+                _tokenState = state::VALUE;
             }
-            else if (_state == state::VALUE)
+            else if (_tokenState == state::VALUE)
 				checklist[i] = token::VALUE;
             else
                 throw std::logic_error("Error: Token is Invalid");
@@ -143,19 +139,58 @@ void Configuration::setCheckList(std::vector<std::string> &token, int *checklist
 	}
 }
 
+void Configuration::checkSyntax(int *checkList, int size)
+{
+    int prev = 1;
+	int cur;
+	
+    for(int i = 0; i < size; i++)
+    { 
+        cur = checkList[i];
+        if (prev == cur && 
+			!(prev == token::PATH || prev == token::CLOSE_BRACKET || prev == token::VALUE)) // 5,8,3 이 아니면
+            std::logic_error("Error: Token Duplicate error");
+        switch (cur)
+        {
+            case token::SERVER : 
+				push(cur); break;
+            case token::LOCATION :
+                push(cur); break;
+            case token::OPEN_BRACKET :
+                push(cur); break;
+            case token::CLOSE_BRACKET :
+                pop(); break;
+            case token::SEMICOLON :
+            {
+                if (prev == token::KEY)
+                    throw std::logic_error("Error: Token Semicolon error");
+            }
+        }
+        prev = checkList[i];
+    }
+    // if (_blockCount != 0)
+    //     throw std::logic_error("Error: Token Bracket not pair");
+}
+
 void Configuration::parsing(const std::string& filePath)
 {
     std::vector<std::string> token = getVectorLine(filePath);
     Server server;
     Location location;
+	int	size = token.size();
 
     // test_printVector(token);
-    int checkList[token.size()];
+    int checkList[size];
     memset(checkList, 0, sizeof(int));
 
     setCheckList(token, checkList);
-	// test_printCheckList(checkList, token.size());
 	test_print(token, checkList);
+    checkSyntax(checkList, size);
+    //중괄호 검사
+    //세미콜론 검사
+	//중복 검사
+
+	// test_printCheckList(checkList, token.size());
     // checkDupdirective(token, checkList);
     // chcekSemicolon(token, checkList);
    
@@ -191,7 +226,11 @@ std::vector<std::string> Configuration::getToken(std::string& str, const std::st
     while (end != std::string::npos) {
         end = str.find_first_of(delimiters, start);
         if (end != start) 
-            result.push_back(str.substr(start, (end == std::string::npos) ? std::string::npos : end - start));
+        {
+            std::string tmp = str.substr(start, (end == std::string::npos) ? std::string::npos : end - start);
+            if (tmp.empty() == false)
+                result.push_back(tmp);
+        }
         if (end == std::string::npos) 
             break;
         if (str[end] == '{' || str[end] == '}' || str[end] == ';')
@@ -201,95 +240,56 @@ std::vector<std::string> Configuration::getToken(std::string& str, const std::st
     return result;
 }
 
-
-// std::vector<std::string> Configuration::getToken(const std::string& line, std::string seq)
-// {
-//     std::vector<std::string> result;
-//     std::string tmp;
-
-//     for(size_t i = 0; i < line.size(); i++)
-//     {
-//         //구분자일때
-//         if (seq.find(line[i]) >= 0)
-//         {
-//             result.push_back(std::string(line, i, 1));
-//             continue;
-//         }
-//         /////////////////////
-
-//         bool flag = 0;
-//         if (isspace(line[i]) && flag == true)
-//         {
-//             result.push_back(tmp);
-//             flag = 0;
-//         }
-//         else if (!isspace(line[i]))
-//         {
-//             tmp += line[i];
-//             flag = 1;
-//         }
-//     }
-//     return result;
-// }
-
-
-void Configuration::push(const std::string& input)
+void Configuration::push(int input)
 {
-    if (input == "server")
+    if (input == stack::SERVER)
     {
-        if (_serverFlag == true || _locationFlag == true)
+		if (_stackState == stack::SERVER)
             throw std::logic_error("Error: Server is already exist");
+		_stackState = stack::SERVER;
         ++_blockCount;
     }
-    if (input == "location")
+    if (input == stack::LOCATION)
     {
-        if (_locationFlag == true || _serverFlag == false)
+        if (_stackState == stack::LOCATION)
             throw std::logic_error("Error: Location is already exist");
-        _pathFlag = true;
+		_stackState = stack::LOCATION;
         ++_blockCount;
     }
-    if (input == "{")
-    {
-        if (_bracket.top() == "server")
-            _serverFlag = true;
-        else if (_bracket.top() == "location")
-        {
-            _locationFlag = true;   
-            _pathFlag = false;
-        }
-        else
-            throw std::logic_error("Error: { is not pair");
-    }
+    // if (input == stack::OPEN_BRACKET)
+    // {
+    //     if (_bracket.top() == token::SERVER)
+    //         _serverFlag = true;
+    //     else if (_bracket.top() == token::LOCATION)
+    //     {
+    //         _locationFlag = true;   
+    //         _pathFlag = false;
+    //     }
+    //     else
+    //         throw std::logic_error("Error: { is not pair");
+    // }
     _bracket.push(input);
 }
 
-void Configuration::pop(Server& server, Location& location) 
+void Configuration::pop() 
 {
-    std::string str;
-
     if (_bracket.empty() == true)
         throw std::logic_error("Error: } is not pair");
+    int top = _bracket.top();
     // first pop
-    str = _bracket.top();
-    if (str != "{")
+    if (top != stack::OPEN_BRACKET)
         throw std::logic_error("Error: { is not exist");
     _bracket.pop();
     // second pop
-    str = _bracket.top();
-    if (str != "server" && str != "location")
+    top = _bracket.top();
+    if (top !=  stack::SERVER && top != stack::LOCATION)
         throw std::logic_error("Error: server or location is not exist");
-    if (str == "server")
-    {
-        _operation.setServer(server);
-        std::memset(&server, 0, sizeof(server));
-        _serverFlag = false;
-    }
-    else if (str == "location")
-    {
-        server.setLocation(location);
-        std::memset(&location, 0, sizeof(location));
-        _locationFlag = false;
-    }
+    if (top == stack::SERVER)
+        // _serverFlag = false;
+		_stackState = 0;
+    else if (top == stack::LOCATION)
+        // _locationFlag = false;
+		_stackState = stack::SERVER;
     _blockCount -= 1;
     _bracket.pop();
 }

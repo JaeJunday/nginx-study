@@ -10,13 +10,14 @@ class Operation;
 class Configuration
 {
 	private:
-		Operation&	_operation;
-		std::stack<std::string> _bracket;
-		int 					_state;
-		bool                    _locationFlag;
-		bool                    _serverFlag;
-		bool					_pathFlag;
-		unsigned int            _blockCount;
+		Operation&		_operation;
+		std::stack<int>	_bracket;
+		int 			_tokenState;
+		// bool			_locationFlag;
+		// bool			_serverFlag;
+		// bool			_pathFlag;
+		int 			_stackState;
+		unsigned int	_blockCount;
 
 		Configuration(const Configuration& other); // Copy Constructor
 		Configuration& operator=(const Configuration& other); // Assignment Operator
@@ -25,9 +26,10 @@ class Configuration
 		Configuration(Operation& operation);// operation Constructor;
 		~Configuration(); // Destructor
 
+		void checkSyntax(int *checkList, int size);
 		void parsing(const std::string& filePath);
-		void push(const std::string& input);
-		void pop(Server& server, Location& location);
+		void push(int input);
+		void pop();
 		void setCheckList(std::vector<std::string> &vectorLine, int *checklist);
 		void setConfigValue(const std::string& key, const std::string& value, Server& server, Location& location);	
 		std::vector<std::string> getVectorLine(const std::string& filePath) const;
