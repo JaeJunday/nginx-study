@@ -57,26 +57,26 @@ void Server::setValue(int index, std::string& value)
     }
 }
 
-// const std::string& Server::getValue(int index) const
-// {
-    // switch (index)
-    // {
-    //     case server::NAME:
-    //         return (_serverName[index]);
-    //     case server::ROOT:
-    //         return (_root);
-    //     case server::LISTEN:
-    //         return (_listen);
-    //     case server::ERROR:
-    //         return _serverName[index];
-    //         return (_errorPage[index]);
-    //     case server::INDEX:
-    //         return (_index);
-    //     case server::MAXBODYSIZE:
-    //         return (_clientMaxBodySize);
-    // }
-    // return Error:Error: Wrong cat getvalue;
-// }
+std::string Server::getValue(int index) const
+{
+    switch (index)
+    {
+        case server::NAME:
+            return (_serverName[index]);
+        case server::ROOT:
+            return (_root);
+        case server::LISTEN:
+            return (_listen);
+        case server::ERROR:
+            return _serverName[index];
+            return (_errorPage[index]);
+        case server::INDEX:
+            return (_index);
+        case server::MAXBODYSIZE:
+            return (_clientMaxBodySize);
+    }
+    return NULL;
+}
 
 void Server::setLocation(const Location& location) {
     _location.push_back(location);

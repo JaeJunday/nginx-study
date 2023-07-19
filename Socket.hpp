@@ -3,6 +3,7 @@
 #include <sys/socket.h> // socket
 #include <netinet/in.h> // sockaddr_in
 #include <sys/event.h>  // kqueue
+#include <fcntl.h>      // fcntl
 
 #define MAX_EVENTS 10
 

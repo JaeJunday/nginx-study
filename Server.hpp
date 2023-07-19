@@ -39,7 +39,7 @@ class Server {
 		~Server();
 
 		void setValue(int index, std::string& value);
-		// const std::string& getValue(int index) const;
+		std::string getValue(int index) const;
 		void setLocation(const Location& location);
 		const Location& getLocation(int index) const;
 		int getLocationSize() const;
