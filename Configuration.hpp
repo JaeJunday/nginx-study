@@ -20,7 +20,6 @@ class Configuration
 		unsigned int	_blockCount;
 		int				_serverTable[server::SIZE];
 		int				_locationTable[location::SIZE];
-	
 
 		Configuration(const Configuration& other); // Copy Constructor
 		Configuration& operator=(const Configuration& other); // Assignment Operator
@@ -29,16 +28,17 @@ class Configuration
 		Configuration(Operation& operation);// operation Constructor;
 		~Configuration(); // Destructor
 
-		void setValue(std::vector<std::string> &token, int *checklist) const;
+		void setValue(std::vector<std::string> &token, int *checklist);
 		int	 findServerKey(const std::string& token) const;
 		int	 findLocationKey(const std::string& token) const;
-		void CheckDupDirective(std::vector<std::string> &token, int *checklist) const;
+		void checkSameKey(std::vector<std::string> &token, int *checklist);
 		void checkSyntax(int *checkList, int size);
 		void parsing(const std::string& filePath);
 		void push(int input);
 		void pop();
 		void setCheckList(std::vector<std::string> &vectorLine, int *checklist);
-		void setConfigValue(const std::string& key, const std::string& value, Server& server, Location& location);	
+		void setConfigValue(const std::string& key, const std::string& value, Server& server, Location& location);
+		void setLocationValue(Location& location, int index, std::string& value);
 		std::vector<std::string> getVectorLine(const std::string& filePath) const;
 		std::vector<std::string> getToken(std::string& str, const std::string& delimiters) const;
 };

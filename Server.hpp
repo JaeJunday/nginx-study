@@ -21,8 +21,14 @@ struct Location
 	std::string	_clientMaxBodySize; // 본문 사이즈 제한
 	std::string	_limitExcept; // 메서드 제한
 	std::string	_tryFiles;
+	//void operator=(std::string& value);
 };
-
+/*
+void Location::operator=(std::string& value)
+{
+	*this = value; 
+}
+*/
 class Server {
 	private:
 		std::vector<std::string>	_serverName;
@@ -39,7 +45,8 @@ class Server {
 		~Server();
 
 		void setValue(int index, std::string& value);
-		const std::string& getValue(int index) const;
+		// const std::string& getValue(int index) const;
 		void setLocation(const Location& location);
-		const Location& Server::getLocation(int index) const;
+		const Location& getLocation(int index) const;
+		
 };

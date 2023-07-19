@@ -246,7 +246,7 @@ void Configuration::checkSameKey(std::vector<std::string> &token, int *checklist
 { 
     int state = state::SERVER;
     int index;
-
+    
     for (size_t i = 0; i < token.size(); i++)
     {
         if (checklist[i] == token::SERVER)
@@ -283,7 +283,32 @@ void Configuration::checkSameKey(std::vector<std::string> &token, int *checklist
     }
 }
 
-void Configuration::setValue(std::vector<std::string> &token, int *checklist) const
+void Configuration::setLocationValue(Location& location, int index, std::string& value)
+{
+    switch (index)
+    {
+        case location::ROOT:
+            location._root = value; break;
+        case location::INDEX:
+            location._index = value; break;
+        case location::AUTOINDEX:
+            location._autoindex = value; break;
+        case location::UPLOAD:
+            location._upload = value; break;
+        case location::PY:
+            location._py = value; break;
+        case location::PHP:
+            location._php = value; break;
+        case location::CLIENT_MAX_BODY_SIZE:
+            location._clientMaxBodySize = value; break;
+        case location::LIMIT_EXCEPT:
+            location._limitExcept = value; break;
+        case location::TRY_FILES:
+            location._tryFiles = value; break;
+    }
+}
+
+void Configuration::setValue(std::vector<std::string> &token, int *checklist)
 {
     int state = state::SERVER;
     int index;
@@ -292,34 +317,47 @@ void Configuration::setValue(std::vector<std::string> &token, int *checklist) co
 
     for (size_t i = 0; i < token.size(); i++)
     {
+        if (checklist[i] == token::CLOSE_BRACKET && state == state::SERVER)
+            _operation._servers.push_back(server);
+        else if (checklist[i] == token::CLOSE_BRACKET && state == state::LOCATION)
+        {
+            server.setLocation(location);
+            state = state::SERVER;
+        }
         if (checklist[i] == token::SERVER)
         {
             state = state::SERVER;
+            memset(&server, 0, sizeof(Server));
         }
         else if (checklist[i] == token::LOCATION)
         {
             state = state::LOCATION;
+            memset(&location, 0, sizeof(Location));
         }
         else if (checklist[i] == token::KEY)
         {
             if (state == state::SERVER)
             {
                 index = findServerKey(token[i]);
-                server.setValue(index, token[i]);
+                i += 1;
+                while (checklist[i] != token::SEMICOLON)
+                {
+                    server.setValue(index, token[i]);
+                    i++;
+                }
             }
             else if (state == state::LOCATION)
             {
                 index = findLocationKey(token[i]);
-                *(&location + (sizeof(std::string) * index)) = token[i];
+                setLocationValue(location, index, token[++i]);
             }
+        }
+        else if (checklist[i] == token::PATH)
+        {
+            
         }
     }
 }
-
-// void Configuration::setValue(std::vector<std::string>& token)
-// {
-    
-// }
 
 void Configuration::parsing(const std::string& filePath)
 {
@@ -335,6 +373,7 @@ void Configuration::parsing(const std::string& filePath)
     setValue(token, checkList);
     // setValue(token);
 	// test_printCheckList(checkList, token.size());
+    std::cout << "Done.\n" << std::endl;
    
     /* To be deleted - kyeonkim
     // while(file.eof() == false) 
