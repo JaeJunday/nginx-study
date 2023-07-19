@@ -27,6 +27,7 @@ class Server {
 		std::vector<std::string>	_serverName;
 		std::vector<std::string>  	_errorPage;
 		std::string					_listen;
+		std::string					_root;
 		std::string					_index;
 		std::string					_clientMaxBodySize;
 		std::vector<Location>		_location;

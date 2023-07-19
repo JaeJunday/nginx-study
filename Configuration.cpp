@@ -17,6 +17,8 @@
 Configuration::Configuration(Operation& operation) 
 : _operation(operation), _tokenState(state::SERVER), _stackState(0), _blockCount(0)
 {
+    memset(_serverTable, 0, sizeof(_serverTable));
+    memset(_locationTable, 0, sizeof(_locationTable));
 }
 
 Configuration::~Configuration()
@@ -173,27 +175,125 @@ void Configuration::checkSyntax(int *checkList, int size)
         throw std::logic_error("Error: Token Bracket not pair");
 }
 
+int Configuration::findServerKey(const std::string& key) const
+{
+    std::string serverDirective[] = {"server_name", "root", "listen", "error_page", "index", "client_max_body_size"};
+    int res = -1;
+    size_t i;
+    size_t length = sizeof(serverDirective) / sizeof(std::string);
+        
+    for (i = 0; i < length; i++)
+    {
+        if (key == serverDirective[i])
+            break;
+    }
+    switch (i)
+    {
+        case server::NAME:
+            return (server::NAME);
+        case server::ROOT:
+            return (server::ROOT);
+        case server::LISTEN:
+            return (server::LISTEN);
+        case server::ERROR:
+            return (server::ERROR);
+        case server::INDEX:
+            return (server::INDEX);
+        case server::MAXBODYSIZE:
+            return (server::MAXBODYSIZE);
+    }
+    return (res);
+}
+
+int Configuration::findLocationKey(const std::string& key) const
+{
+    static std::string locationDirective[] =
+    {"root", "index", "autoindex", "upload", "py", "php", "client_max_body_size", "limit_except","try_files"};
+    int res = -1;
+    size_t i;
+    size_t length = sizeof(locationDirective) / sizeof(std::string);
+        
+    for (i = 0; i < length; i++)
+    {
+        if (key == locationDirective[i])
+            break;
+    }
+    switch (i)
+    {
+        case location::ROOT:
+            return (location::ROOT);
+        case location::INDEX:
+            return (location::INDEX);
+        case location::AUTOINDEX:
+            return (location::AUTOINDEX);
+        case location::UPLOAD:
+            return (location::UPLOAD);
+        case location::PY:
+            return (location::PY);
+        case location::PHP:
+            return (location::PHP);
+        case location::CLIENT_MAX_BODY_SIZE:
+            return (location::CLIENT_MAX_BODY_SIZE);
+        case location::LIMIT_EXCEPT:
+            return (location::LIMIT_EXCEPT);
+        case location::TRY_FILES:
+            return (location::TRY_FILES);
+    }
+    return (res);
+}
+
+void Configuration::CheckDupDirective(std::vector<std::string> &token, int *checklist)
+{ 
+    int state = state::SERVER;
+    int index;
+
+    for (size_t i = 0; i < token.size(); i++)
+    {
+        if (checklist[i] == token::SERVER)
+            state = state::SERVER;
+        else if (checklist[i] == token::LOCATION)
+            state = state::LOCATION;
+        else if (checklist[i] == token::KEY)
+        {
+            if (state == state::SERVER)
+            {
+                index = findServerKey(token[i]);
+                if (index == -1)
+                    throw std::logic_error("Error: Invalid key");
+                if (_serverTable[index] > 0)
+                    throw std::logic_error("Error: Same Server Key error");
+                _serverTable[index] = i;
+            }
+            else if (state == state::LOCATION)
+            {
+                index = findLocationKey(token[i]);
+                if (index == -1)
+                    throw std::logic_error("Error: Invalid key");
+                if (_locationTable[index] > 0)
+                    throw std::logic_error("Error: Same Location Key error");
+                _locationTable[index] = i;
+            }
+        }
+    }
+}
+
 void Configuration::parsing(const std::string& filePath)
 {
     std::vector<std::string> token = getVectorLine(filePath);
     Server server;
     Location location;
 	int	size = token.size();
-
-    // test_printVector(token);
     int checkList[size];
-    memset(checkList, 0, sizeof(int));
+   memset(checkList, 0, sizeof(checkList));
 
     setCheckList(token, checkList);
-    //중괄호 검사, 문법 검사?
-	test_print(token, checkList);
+	// test_print(token, checkList);
+    //중괄호 검사, 문법 검사, 세미콜론 검사 done
     checkSyntax(checkList, size);
-    //세미콜론 검사
 	//중복 검사
+    CheckDupDirective(token, checkList);
 
 	// test_printCheckList(checkList, token.size());
-    // checkDupdirective(token, checkList);
-    // chcekSemicolon(token, checkList);
    
     /* To be deleted - kyeonkim
     // while(file.eof() == false) 

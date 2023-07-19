@@ -6,10 +6,12 @@ namespace server
     enum SERVER
     {
         NAME = 0,
+        ROOT,
         LISTEN,
         ERROR,
         INDEX,
         MAXBODYSIZE,
+        SIZE
     };
 }
 
@@ -25,7 +27,8 @@ namespace location
         PHP,
         CLIENT_MAX_BODY_SIZE,
         LIMIT_EXCEPT,
-        TRY_FILES
+        TRY_FILES,
+        SIZE
     };
 }
 
