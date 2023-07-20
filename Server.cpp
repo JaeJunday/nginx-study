@@ -57,7 +57,7 @@ void Server::setValue(int index, std::string& value)
     }
 }
 
-const std::string Server::getValue(int index) const
+std::string Server::getValue(int index) const
 {
     switch (index)
     {
@@ -79,6 +79,12 @@ const std::string Server::getValue(int index) const
 }
 
 void Server::setLocation(const Location& location) {
+
+    for (size_t i = 0; i < _location.size(); ++i)
+    {
+        if (_location[i]._path == location._path)
+            throw std::logic_error("Error: path duplicate");
+    }
     _location.push_back(location);
 }
 

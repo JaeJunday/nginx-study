@@ -16,7 +16,6 @@ void Configuration::parsing(const std::string& filePath)
     checkSyntax(checkList, size);
     checkSameKey(token, checkList);
     setValue(token, checkList);
-    checkSamePath();
 }
 
 std::vector<std::string> Configuration::getVectorLine(const std::string& filePath) const
@@ -185,28 +184,6 @@ void Configuration::checkSameKey(std::vector<std::string> &token, int *checklist
                     throw std::logic_error("Error: Same Location Key error");
                 locationTable[index] = 1;
             }
-        }
-    }
-}
-
-void Configuration::checkSamePath()
-{
-    std::vector<Server> servers = _operation.getServers();
-    int size = servers.size();
-    int locationSize;
-    std::pair<std::map<std::string, char>::iterator, bool> result;
-    std::string key;
-
-    for (int i = 0; i < size; ++i)
-    {
-        std::map<std::string, char> checker;
-        locationSize = servers[i].getLocationSize(); 
-        for (int j = 0; j < locationSize; ++j)
-        {
-            key = servers[i].getLocation(j)._path;
-            result = checker.insert(std::make_pair(key, '0')); 
-            if (result.second == false)
-                throw std::logic_error("Error: path duplicate");
         }
     }
 }

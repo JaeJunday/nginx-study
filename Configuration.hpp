@@ -34,8 +34,6 @@ class Configuration
 		void setCheckList(std::vector<std::string> &vectorLine, int *checklist);
 		void checkSyntax(int *checkList, int size);
 		void checkSameKey(std::vector<std::string> &token, int *checklist);
-		void checkSamePath();
-		//
 		void setValue(std::vector<std::string> &token, int *checklist);
 		int	 findLocationKey(const std::string& token) const;
 		int	 findServerKey(const std::string& token) const;
