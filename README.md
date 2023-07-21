@@ -15,3 +15,18 @@
 |**Chore**           |빌드 업무 수정, 패키지 매니저 수정, 패키지 관리자 구성 등 업데이트, Production Code 변경 없음|
 |**Rename**          |파일 혹은 폴더명을 수정하거나 옮기는 작업만인 경우|
 |**Remove**          |파일을 삭제하는 작업만 수행한 경우|
+
+<!--
+Request parser : 
+
+* 파싱은 한글자씩 (1byte) 읽는다. 
+* 공백은 단일 공백(sp)만 허용한다.
+* 헤더랑 본문 사이에 공백 라인이 있어야된다.
+
+skema = <GET - space - path - space - HTTP/1.1 - \n - >
+* host : 
+* content length :
+* content type : 
+
+
+-->
