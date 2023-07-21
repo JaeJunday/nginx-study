@@ -6,6 +6,7 @@
 class Request
 {
     private:
+        char *buffer[kq-recv-event-length];
         std::string _method;
         std::string _host;
         std::string _contentType;
@@ -15,4 +16,7 @@ class Request
     public:
         Request(void);
         virtual ~Request(void);
+
+        void Request::parsing();
+        void Request::checkHeader() const
 };
