@@ -80,7 +80,6 @@ for (int i = 0; i < 1; ++i)
         //     break;
         data += buffer;
         j += 1;
-    usleep(10);
 // file input ###########################3
     std::ofstream ff;
     ff.open("test.txt", std::ios::binary);
@@ -91,7 +90,6 @@ for (int i = 0; i < 1; ++i)
 // file input ###########################3
     // }
     write(1, buffer, 3349633);
-    usleep(10);
     close(_sockets[i].clientFd);
     close(_sockets[i].serverFd);
     std::cout << bytes_read << std::endl;
@@ -251,4 +249,12 @@ for (int i = 0; i < 1; ++i)
     close(kq);
     return 0;
     */
+}
+
+void Operation::timeStamp(void) const
+{
+    std::time_t now = std::time(NULL);
+    char timeStamp[40];
+    std::strftime(timeStamp, sizeof(timeStamp), "Date: %a, %d %b %Y %H:%M:%S GMT", std::localtime(&now));
+    std::cout << timeStamp << std::endl;
 }

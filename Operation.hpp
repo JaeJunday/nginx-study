@@ -7,6 +7,7 @@
 #include <vector>
 #include <unistd.h>
 #include <sys/event.h>  // kqueue
+#include <ctime>
 
 #define FALLOW 0
 
@@ -25,4 +26,5 @@ public:
     const std::vector<Server>& getServers() const;
     int createBoundSocket(int port);
     void start();
+    void timeStamp() const;
 };
