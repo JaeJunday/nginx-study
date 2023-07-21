@@ -250,11 +250,3 @@ for (int i = 0; i < 1; ++i)
     return 0;
     */
 }
-
-void Operation::timeStamp(void) const
-{
-    std::time_t now = std::time(NULL);
-    char timeStamp[40];
-    std::strftime(timeStamp, sizeof(timeStamp), "Date: %a, %d %b %Y %H:%M:%S GMT", std::localtime(&now));
-    std::cout << timeStamp << std::endl;
-}
