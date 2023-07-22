@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iostream>
-#include <ostream>
 #include <string>
 #include <ctime>
 
@@ -9,11 +8,5 @@
 
 class Time
 {
-    private:
-        Time(const Time& src);
-        Time& operator=(Time const& rhs);
-        Time();
-        virtual ~Time(void);
-    public:
-        static void stamp();
+    public: static const std::string stamp();
 };
