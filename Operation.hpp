@@ -13,7 +13,6 @@
 class Operation {
 private:
     std::vector<Server> _servers;
-    std::vector<Socket> _sockets;
 public:
     void setServer(const Server& server);
     const std::vector<Server>& getServers() const;

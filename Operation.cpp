@@ -32,47 +32,80 @@ int Operation::createBoundSocket(int port)
 void Operation::start() {
     // 서버 시작 로직을 구현합니다.
     // ...
-    Socket  socket;
-
     // for(int i = 0; i < _servers.size(); ++i)
     for(int i = 0; i < 1; ++i)
     {
         try {
             std::string portStr = _servers[i].getValue(server::LISTEN);
             double port = strtod(portStr.c_str(), NULL);
-            socket.serverFd = createBoundSocket(static_cast<int>(port));
+            _servers[i].setSocket(createBoundSocket(static_cast<int>(port)));
             // fcntl(socket.serverFd, F_SETFL, O_NONBLOCK);
-            if (listen(socket.serverFd, SOMAXCONN) == -1)
+            if (listen(_servers[i].getSocket(), SOMAXCONN) == -1)
                 throw std::logic_error("Error: Listen failed");
-            _sockets.push_back(socket); 
         } catch (std::exception &e) {
             std::cout << e.what() << std::endl;
             continue;
         }
     }
 
+int kq, nev;
+kq = kqueue();
+struct kevent event, events[_servers.size()];
+struct	kevent tevent;	 /* Event triggered */
+
+EV_SET(&event, _servers[0].getSocket(), EVFILT_READ, EV_ADD, 0, 0, nullptr);
+
+
 // for (int i = 0; i < _sockets.size(); ++i)
+
+
+// kevent(kq, &event, 1, nullptr, 0, nullptr);
+//nev = kevent(kq, nullptr, 0, events, MAX_EVENTS, nullptr);
+
+kevent(kq, &event, 1, NULL, 0, NULL);
+nev = kevent(kq, NULL, 0, &tevent, 1, NULL);
+char *buffer;
+
+// char buffer[tevent.data];
+if (nev == _servers[0].getSocket())    
+{
+    // 연결요청
+    buffer = new char[tevent.data];
+    _sockets[i].client_len = sizeof(_sockets[i].client_addr);
+    _sockets[i].clientFd = accept(_sockets[i].serverFd, reinterpret_cast<struct sockaddr*>(&_sockets[i].client_addr), &_sockets[i].client_len);
+    if (_sockets[i].clientFd == -1)
+        throw std::logic_error("Error: Accept failed");
+}
+else 
+{   
+    메세지; 송수신
+}
+
+
+
+
 char buffer[3349633];
+memset(buffer, 0, sizeof(buffer));
 for (int i = 0; i < 1; ++i)
 {
     _sockets[i].client_len = sizeof(_sockets[i].client_addr);
     _sockets[i].clientFd = accept(_sockets[i].serverFd, reinterpret_cast<struct sockaddr*>(&_sockets[i].client_addr), &_sockets[i].client_len);
     if (_sockets[i].clientFd == -1)
         throw std::logic_error("Error: Accept failed");
-    memset(buffer, 0, sizeof(buffer));
     ssize_t bytes_read;
     std::string data;
     int j = 0;
     // fcntl(_sockets[i].clientFd, F_SETFL, O_NONBLOCK);
     // while (true)
     // {
-        bytes_read = recv(_sockets[i].clientFd, &buffer, sizeof(buffer), 0);
+    bytes_read = recv(_sockets[i].clientFd, &buffer, sizeof(buffer), 0);
         // if (bytes_read == 0)
         //     break;
         // if (bytes_read == -1)
         //     break;
-        data += buffer;
-        j += 1;
+    data += buffer;
+    j += 1;
+
 // file input ###########################3
     std::ofstream ff;
     ff.open("test.txt", std::ios::binary);
@@ -81,6 +114,7 @@ for (int i = 0; i < 1; ++i)
     }
     ff.close();
 // file input ###########################3
+
     // }
     write(1, buffer, 3349633);
     close(_sockets[i].clientFd);
