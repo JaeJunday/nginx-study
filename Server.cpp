@@ -1,43 +1,5 @@
 #include "Server.hpp"
 
-Server::Server()
-     //_serverName(0),
-      //_errorPage(0),
-      //_listen(0),
-      //_index(0),
-      //_clientMaxBodySize(0)
-      //_location(0)
-{
-}
-
-Server::Server(const Server& other)
-    : _serverName(other._serverName),
-      _errorPage(other._errorPage),
-      _listen(other._listen),
-      _index(other._index),
-      _clientMaxBodySize(other._clientMaxBodySize),
-      _location(other._location)
-{
-}
-
-Server& Server::operator=(const Server& other)
-{
-    if (this != &other)
-    {
-        _serverName = other._serverName;
-        _errorPage = other._errorPage;
-        _listen = other._listen;
-        _index = other._index;
-        _clientMaxBodySize = other._clientMaxBodySize;
-        _location = other._location;
-    }
-    return *this;
-}
-
-Server::~Server()
-{
-}
-
 void Server::setValue(int index, std::string& value)
 {
     switch (index)

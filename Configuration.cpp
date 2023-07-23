@@ -3,8 +3,6 @@
 Configuration::Configuration(Operation& operation) 
 : _operation(operation), _tokenState(state::SERVER), _stackState(0), _blockCount(0){}
 
-Configuration::~Configuration(){}
-
 void Configuration::parsing(const std::string& filePath)
 {
     std::vector<std::string> token = getVectorLine(filePath);

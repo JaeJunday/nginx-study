@@ -1,12 +1,5 @@
 #include "Operation.hpp"
 
-Operation::Operation() {}
-
-Operation::~Operation() 
-{
-    _servers.clear();
-}
-
 void Operation::setServer(const Server& server) 
 {
     _servers.push_back(server);

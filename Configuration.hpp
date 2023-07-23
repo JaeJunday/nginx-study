@@ -20,13 +20,8 @@ class Configuration
 		int 			_tokenState;
 		int 			_stackState;
 		unsigned int	_blockCount;
-
-		Configuration(const Configuration& other);
-		Configuration& operator=(const Configuration& other);
-		Configuration();
 	public:
 		Configuration(Operation& operation);
-		~Configuration();
 
 		void parsing(const std::string& filePath);
 		std::vector<std::string> getVectorLine(const std::string& filePath) const;

@@ -17,7 +17,7 @@ int main(int argc, char **argv)
     try
     {
         config.parsing(filename);
-        operation.start(); 
+        operation.start();
     } 
     catch(std::exception &e) 
     {
