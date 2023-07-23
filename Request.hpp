@@ -6,7 +6,7 @@
 class Request
 {
     private:
-        char buffer[kq-recv-event-length];
+        char buffer[];
         std::string _method;
         std::string _host;
         std::string _contentType;

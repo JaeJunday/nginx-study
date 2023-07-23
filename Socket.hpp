@@ -8,7 +8,7 @@
 
 struct Socket
 {
-	int serverFd, clientFd;
-	sockaddr_in		server_addr, client_addr;
-	socklen_t		client_len;
+	int 			_fd;
+	// sockaddr_in		_addr;
+	// socklen_t		_len;
 };
