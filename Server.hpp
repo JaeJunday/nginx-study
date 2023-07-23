@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enum.hpp"
+#include "Socket.hpp"
 #include <iostream>
 #include <locale>
 #include <string>
@@ -21,7 +22,6 @@ struct Location
 	std::string	_clientMaxBodySize; // 본문 사이즈 제한
 	std::string	_limitExcept; // 메서드 제한
 	std::string	_tryFiles;
-	//void operator=(std::string& value);
 };
 class Server {
 	private:
@@ -32,10 +32,13 @@ class Server {
 		std::string					_index;
 		std::string					_clientMaxBodySize;
 		std::vector<Location>		_location;
+    	int 						_socket;
 	public:
 		void setValue(int index, std::string& value);
 		std::string getValue(int index) const;
 		void setLocation(const Location& location);
 		const Location& getLocation(int index) const;
 		int getLocationSize() const;
+		void setSocket(int fd);
+		int getSocket() const;
 };

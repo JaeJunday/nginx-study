@@ -57,3 +57,13 @@ const Location& Server::getLocation(int index) const {
 int Server::getLocationSize() const {
     return _location.size();
 }
+
+void Server::setSocket(int fd)
+{
+    _socket = fd;
+}
+
+int Server::getSocket() const
+{
+    return _socket;
+}
