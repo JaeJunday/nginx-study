@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Server.hpp"
-#include "Socket.hpp"
 #include "Request.hpp"
 #include <iostream>
 #include <string>
@@ -9,6 +8,7 @@
 #include <list>
 #include <unistd.h>
 #include <sys/event.h>  // kqueue
+#include <fcntl.h>
 
 #define FALLOW 0
 

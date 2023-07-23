@@ -54,8 +54,7 @@ void Operation::start() {
 	EV_SET(&event, _servers[0].getSocket(), EVFILT_READ, EV_ADD, 0, 0, nullptr);
 	kevent(kq, &event, 1, NULL, 0, NULL);
 	// loop
-	// while (true) --- 웹에서 두 번 클릭해야 넘어감. - kyeonkim
-	for (int j = 0; j < 10; ++j)
+	while (true)
 	{
 		nev = kevent(kq, NULL, 0, &tevent, 1, NULL);
 		if (nev == -1)
@@ -87,16 +86,18 @@ void Operation::start() {
 			for (ITOR iter = _requests.begin(); iter != _requests.end(); ++iter)
 			{ 
 				if(tevent.ident == static_cast<uintptr_t>(iter->getSocket()))
-				{   
+				{
 					char *buf = new char[tevent.data];
 					ssize_t bytesRead = recv(iter->getSocket(), buf, tevent.data, 0);
 					if (bytesRead == false)
 					{
 						close(iter->getSocket());
-						return;
+						_requests.erase(iter);
+						break;	
 					}
 					iter->setBuffer(buf);
 					write(1, buf, tevent.data);
+					break;
 				}
 			}
 		}
