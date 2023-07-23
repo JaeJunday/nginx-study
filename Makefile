@@ -2,7 +2,8 @@ NAME = ./webserv
 SRCS = main.cpp \
 		Configuration.cpp \
 		Server.cpp \
-		Operation.cpp
+		Operation.cpp \
+		Request.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 OBJ_DIR = obj/
