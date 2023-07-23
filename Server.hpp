@@ -1,7 +1,6 @@
 #pragma once
 
 #include "enum.hpp"
-#include "Socket.hpp"
 #include <iostream>
 #include <locale>
 #include <string>
