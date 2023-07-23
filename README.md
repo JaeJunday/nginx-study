@@ -19,14 +19,16 @@
 <!--
 Request parser : 
 
-* 파싱은 한글자씩 (1byte) 읽는다. 
-* 공백은 단일 공백(sp)만 허용한다.
+* 파싱은 한글자씩 (1byte) 읽는다. X
+* 공백은 단일 공백(sp)만 허용한다
 * 헤더랑 본문 사이에 공백 라인이 있어야된다.
 
-skema = <GET - space - path - space - HTTP/1.1 - \n - >
+schema = <GET - space - path - space - HTTP/1.1 - \n - >
+
+
+
 * host : 
 * content length :
 * content type : 
-
 
 -->

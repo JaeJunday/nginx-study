@@ -94,16 +94,18 @@ void Operation::start() {
 			// else
 			// send
 
-					char *buf = new char[tevent.data]; // where? delete [] buf; >>>>>>>> A. request 객체 소멸 시
-					ssize_t bytesRead = recv(iter->getSocket(), buf, tevent.data, 0);
+					char *buffer = new char[tevent.data]; // where? delete [] buffer; >>>>>>>> A. request 객체 소멸 시
+					ssize_t bytesRead = recv(iter->getSocket(), buffer, tevent.data, 0);
 					if (bytesRead == false)
 					{
 						close(iter->getSocket());
 						_requests.erase(iter);
 						break;	
 					}
-					iter->setBuffer(buf);
-					write(1, buf, tevent.data);
+					// iter->setbufferfer(buffer);
+					write(1, buffer, tevent.data);
+					iter->parsing(buffer);
+					delete[] buffer;
 					break;
 				}
 			}
@@ -131,3 +133,18 @@ void test_print_event(struct kevent event)
  	// }
 	// ff.close();
 // file input ###########################3
+
+// 수신된 바이트를 PNG 파일로 저장하는 함수
+// bool saveAsPNG(const std::vector<char>& data, const std::string& file_path) {
+//     std::ofstream file(file_path, std::ios::binary);
+//     if (!file) {
+//         std::cerr << "Failed to open file: " << file_path << std::endl;
+//         return false;
+//     }
+
+//     file.write(data.data(), data.size());
+//     file.close();
+//     return true;
+// }
+
+// saveAsPNG(receivedData, file_path)
