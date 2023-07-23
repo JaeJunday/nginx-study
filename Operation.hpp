@@ -25,4 +25,5 @@ public:
     const std::vector<Server>& getServers() const;
     int createBoundSocket(int port);
     void start();
+    void timeStamp() const;
 };
