@@ -83,11 +83,18 @@ void Operation::start() {
 		}
 		else // 클라이언트로 연결요청이 들어왔을 때
 		{
+			// test_print_event(tevent);
 			for (ITOR iter = _requests.begin(); iter != _requests.end(); ++iter)
 			{ 
 				if(tevent.ident == static_cast<uintptr_t>(iter->getSocket()))
 				{
-					char *buf = new char[tevent.data];
+			// if (tevent.filter == EVFILT_READ)
+			// recv
+			// >>>>>
+			// else
+			// send
+
+					char *buf = new char[tevent.data]; // where? delete [] buf; >>>>>>>> A. request 객체 소멸 시
 					ssize_t bytesRead = recv(iter->getSocket(), buf, tevent.data, 0);
 					if (bytesRead == false)
 					{
@@ -104,11 +111,23 @@ void Operation::start() {
 	}
 }
 
+void test_print_event(struct kevent event)
+{
+	std::cout << "\n===============================================\n";
+	std::cout << "event ident : " << event.ident << "\n";
+	std::cout << "event filter : " << event.filter << "\n";
+	std::cout << "event flags : " << event.flags << "\n";
+	std::cout << "event fflags : " << event.fflags << "\n";
+	std::cout << "event data : " << event.data << "\n";
+	std::cout << "event udata : " << event.udata << "\n";
+	std::cout << "===============================================\n" << std::endl;
+}
+
 // file input ###########################3
 	// std::ofstream ff;
 	// ff.open("test.txt", std::ofstream::out);
 	// for (int i = 0; i < tevent.data; ++i) {
 	// 	ff.put(buf[i]);
-	// }
+ 	// }
 	// ff.close();
 // file input ###########################3

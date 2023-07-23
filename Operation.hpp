@@ -1,14 +1,15 @@
 #pragma once
 
 #include "Server.hpp"
+// #include "Socket.hpp"
 #include "Request.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
 #include <list>
 #include <unistd.h>
-#include <sys/event.h>  // kqueue
 #include <fcntl.h>
+#include <sys/event.h>  // kqueue
 
 #define FALLOW 0
 
@@ -24,3 +25,5 @@ public:
     int createBoundSocket(int port);
     void start();
 };
+
+void test_print_event(struct kevent event);
