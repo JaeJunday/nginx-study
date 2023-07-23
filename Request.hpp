@@ -4,7 +4,9 @@
 #include <string>
 #include "sys/socket.h"
 #include <netinet/in.h> // sockaddr_in
-
+#include <sys/types.h>  // socket, bind
+#include <sys/socket.h> // socket
+#include <fcntl.h> 
 class Request
 {
     private:
