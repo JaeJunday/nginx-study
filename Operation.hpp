@@ -2,6 +2,7 @@
 
 #include "Server.hpp"
 #include "Request.hpp"
+#include "enum.hpp"
 
 #include <iostream>
 #include <string>

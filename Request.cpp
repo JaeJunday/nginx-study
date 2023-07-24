@@ -1,7 +1,7 @@
 #include "Request.hpp"
 
 Request::Request(int socket)
-    : _socket(socket), _port(0), _contentLength(0)
+    : _state(0), _socket(socket), _port(0), _contentLength(0)
 {
 }
 
@@ -115,7 +115,8 @@ void Request::parsing(char* buf, intptr_t size)
             setFieldLind(fieldLine);
             endLine = newEndLine + 2;
         }
-
+        if (_method == "POST")
+            _state = request::POST;
         std::cout << std::endl;
         std::cout << "우리가 넣은 값" << std::endl;
         std::cout << "method: " << _method << std::endl;
@@ -148,9 +149,25 @@ void Request::parsing(char* buf, intptr_t size)
     }
 }
 
+int Request::getState() const
+{
+    return _state;
+}
+
+
 int Request::getSocket() const
 {
     return _socket;
+}
+
+const std::string& Request::getMain() const
+{
+    return _main;
+}
+
+void Request::setMain(char *buffer, int size)
+{
+    _main += std::string(buffer, size);
 }
 
 unsigned int stoui(const std::string& str)

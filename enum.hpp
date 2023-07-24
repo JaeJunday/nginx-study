@@ -71,3 +71,14 @@ namespace stack
         CLOSE_BRACKET = 5,
     };
 }
+
+namespace request
+{
+    enum REQUEST
+    {
+        GET = 0,
+        POST = 1,
+        DELETE = 2,
+        HEAD = 3
+    };
+}

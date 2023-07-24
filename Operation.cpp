@@ -104,17 +104,14 @@ void Operation::start() {
 			// test_print_event(tevent);
 			for (ITOR iter = _requests.begin(); iter != _requests.end(); ++iter)
 			{
+				// 이벤트 들어온 소켓 번호 찾는 부분
 				if(tevent.ident == static_cast<uintptr_t>(iter->getSocket()))
 				{
-					test_print_event(tevent);
-			// if (tevent.filter == EVFILT_READ)
-			// recv
-			// >>>>>
-			// else
-			// send
-
-					// std::cout << tevent.data << std::endl;
-					char *buffer = new char[tevent.data]; // where? delete [] buffer; >>>>>>>> A. request 객체 소멸 시
+					// method == POST 일때만 한번 더 받음
+					// GET 이랑 DELETE일때는 한번 더 안받음
+					// POST일 때는 리퀘스트 멤버 버퍼를 만들어서 헤더를 저장해 놓음
+					// std::cout << "HERE" << std::endl;
+					char *buffer = new char[tevent.data];
 					ssize_t bytesRead = recv(iter->getSocket(), buffer, tevent.data, 0);
 					if (bytesRead == false)
 					{
@@ -122,14 +119,18 @@ void Operation::start() {
 						_requests.erase(iter);
 						break;	
 					}
-					// std::cout << bytesRead << std::endl;
-					
-					write(1, buffer, tevent.data);
-					// std::cout << tevent.data << std::endl;
-					// std::cout << "HERE!" << std::endl;
-					iter->parsing(buffer, tevent.data);
+					if (iter->getState() == request::POST)
+					{
+						iter->setMain(buffer, tevent.data);
+						std::cout << iter->getMain() << std::endl;
+					}
+					else
+					{
+						test_print_event(tevent);
+						iter->parsing(buffer, tevent.data);
+					}
 					delete[] buffer;
-					break;
+					break;				
 				}
 			}
 		}
@@ -147,3 +148,10 @@ void test_print_event(struct kevent event)
 	std::cout << "event udata : " << event.udata << "\n";
 	std::cout << "===============================================\n" << std::endl;
 }
+
+
+// if (tevent.filter == EVFILT_READ)
+			// recv
+			// >>>>>
+			// else
+			// send
