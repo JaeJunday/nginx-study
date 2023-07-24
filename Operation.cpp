@@ -97,6 +97,7 @@ void Operation::start() {
 			// event 등록이 들어가야한다.
 			EV_SET(&revent, requestFd, EVFILT_READ, EV_ADD, 0, 0, nullptr);
 			kevent(kq, &revent, 1, NULL, 0, NULL);
+			// EV_SET(&revent, requestFd, EVFILT_WRITE, EV_ADD, 0, 0, nullptr);
 			_requests.push_back(request);
 		}
 		else // 클라이언트로 연결요청이 들어왔을 때
@@ -111,26 +112,35 @@ void Operation::start() {
 					// GET 이랑 DELETE일때는 한번 더 안받음
 					// POST일 때는 리퀘스트 멤버 버퍼를 만들어서 헤더를 저장해 놓음
 					// std::cout << "HERE" << std::endl;
-					char *buffer = new char[tevent.data];
-					ssize_t bytesRead = recv(iter->getSocket(), buffer, tevent.data, 0);
-					if (bytesRead == false)
+					test_print_event(tevent);
+					if (tevent.filter == EVFILT_READ)
 					{
-						close(iter->getSocket());
-						_requests.erase(iter);
-						break;	
-					}
-					if (iter->getState() == request::POST)
-					{
-						iter->setMain(buffer, tevent.data);
-						std::cout << iter->getMain() << std::endl;
+						char *buffer = new char[tevent.data];
+						ssize_t bytesRead = recv(iter->getSocket(), buffer, tevent.data, 0);
+						if (bytesRead == false)
+						{
+							// close(iter->getSocket());
+							_requests.erase(iter);	
+							break;	
+						}
+						if (iter->getState() == request::POST)
+						{
+							iter->setMain(buffer, tevent.data);
+							std::cout << iter->getMain() << std::endl;
+						}
+						else
+						{
+							test_print_event(tevent);
+							iter->parsing(buffer, tevent.data);
+						}
+						delete[] buffer;
+						break;				
 					}
 					else
-					{
-						test_print_event(tevent);
-						iter->parsing(buffer, tevent.data);
+					{	
+						std::cout << "send" << std::endl;
+						return;
 					}
-					delete[] buffer;
-					break;				
 				}
 			}
 		}
