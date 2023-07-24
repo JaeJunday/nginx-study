@@ -1,14 +1,17 @@
 #pragma once
 
 #include "Server.hpp"
-// #include "Socket.hpp"
 #include "Request.hpp"
+
 #include <iostream>
 #include <string>
 #include <vector>
 #include <list>
 #include <unistd.h>
 #include <fcntl.h>
+#include <netinet/in.h> // sockaddr_in
+#include <sys/types.h>  // socket, bind
+#include <sys/socket.h> // socket
 #include <sys/event.h>  // kqueue
 
 #define FALLOW 0

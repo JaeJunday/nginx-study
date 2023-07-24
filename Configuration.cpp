@@ -15,7 +15,6 @@ void Configuration::parsing(const std::string& filePath)
     checkSameKey(token, checkList);
     setValue(token, checkList);
 }
-
 std::vector<std::string> Configuration::getVectorLine(const std::string& filePath) const
 {
     std::ifstream	file;

@@ -18,9 +18,27 @@ int Operation::createBoundSocket(int port)
 	sockaddr_in serverAddr;
 	int optval = 1;
 	memset((char*)&serverAddr, 0, sizeof(sockaddr_in));
-	serverAddr.sin_family = AF_INET;
+
+	// ip v4
+	serverAddr.sin_family = AF_INET; 
+
+// 0 ~ 255. 255. 255. 255
+//       1   1      1   1
+// 	char  char  char char 
+// 	8         8       8     8 
+// 	atoi(255)
+// 	4
+// 	i = 192 << 24 
+// 	i = 168 << 16
+// 	i = 0 << 8
+// 	i = 1
+
+	// ip address
 	serverAddr.sin_addr.s_addr = INADDR_ANY;
+
+	// host port
 	serverAddr.sin_port = htons(4242);
+
 	setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 	if (bind(socketFd, reinterpret_cast<struct sockaddr*>(&serverAddr), sizeof(serverAddr)) == -1)
 		throw std::logic_error("Error: Socket bind failed");
@@ -70,7 +88,7 @@ void Operation::start() {
 			socklen_t		requestLen;
 			struct kevent	revent;
 			
-			requestFd = accept(_servers[0].getSocket(), reinterpret_cast<struct sockaddr *>(&requestAddr), &requestLen);
+			requestFd = accept(_servers[0].getSocket(), reinterpret_cast<struct sockaddr*>(&requestAddr), &requestLen);
 			if (requestFd == -1)
 				throw std::logic_error("Error: Accept failed");
 
@@ -85,15 +103,17 @@ void Operation::start() {
 		{
 			// test_print_event(tevent);
 			for (ITOR iter = _requests.begin(); iter != _requests.end(); ++iter)
-			{ 
+			{
 				if(tevent.ident == static_cast<uintptr_t>(iter->getSocket()))
 				{
+					test_print_event(tevent);
 			// if (tevent.filter == EVFILT_READ)
 			// recv
 			// >>>>>
 			// else
 			// send
 
+					// std::cout << tevent.data << std::endl;
 					char *buffer = new char[tevent.data]; // where? delete [] buffer; >>>>>>>> A. request 객체 소멸 시
 					ssize_t bytesRead = recv(iter->getSocket(), buffer, tevent.data, 0);
 					if (bytesRead == false)
@@ -102,9 +122,12 @@ void Operation::start() {
 						_requests.erase(iter);
 						break;	
 					}
-					// iter->setbufferfer(buffer);
+					// std::cout << bytesRead << std::endl;
+					
 					write(1, buffer, tevent.data);
-					iter->parsing(buffer);
+					// std::cout << tevent.data << std::endl;
+					// std::cout << "HERE!" << std::endl;
+					iter->parsing(buffer, tevent.data);
 					delete[] buffer;
 					break;
 				}
@@ -124,27 +147,3 @@ void test_print_event(struct kevent event)
 	std::cout << "event udata : " << event.udata << "\n";
 	std::cout << "===============================================\n" << std::endl;
 }
-
-// file input ###########################3
-	// std::ofstream ff;
-	// ff.open("test.txt", std::ofstream::out);
-	// for (int i = 0; i < tevent.data; ++i) {
-	// 	ff.put(buf[i]);
- 	// }
-	// ff.close();
-// file input ###########################3
-
-// 수신된 바이트를 PNG 파일로 저장하는 함수
-// bool saveAsPNG(const std::vector<char>& data, const std::string& file_path) {
-//     std::ofstream file(file_path, std::ios::binary);
-//     if (!file) {
-//         std::cerr << "Failed to open file: " << file_path << std::endl;
-//         return false;
-//     }
-
-//     file.write(data.data(), data.size());
-//     file.close();
-//     return true;
-// }
-
-// saveAsPNG(receivedData, file_path)
