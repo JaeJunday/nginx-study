@@ -204,7 +204,8 @@ void Configuration::setValue(std::vector<std::string> &token, int *checklist)
         if (checklist[i] == token::SERVER)
         {
             state = state::SERVER;
-            memset(&server, 0, sizeof(Server));
+            Server newServer;
+            server = newServer;
         }
         else if (checklist[i] == token::LOCATION)
         {
@@ -233,7 +234,6 @@ void Configuration::setValue(std::vector<std::string> &token, int *checklist)
         {
             location._path = token[i];
         }
-
     }
 }
 
@@ -269,7 +269,7 @@ int Configuration::findServerKey(const std::string& key) const
 
 int Configuration::findLocationKey(const std::string& key) const
 {
-    static std::string locationDirective[] =
+    std::string locationDirective[] =
     {"root", "index", "autoindex", "upload", "py", "php", "client_max_body_size", "limit_except","try_files"};
     int res = -1;
     size_t i;
