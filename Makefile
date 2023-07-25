@@ -10,7 +10,8 @@ OBJ_DIR = obj/
 OBJS_FILES = $(addprefix $(OBJ_DIR),$(OBJS))
 
 CXX = c++
-# CXXFLAGS = -std=c++98 -Wall -Wextra -Werror
+# CXXFLAGS = -std=c++98 -Wall -Wextra -Werror 
+# CXXFLAGS += -g
 CXXFLAGS += -fsanitize=address -g3
 
 
