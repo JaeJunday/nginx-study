@@ -3,6 +3,8 @@
 #include <iostream> 
 #include <string> 
 #include <ctime>
+#include <sstream>
+#include <fstream>
 
 #define TIME_SIZE 40
 /*
@@ -18,7 +20,7 @@ class AResponse
 {
 	protected:
 		std::string		_version;
-		unsigned int	_stateCode;
+		std::string		_stateCode;
 		std::string		_reasonPhrase;
 
 		std::time_t		_date;
@@ -29,16 +31,17 @@ class AResponse
 			
 		unsigned int	_contentLength;
 
-		std::string		_buffer;
+		std::stringstream	_buffer;
 		Request*		_request;	
-		AResponse();
-		AResponse(const AResponse& src);
+		AResponse(const AResponse& src); 
 		AResponse& operator=(AResponse const& rhs);
 	public:
+		AResponse();
 		virtual ~AResponse();
 		AResponse(Request* request);
-		const std::string getData() const;
-		virtual void createResponseMessage() const =0;
+		std::string getDate() const;
+		virtual void createResponseHeader() =0;
+		virtual void createResponseMain();
 		void stamp() const;
 };
 

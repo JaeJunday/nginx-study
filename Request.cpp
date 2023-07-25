@@ -13,7 +13,7 @@ Request::Request(int socket)
 // Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
 // Accept-Encoding: gzip, deflate
 // Accept-Language: en-US,en;q=0.9,ko;q=0.8
-//
+// Transfer-encoding: chunked
 // main
 
 std::vector<std::string> Request::getToken(std::string& str, const std::string& delimiters) const
@@ -86,6 +86,10 @@ void Request::setFieldLind(std::string fieldLine)
         _contentType = token[1];
     if (token[0] == "Content-Length")
         _contentLength = stoui(token[1]);
+    if (token[0] == "Transfer-encoding")
+        _transferEncoding = token[1];
+    if (token[0] == "Connection")
+        _connection = token[1];
 }
 
 // http://0.0.0.0:4242
@@ -116,16 +120,23 @@ void Request::parsing(char* buf, intptr_t size)
             endLine = newEndLine + 2;
         }
         if (_method == "POST")
+        {
             _state = request::POST;
+            // if (_transferEncoding == "chunked")
+            //     _state = 
+        }
         std::cout << std::endl;
         std::cout << "우리가 넣은 값" << std::endl;
         std::cout << "method: " << _method << std::endl;
         std::cout << "_requestUrl: " <<_requestUrl << std::endl;
         std::cout << "_version: " << _version << std::endl;
-        std::cout << "_ip: " <<_ip << std::endl;
-        std::cout << "port: " <<_port << std::endl;
-        std::cout << "c type: " <<_contentType << std::endl;
-        std::cout << "c len: " <<_contentLength << std::endl;
+        std::cout << "_ip: " << _ip << std::endl;
+        std::cout << "port: " << _port << std::endl;
+        std::cout << "c type: " << _contentType << std::endl;
+        std::cout << "c len: " << _contentLength << std::endl;
+        std::cout << "Transfer-encoding: " << _transferEncoding << std::endl;
+        std::cout << "connection: " << _connection << std::endl;
+        std::cout << std::endl;
         
 // std::cout << fieldLine << std::endl;
         
@@ -170,7 +181,39 @@ void Request::setMain(char *buffer, int size)
     _main += std::string(buffer, size);
 }
 
+const std::string& Request::getConnection() const
+{
+    return _connection;
+}
+
+const std::string& Request::getTransferEncoding() const
+{
+    return _transferEncoding;
+}
+
+
 unsigned int stoui(const std::string& str)
 {
     return static_cast<unsigned int>(std::strtod(str.c_str(), NULL));
+}
+
+
+const std::string& Request::getIp() const
+{
+    return _ip;
+}
+
+const std::string& Request::getMethod() const
+{
+    return _method;
+}
+
+const std::string& Request::getVersion() const
+{
+	return _version;
+}
+
+const std::string& Request::getRequestUrl() const
+{
+    return _requestUrl;
 }
