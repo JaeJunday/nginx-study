@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enum.hpp"
+#include "Util.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -37,12 +38,8 @@ class Request
         const std::string& getConnection() const;
 
         void setRequestLine(std::string requestLine);
-        std::vector<std::string> getToken(std::string& str, const std::string& delimiters) const;
         void checkMultipleSpaces(const std::string& str);
         void setFieldLind(std::string fieldLine);
         void setMain(char *buffer, int size);
         const std::string& getMain() const;
 };
-
-// 이거 오퍼레이션에서 썼었음 리팩토링 ㄱ
-unsigned int stoui(const std::string& str);

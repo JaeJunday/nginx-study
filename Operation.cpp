@@ -1,7 +1,5 @@
 #include "Operation.hpp"
 
-static int x = 0;
-
 void Operation::setServer(const Server& server) 
 {
 	_servers.push_back(server);
@@ -23,17 +21,6 @@ int Operation::createBoundSocket(int port)
 
 	// ip v4
 	serverAddr.sin_family = AF_INET; 
-
-// 0 ~ 255. 255. 255. 255
-//       1   1      1   1
-// 	char  char  char char 
-// 	8         8       8     8 
-// 	atoi(255)
-// 	4
-// 	i = 192 << 24 
-// 	i = 168 << 16
-// 	i = 0 << 8
-// 	i = 1
 
 	// ip address
 	serverAddr.sin_addr.s_addr = INADDR_ANY;
@@ -61,7 +48,7 @@ void Operation::start() {
 			if (listen(_servers[i].getSocket(), SOMAXCONN) == -1)
 				throw std::logic_error("Error: Listen failed");
 		} catch (std::exception &e) {
-			std::cout << e.what() << std::endl;
+			std::cerr << e.what() << std::endl;
 			continue;
 		}
 	}
@@ -157,7 +144,6 @@ void Operation::start() {
 				std::cout << res->getBuffer().str() << std::endl;
 				ssize_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
 				std::cout << byteWrite << std::endl;
-				std::cout << ++x << std::endl;;
 				delete res;
 				close(tevent.ident);
 				// send

@@ -16,27 +16,6 @@ Request::Request(int socket)
 // Transfer-encoding: chunked
 // main
 
-std::vector<std::string> Request::getToken(std::string& str, const std::string& delimiters) const
-{
-    std::vector<std::string> result;
-    size_t start = 0;
-    size_t end = 0;
-
-    while (end != std::string::npos) {
-        end = str.find(delimiters, start);
-        if (end != start) 
-        {
-            std::string tmp = str.substr(start, (end == std::string::npos) ? std::string::npos : end - start);
-            if (tmp.empty() == false)
-                result.push_back(tmp);
-        }
-        if (end == std::string::npos) 
-            break;
-        start = end + 1;
-    }
-    return result;
-}
-
 void Request::checkMultipleSpaces(const std::string& str)
 {
     char prev = '\0';
@@ -50,7 +29,7 @@ void Request::checkMultipleSpaces(const std::string& str)
 void Request::setRequestLine(std::string requestLine)
 {
     checkMultipleSpaces(requestLine);
-    std::vector<std::string> token = getToken(requestLine, " ");
+    std::vector<std::string> token = util::getToken(requestLine, " ");
 
     if (token.size() != 3)
         throw std::runtime_error("Error: Request Line size error");
@@ -67,7 +46,7 @@ void Request::setRequestLine(std::string requestLine)
 void Request::setFieldLind(std::string fieldLine)
 {
     checkMultipleSpaces(fieldLine);
-    std::vector<std::string> token = getToken(fieldLine, ": ");
+    std::vector<std::string> token = util::getToken(fieldLine, ": ");
     token[1].erase(0, 1);
     if (token.size() != 2)
         throw std::runtime_error("Error: Header error");
@@ -80,12 +59,12 @@ void Request::setFieldLind(std::string fieldLine)
         if (mid == std::string::npos)
             throw std::runtime_error("Error: Host Error");
         _ip = std::string(token[1], 0, mid);
-        _port = stoui(std::string(token[1], mid + 1, token[1].size() - (mid + 1)));
+        _port = util::stoui(std::string(token[1], mid + 1, token[1].size() - (mid + 1)));
     }
     if (token[0] == "Content-Type")
         _contentType = token[1];
     if (token[0] == "Content-Length")
-        _contentLength = stoui(token[1]);
+        _contentLength = util::stoui(token[1]);
     if (token[0] == "Transfer-encoding")
         _transferEncoding = token[1];
     if (token[0] == "Connection")
@@ -154,9 +133,9 @@ void Request::parsing(char* buf, intptr_t size)
 			// checkOtherLine(line);
         // } 
 	} catch (std::runtime_error &e) { 
-        std::cout << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
     } catch (std::exception &e) { 
-        std::cout << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
     }
 }
 
@@ -192,10 +171,7 @@ const std::string& Request::getTransferEncoding() const
 }
 
 
-unsigned int stoui(const std::string& str)
-{
-    return static_cast<unsigned int>(std::strtod(str.c_str(), NULL));
-}
+
 
 
 const std::string& Request::getIp() const

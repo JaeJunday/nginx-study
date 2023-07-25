@@ -5,7 +5,8 @@ SRCS = main.cpp \
 		Operation.cpp \
 		Request.cpp \
 		AResponse.cpp \
-		Get.cpp
+		Get.cpp \
+		Util.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 OBJ_DIR = obj/
