@@ -93,56 +93,55 @@ void Operation::start() {
 				throw std::logic_error("Error: Accept failed");
 
 			// 연결요청 들어오면 객체 생성하고 리스트에 이어붙임
-			Request request(requestFd);
+			Request *request = new Request(requestFd);
 			// event 등록이 들어가야한다.
-			EV_SET(&revent, requestFd, EVFILT_READ, EV_ADD, 0, 0, nullptr);
+			EV_SET(&revent, requestFd, EVFILT_READ, EV_ADD, 0, 0, request);
 			kevent(kq, &revent, 1, NULL, 0, NULL);
 			// EV_SET(&revent, requestFd, EVFILT_WRITE, EV_ADD, 0, 0, nullptr);
-			_requests.push_back(request);
+			// _requests.push_back(request);
 		}
 		else // 클라이언트로 연결요청이 들어왔을 때
 		{
 			// test_print_event(tevent);
-			for (ITOR iter = _requests.begin(); iter != _requests.end(); ++iter)
-			{
+			// for (ITOR iter = _requests.begin(); iter != _requests.end(); ++iter)
+			// {
 				// 이벤트 들어온 소켓 번호 찾는 부분
-				if(tevent.ident == static_cast<uintptr_t>(iter->getSocket()))
-				{
+				// if(tevent.ident == static_cast<uintptr_t>(iter->getSocket()))
+				// {
 					// method == POST 일때만 한번 더 받음
 					// GET 이랑 DELETE일때는 한번 더 안받음
 					// POST일 때는 리퀘스트 멤버 버퍼를 만들어서 헤더를 저장해 놓음
 					// std::cout << "HERE" << std::endl;
-					test_print_event(tevent);
+					// test_print_event(tevent);
 					if (tevent.filter == EVFILT_READ)
 					{
 						char *buffer = new char[tevent.data];
-						ssize_t bytesRead = recv(iter->getSocket(), buffer, tevent.data, 0);
+						ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
+						Request *req = static_cast<Request*>(tevent.udata);
+						std::cout <<  "bytesRead :: " << bytesRead << std::endl;
 						if (bytesRead == false)
 						{
-							// close(iter->getSocket());
-							_requests.erase(iter);	
-							break;	
+							close(req->getSocket());
+							delete req;
 						}
-						if (iter->getState() == request::POST)
+						else if (req->getState() == request::POST)
 						{
-							iter->setMain(buffer, tevent.data);
-							std::cout << iter->getMain() << std::endl;
+							req->setMain(buffer, tevent.data);
+							std::cout << req->getMain() << std::endl;
 						}
 						else
 						{
 							test_print_event(tevent);
-							iter->parsing(buffer, tevent.data);
+							req->parsing(buffer, tevent.data);
 						}
 						delete[] buffer;
-						break;				
 					}
 					else
 					{	
 						std::cout << "send" << std::endl;
-						return;
 					}
-				}
-			}
+				// }
+			// }
 		}
 	}
 }
