@@ -19,13 +19,22 @@ class Request
 		std::string  _version;
         std::string  _ip;
         unsigned int _port;
+        std::string  _connection;
         std::string  _contentType;
         unsigned int _contentLength;
+        std::string  _transferEncoding;
     public:
         Request(int socket);
         void parsing(char* buf, intptr_t size);
         int getSocket() const;
         int getState() const;
+
+        const std::string& getIp() const;
+        const std::string& getMethod() const;
+        const std::string& getVersion() const;
+
+        const std::string& getTransferEncoding() const;
+        const std::string& getConnection() const;
         void setRequestLine(std::string requestLine);
         std::vector<std::string> getToken(std::string& str, const std::string& delimiters) const;
         void checkMultipleSpaces(const std::string& str);
