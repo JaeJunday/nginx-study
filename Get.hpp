@@ -7,7 +7,7 @@ class Get : public AResponse
     private:
     public:
         Get();
-        Get(const Get& src);
+        Get(Request* request);
         virtual ~Get();
         Get& operator=(Get const& rhs);
 	    void createResponseHeader(); // override

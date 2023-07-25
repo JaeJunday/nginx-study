@@ -5,9 +5,9 @@ Get::Get() : AResponse()
 { 
 }
 
-Get::Get(const Get& src)
+Get::Get(Request* request) : AResponse()
 {
-    /* Copy Constructor Implementation */
+    _request = request;
 }
 
 Get::~Get()
@@ -53,19 +53,49 @@ void Get::createResponseHeader()
 	_buffer << "Date: " << getDate() << "\r\n";
 	_buffer << "Server: " << _serverName << "\r\n";
 	_buffer << "Content-Type: " << _contentType << "\r\n";
+    std::ifstream	file;
+    std::stringstream tmp;
+    // 경로에 따라서 맞는 경로의 파일을 오픈
+    if (_request->getRequestUrl() == "/")
+	{
+
+		file.open("resource/hello.html");
+		if (file.is_open() == false)
+            throw std::runtime_error("Error: file not found error");
+        tmp << file.rdbuf();
+        _contentLength = tmp.str().length();
+        file.close();
+	}
+    else
+    {
+        file.open("resource/error/404.html");
+		if (file.is_open() == false)
+            throw std::runtime_error("Error: file not found error");
+        tmp << file.rdbuf();
+        _contentLength = tmp.str().length();
+        file.close();
+    }
 	_buffer << "Content-Length: " << _contentLength << "\r\n\r\n";
 }
 
 void Get::createResponseMain()
 {
     std::ifstream	file;
-	std::string		line;
 
     if (_request->getRequestUrl() == "/")
 	{
-		file.open("resource/hello.html", std::ios::binary);
-		if (file.eof() == false)
-            error;
+		file.open("resource/hello.html");
+		if (file.is_open() == false)
+            throw std::runtime_error("Error: file not found error");
         _buffer << file.rdbuf();
+        file.close();
 	}
+    else
+    {
+		file.open("resource/error/404.html");
+		if (file.is_open() == false)
+            throw std::runtime_error("Error: file not found error2222");
+        _buffer << file.rdbuf();
+        file.close();
+    }
 }

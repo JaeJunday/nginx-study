@@ -3,7 +3,9 @@ SRCS = main.cpp \
 		Configuration.cpp \
 		Server.cpp \
 		Operation.cpp \
-		Request.cpp
+		Request.cpp \
+		AResponse.cpp \
+		Get.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 OBJ_DIR = obj/

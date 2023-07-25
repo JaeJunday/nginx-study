@@ -43,6 +43,7 @@ class AResponse
 		virtual void createResponseHeader() =0;
 		virtual void createResponseMain();
 		void stamp() const;
+		const std::stringstream& getBuffer() const;
 };
 
 // response data 를 만들고 stamp 를 찍는다.

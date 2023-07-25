@@ -1,5 +1,7 @@
 #include "Operation.hpp"
 
+static int x = 0;
+
 void Operation::setServer(const Server& server) 
 {
 	_servers.push_back(server);
@@ -96,55 +98,79 @@ void Operation::start() {
 			Request *request = new Request(requestFd);
 			// event 등록이 들어가야한다.
 			EV_SET(&revent, requestFd, EVFILT_READ, EV_ADD, 0, 0, request);
+			// EV_SET(&revent, requestFd, EVFILT_WRITE, EV_ADD, 0, 0, request);
 			kevent(kq, &revent, 1, NULL, 0, NULL);
-			// EV_SET(&revent, requestFd, EVFILT_WRITE, EV_ADD, 0, 0, nullptr);
 			// _requests.push_back(request);
 		}
 		else // 클라이언트로 연결요청이 들어왔을 때
 		{
-			// test_print_event(tevent);
-			// for (ITOR iter = _requests.begin(); iter != _requests.end(); ++iter)
-			// {
-				// 이벤트 들어온 소켓 번호 찾는 부분
-				// if(tevent.ident == static_cast<uintptr_t>(iter->getSocket()))
-				// {
-					// method == POST 일때만 한번 더 받음
-					// GET 이랑 DELETE일때는 한번 더 안받음
-					// POST일 때는 리퀘스트 멤버 버퍼를 만들어서 헤더를 저장해 놓음
-					// std::cout << "HERE" << std::endl;
-					// test_print_event(tevent);
-					if (tevent.filter == EVFILT_READ)
+			// method == POST 일때만 한번 더 받음
+			// GET 이랑 DELETE일때는 한번 더 안받음
+			// POST일 때는 리퀘스트 멤버 버퍼를 만들어서 헤더를 저장해 놓음
+			if (tevent.filter == EVFILT_READ)
+			{
+				char *buffer = new char[tevent.data];
+				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
+				Request *req = static_cast<Request*>(tevent.udata);
+				// std::cout <<  "bytesRead :: " << bytesRead << std::endl;
+				if (bytesRead == false || req->getConnection() == "close")
+				{
+					close(req->getSocket());
+					delete req;
+				}
+				else if (req->getState() == request::POST)
+				{
+					req->setMain(buffer, tevent.data);
+					std::cout << req->getMain() << std::endl;
+					std::cout << "메인문 한번 들어옴" << std::endl;
+					// if (req->getTransferEncoding() == "chunked")
+					// {}
+					// else
+					// {}
+				}
+				else
+				{
+					test_print_event(tevent);
+					req->parsing(buffer, tevent.data);
+					std::cout << "클라이언트에서 날라온 값" << std::endl;
+					write(1, buffer, tevent.data);
+					std::cout << std::endl;
+					// makeResponse
+					if (req->getState() != request::POST)
 					{
-						char *buffer = new char[tevent.data];
-						ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
-						Request *req = static_cast<Request*>(tevent.udata);
-						std::cout <<  "bytesRead :: " << bytesRead << std::endl;
-						if (bytesRead == false)
-						{
-							close(req->getSocket());
-							delete req;
-						}
-						else if (req->getState() == request::POST)
-						{
-							req->setMain(buffer, tevent.data);
-							std::cout << req->getMain() << std::endl;
-						}
-						else
-						{
-							test_print_event(tevent);
-							req->parsing(buffer, tevent.data);
-						}
-						delete[] buffer;
+						// get, head, delete
+						AResponse* response = new Get(req);
+						// 응답 헤더
+						response->createResponseHeader();
+						// 있을수도있고 없을 수도 있습니다.
+						response->createResponseMain();
+						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
+						kevent(kq, &tevent, 1, NULL, 0, NULL);
 					}
-					else
-					{	
-						std::cout << "send" << std::endl;
-					}
-				// }
-			// }
+				}
+				delete[] buffer;
+			}
+			else if (tevent.filter == EVFILT_WRITE)
+			{	
+				AResponse* res = static_cast<AResponse*>(tevent.udata);
+				std::cout << "send" << std::endl;
+				std::cout << res->getBuffer().str() << std::endl;
+				ssize_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
+				std::cout << byteWrite << std::endl;
+				std::cout << ++x << std::endl;;
+				delete res;
+				close(tevent.ident);
+				// send
+				// 리스폰스 객체의 데이터를 소켓으로 send하는 부분	
+				// send(client_fd, result.c_str(), result.length(), 0);
+				// return;
+			}
+			// std::cout << "이벤트 한번" << std::endl;
 		}
+		// std::cout << "이벤트 --- 한번" << std::endl
 	}
 }
+
 
 void test_print_event(struct kevent event)
 {
@@ -157,10 +183,3 @@ void test_print_event(struct kevent event)
 	std::cout << "event udata : " << event.udata << "\n";
 	std::cout << "===============================================\n" << std::endl;
 }
-
-
-// if (tevent.filter == EVFILT_READ)
-			// recv
-			// >>>>>
-			// else
-			// send

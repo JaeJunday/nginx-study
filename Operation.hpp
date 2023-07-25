@@ -1,5 +1,7 @@
 #pragma once
 
+#include "AResponse.hpp"
+#include "Get.hpp"
 #include "Server.hpp"
 #include "Request.hpp"
 #include "enum.hpp"
