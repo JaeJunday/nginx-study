@@ -19,7 +19,7 @@ class Request
 		std::string  _requestUrl;
 		std::string  _version;
         std::string  _ip;
-        unsigned int _port;
+        uint32_t     _port;
         std::string  _connection;
         std::string  _contentType;
         unsigned int _contentLength;
