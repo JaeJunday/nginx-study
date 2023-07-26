@@ -13,5 +13,11 @@ a.out
 #Sensitive information
 .env
 
+#macos metadata
+.Ds_Store
+
+#testcode
 exam.txt
+
+#outfile
 webserv
