@@ -21,21 +21,20 @@ std::vector<std::string> util::getToken(std::string& str, const std::string& del
     return result;
 }
 
-unsigned int util::stoui(const std::string& str)
+uint32_t util::stoui(const std::string& str)
 {
-    return static_cast<unsigned int>(std::strtod(str.c_str(), NULL));
+    return static_cast<uint32_t>(std::strtod(str.c_str(), NULL));
 }
 
-unsigned int util::convertIp(std::string ipStr)
+uint32_t util::convertIp(std::string ipStr)
 {
     std::vector<std::string> tmp = util::getToken(ipStr, ".");
-    int octet;
-    unsigned int ip = 0;
+    if (tmp.size() != OCTET_COUNT)
+        throw std::runtime_error("Error: Invalid Ip Address");
+    uint32_t ip = 0;
     for (int i = 0, shift = 24; i < tmp.size(); ++i, shift -= 8) { 
-        octet = util::stoui(tmp[i]);
-        if (std::isdigit(octet) == false)
-            throw std::runtime_error("Error: Octet is not digit");
-        if (octet < 0 && octet > 255)
+        uint32_t octet = util::stoui(tmp[i]);
+        if (octet > OCTET_MAX)
             throw std::runtime_error("Error: Invalid Octet Range 0 ~ 255");
         ip |= octet << shift;
     }
