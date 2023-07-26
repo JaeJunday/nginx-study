@@ -10,7 +10,7 @@ const std::vector<Server>& Operation::getServers() const
 	return _servers;
 }
 
-int Operation::createBoundSocket(int port)
+int Operation::createBoundSocket(std::string listen)
 {
 	int socketFd = socket(AF_INET, SOCK_STREAM, FALLOW);
 	if (socketFd == -1)
@@ -19,14 +19,34 @@ int Operation::createBoundSocket(int port)
 	int optval = 1;
 	memset((char*)&serverAddr, 0, sizeof(sockaddr_in));
 
+	std::vector<std::string> ipPort = util::getToken(listen, ":");
+
+//-------------------------------------------delete
+	std::cout << ipPort[0] << std::endl;
+	std::cout << ipPort[1] << std::endl;
+//-------------------------------------------
+
+	uint32_t ip = 0x0000000; 
+	uint32_t port = 0;
+	if (ipPort.size() == 1)
+		port = util::stoui(ipPort[0]);
+	else if (ipPort.size() == 2)
+	{
+		ip = util::convertIp(ipPort[0]); 
+		port = util::stoui(ipPort[1]);
+	}
+
+//-------------------------------------------delete
+	std::cout << "ip " << ip << std::endl;
+	std::cout << "port " << port << std::endl;
+//-------------------------------------------
+
 	// ip v4
 	serverAddr.sin_family = AF_INET; 
-
 	// ip address
-	serverAddr.sin_addr.s_addr = INADDR_ANY;
-
+	serverAddr.sin_addr.s_addr = htonl(ip);
 	// host port
-	serverAddr.sin_port = htons(4242);
+	serverAddr.sin_port = htons(port);
 
 	setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 	if (bind(socketFd, reinterpret_cast<struct sockaddr*>(&serverAddr), sizeof(serverAddr)) == -1)
@@ -41,9 +61,7 @@ void Operation::start() {
 	for(int i = 0; i < 1; ++i)
 	{
 		try {
-			std::string portStr = _servers[i].getValue(server::LISTEN);
-			double port = strtod(portStr.c_str(), NULL);
-			_servers[i].setSocket(createBoundSocket(static_cast<int>(port)));
+			_servers[i].setSocket(createBoundSocket(_servers[i].getValue(server::LISTEN)));
 			fcntl(_servers[i].getSocket(), F_SETFL, O_NONBLOCK);
 			if (listen(_servers[i].getSocket(), SOMAXCONN) == -1)
 				throw std::logic_error("Error: Listen failed");

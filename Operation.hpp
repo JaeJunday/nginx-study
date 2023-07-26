@@ -5,6 +5,7 @@
 #include "Server.hpp"
 #include "Request.hpp"
 #include "enum.hpp"
+#include "Util.hpp"
 
 #include <iostream>
 #include <string>
@@ -28,7 +29,7 @@ private:
 public:
     void setServer(const Server& server);
     const std::vector<Server>& getServers() const;
-    int createBoundSocket(int port);
+    int createBoundSocket(std::string listen);
     void start();
 };
 
