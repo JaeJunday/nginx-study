@@ -25,6 +25,7 @@ private:
     std::vector<Server> _servers;
     std::map<int, Request *> _requests;
 public:
+    ~Operation();
     void setServer(const Server& server);
     const std::vector<Server>& getServers() const;
     int createBoundSocket(std::string listen);
