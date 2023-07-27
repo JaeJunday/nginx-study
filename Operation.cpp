@@ -71,6 +71,7 @@ void Operation::start() {
 		}
 	}
 
+// 서버 찾는 함수를 어디다가 해야하지?????
 	int kq, nev;
 	kq = kqueue();
 	struct kevent event, events[10];
@@ -101,6 +102,10 @@ void Operation::start() {
 
 			// 연결요청 들어오면 객체 생성하고 리스트에 이어붙임
 			Request *request = new Request(requestFd);
+
+			// 메모리 누수 방지
+			// 맵에 request 주소를 저장 -> 프로그램 종료시 맵에 있는 request 주소 들 삭제???? 
+
 			// event 등록이 들어가야한다.
 			EV_SET(&revent, requestFd, EVFILT_READ, EV_ADD, 0, 0, request);
 			// EV_SET(&revent, requestFd, EVFILT_WRITE, EV_ADD, 0, 0, request);
@@ -120,6 +125,7 @@ void Operation::start() {
 				// std::cout <<  "bytesRead :: " << bytesRead << std::endl;
 				if (bytesRead == false || req->getConnection() == "close")
 				{
+					// 맵에 있는 request 주소 삭제
 					close(req->getSocket());
 					delete req;
 				}
@@ -127,7 +133,10 @@ void Operation::start() {
 				{
 					req->setMain(buffer, tevent.data);
 					std::cout << req->getMain() << std::endl;
+					std::cout << req->getMain().length() << std::endl;
 					std::cout << "메인문 한번 들어옴" << std::endl;
+
+					// cuncked 일때
 					// if (req->getTransferEncoding() == "chunked")
 					// {}
 					// else
@@ -137,9 +146,14 @@ void Operation::start() {
 				{
 					test_print_event(tevent);
 					req->parsing(buffer, tevent.data);
+
+					// --------------------------------------------------------- delete
 					std::cout << "클라이언트에서 날라온 값" << std::endl;
+					//
 					write(1, buffer, tevent.data);
 					std::cout << std::endl;
+					// --------------------------------------------------------- 
+
 					// makeResponse
 					if (req->getState() != request::POST)
 					{
@@ -149,7 +163,9 @@ void Operation::start() {
 						response->createResponseHeader();
 						// 있을수도있고 없을 수도 있습니다.
 						response->createResponseMain();
+
 						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
+						// EVFILT_TIMER
 						kevent(kq, &tevent, 1, NULL, 0, NULL);
 					}
 				}
@@ -157,6 +173,7 @@ void Operation::start() {
 			}
 			else if (tevent.filter == EVFILT_WRITE)
 			{	
+				// response주소도 저장해야 하나???
 				AResponse* res = static_cast<AResponse*>(tevent.udata);
 				std::cout << "send" << std::endl;
 				std::cout << res->getBuffer().str() << std::endl;

@@ -10,7 +10,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <list>
+#include <map>
 #include <unistd.h>
 #include <fcntl.h>
 #include <netinet/in.h> // sockaddr_in
@@ -20,12 +20,10 @@
 
 #define FALLOW 0
 
-typedef std::list<Request>::iterator ITOR;
-
 class Operation {
 private:
     std::vector<Server> _servers;
-    std::list<Request> _requests;
+    std::map<int, Request *> _requests;
 public:
     void setServer(const Server& server);
     const std::vector<Server>& getServers() const;
