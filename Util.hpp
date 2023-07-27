@@ -12,6 +12,6 @@
 namespace util
 {
     std::vector<std::string> getToken(std::string& str, const std::string& delimiters);
-    uint32_t convertIp(std::string ipStr);
+    uint32_t convertIp(std::string& ipStr);
 	uint32_t stoui(const std::string& str);
 }

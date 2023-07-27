@@ -26,7 +26,7 @@ uint32_t util::stoui(const std::string& str)
     return static_cast<uint32_t>(std::strtod(str.c_str(), NULL));
 }
 
-uint32_t util::convertIp(std::string ipStr)
+uint32_t util::convertIp(std::string& ipStr)
 {
     std::vector<std::string> tmp = util::getToken(ipStr, ".");
     if (tmp.size() != OCTET_COUNT)
