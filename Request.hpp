@@ -17,7 +17,7 @@ class Request
     private:
         int          _state;
         int          _socket;
-        std::string  _main;
+        std::string  _buffer;
         std::string  _method;
 		std::string  _requestUrl;
 		std::string  _version;
@@ -42,9 +42,11 @@ class Request
         const std::string& getTransferEncoding() const;
         const std::string& getConnection() const;
 
+        std::queue<std::string> getBufferQueue() const;
         void setRequestLine(std::string& requestLine);
         void checkMultipleSpaces(const std::string& str);
         void setFieldLind(std::string& fieldLine);
-        void setMain(char *buffer, int size);
-        const std::string& getMain() const;
+        void setBuffer(char *buffer, int size);
+        void setBufferQueue(char *buffer, int size);
+        const std::string& getBuffer() const;
 };

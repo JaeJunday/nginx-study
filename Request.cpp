@@ -150,14 +150,25 @@ int Request::getSocket() const
     return _socket;
 }
 
-const std::string& Request::getMain() const
+const std::string& Request::getBuffer() const
 {
-    return _main;
+    return _buffer;
 }
 
-void Request::setMain(char *buffer, int size)
+void Request::setBuffer(char *buffer, int size)
 {
-    _main += std::string(buffer, size);
+    _buffer += std::string(buffer, size);
+}
+
+std::queue<std::string> Request::getBufferQueue() const
+{
+    return _bufferQueue;
+}
+
+void Request::setBufferQueue(char *buffer, int size)
+{
+    std::string tmp = std::string(buffer, size);
+    _bufferQueue.push(tmp);    
 }
 
 const std::string& Request::getConnection() const
