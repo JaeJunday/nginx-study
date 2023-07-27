@@ -140,7 +140,13 @@ void Operation::start() {
 				{
 					
 					// req->setBuffer(buffer, tevent.data);
-					req->setBufferQueue(buffer, tevent.data);
+					req->setBufferTunnel(buffer, tevent.data);
+					if (req->getBufferTunnel().size() == req->getContentLength())
+					{
+						req->setBuffer(buffer, req->getBufferTunnel().size());
+						req->bufferParsing();
+						
+					}
 					std::cout << req->getBuffer() << std::endl;
 					std::cout << req->getBuffer().length() << std::endl;
 					std::cout << "메인문 한번 들어옴" << std::endl;

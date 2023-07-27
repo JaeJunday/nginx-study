@@ -32,7 +32,10 @@ class AResponse
 		unsigned int	_contentLength;
 
 		std::stringstream	_buffer;
+
+		// 삭제한 request 를 가리킬 가능성이 있는가??
 		Request*		_request;	
+		
 		AResponse(const AResponse& src); 
 		AResponse& operator=(AResponse const& rhs);
 	public:

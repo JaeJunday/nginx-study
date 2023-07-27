@@ -22,11 +22,11 @@ int main(int argc, char **argv)
     catch(std::exception &e) 
     {
         std::cerr << e.what() << std::endl;
-        return 1; 
+        return 0; 
     }
 //////////test line ///////////
     // std::cout << operation._servers[0].getServerName(0) << std::endl;
     // std::cout << operation._servers[0].getErrorPage(0) << std::endl;
     // std::cout << operation._servers[0].getListen() << std::endl;
-
+    return 0;
 }

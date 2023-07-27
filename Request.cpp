@@ -62,7 +62,13 @@ void Request::setFieldLind(std::string& fieldLine)
         _port = util::stoui(std::string(token[1], mid + 1, token[1].size() - (mid + 1)));
     }
     if (token[0] == "Content-Type")
-        _contentType = token[1];
+    {
+        const std::string hash = "boundary=";
+        if (int index = token[1].find(hash))
+            _boundary = std::string(token[1], index + hash.length(), token[1].size() - index);
+        else 
+            _contentType = token[1]; 
+    } 
     if (token[0] == "Content-Length")
         _contentLength = util::stoui(token[1]);
     if (token[0] == "Transfer-encoding")
@@ -115,6 +121,7 @@ void Request::parsing(char* buf, intptr_t size)
         std::cout << "c len: " << _contentLength << std::endl;
         std::cout << "Transfer-encoding: " << _transferEncoding << std::endl;
         std::cout << "connection: " << _connection << std::endl;
+        std::cout << "boundary: " << _boundary << std::endl;
         std::cout << std::endl;
         
 // std::cout << fieldLine << std::endl;
@@ -155,20 +162,50 @@ const std::string& Request::getBuffer() const
     return _buffer;
 }
 
+void Request::bufferParsing()
+{
+    // std::stringstream bufferStream;
+    // bufferStream << _buffer;
+
+    // std::string temp;
+    // int state = file::START;
+
+    // if (getline(bufferStream, temp))
+    //     if (temp != _boundary)
+    //         return;
+
+    // while (getline(bufferStream, temp))
+    // {
+    //     if (temp == _boundary && state == file::START)
+    //         state = file::HASH;
+    //     else if(state == file::HASH)
+    //     {
+    //         size_t i = temp.find("filename=\"");
+    //         if (i == std::string::npos)
+    //     }
+
+    // }
+        
+}
+
+//         HASH = 0,
+//         HEADER = 1,
+//         CONTENT = 2,
+//         END = 3
+
 void Request::setBuffer(char *buffer, int size)
 {
     _buffer += std::string(buffer, size);
 }
 
-std::queue<std::string> Request::getBufferQueue() const
+const std::string& Request::getBufferTunnel() const
 {
-    return _bufferQueue;
+    return _bufferTunnel;
 }
 
-void Request::setBufferQueue(char *buffer, int size)
+void Request::setBufferTunnel(char *buffer, int size)
 {
-    std::string tmp = std::string(buffer, size);
-    _bufferQueue.push(tmp);    
+    _bufferTunnel += std::string(buffer, size);   
 }
 
 const std::string& Request::getConnection() const
@@ -181,6 +218,10 @@ const std::string& Request::getTransferEncoding() const
     return _transferEncoding;
 }
 
+unsigned int Request::getContentLength() const
+{
+    return _contentLength;
+}
 
 
 

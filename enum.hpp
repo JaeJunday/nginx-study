@@ -68,7 +68,7 @@ namespace stack
         SERVER = 1,
         LOCATION = 2,
         OPEN_BRACKET = 4,
-        CLOSE_BRACKET = 5,
+        CLOSE_BRACKET = 5
     };
 }
 
@@ -80,5 +80,18 @@ namespace request
         POST = 1,
         DELETE = 2,
         HEAD = 3
+    };
+}
+
+
+namespace file
+{
+    enum STATE
+    {
+        HASH = 0,
+        HEADER = 1,
+        CONTENT = 2,
+        END = 3,
+        START = 4
     };
 }
