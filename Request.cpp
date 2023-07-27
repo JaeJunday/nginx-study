@@ -26,7 +26,7 @@ void Request::checkMultipleSpaces(const std::string& str)
     }
 }
 
-void Request::setRequestLine(std::string requestLine)
+void Request::setRequestLine(std::string& requestLine)
 {
     checkMultipleSpaces(requestLine);
     std::vector<std::string> token = util::getToken(requestLine, " ");
@@ -43,7 +43,7 @@ void Request::setRequestLine(std::string requestLine)
     _version = token[2];
 }
 
-void Request::setFieldLind(std::string fieldLine)
+void Request::setFieldLind(std::string& fieldLine)
 {
     checkMultipleSpaces(fieldLine);
     std::vector<std::string> token = util::getToken(fieldLine, ": ");

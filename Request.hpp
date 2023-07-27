@@ -7,7 +7,10 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <queue>
 #include <fcntl.h> 
+
+struct PostData{ std::string _boundary; std::string _filename; std::string _contentType; };
 
 class Request
 {
@@ -24,6 +27,8 @@ class Request
         std::string  _contentType;
         unsigned int _contentLength;
         std::string  _transferEncoding;
+        std::vector<PostData> _files;
+        std::queue<std::string> _bufferQueue;
     public:
         Request(int socket);
         void parsing(char* buf, intptr_t size);
@@ -37,9 +42,9 @@ class Request
         const std::string& getTransferEncoding() const;
         const std::string& getConnection() const;
 
-        void setRequestLine(std::string requestLine);
+        void setRequestLine(std::string& requestLine);
         void checkMultipleSpaces(const std::string& str);
-        void setFieldLind(std::string fieldLine);
+        void setFieldLind(std::string& fieldLine);
         void setMain(char *buffer, int size);
         const std::string& getMain() const;
 };
