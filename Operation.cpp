@@ -1,8 +1,14 @@
 #include "Operation.hpp"
 
+Operation::~Operation()
+{
+	if (_requests.empty() == false)
+		_requests.clear();
+}
+
 void Operation::setServer(const Server& server) 
 {
-	_servers.push_back(server);
+	_servers.push_back(server); 
 }
 
 const std::vector<Server>& Operation::getServers() const
@@ -102,6 +108,7 @@ void Operation::start() {
 
 			// 연결요청 들어오면 객체 생성하고 리스트에 이어붙임
 			Request *request = new Request(requestFd);
+			_requests.insert(std::make_pair(requestFd, request));
 
 			// 메모리 누수 방지
 			// 맵에 request 주소를 저장 -> 프로그램 종료시 맵에 있는 request 주소 들 삭제???? 
@@ -131,9 +138,11 @@ void Operation::start() {
 				}
 				else if (req->getState() == request::POST)
 				{
-					req->setMain(buffer, tevent.data);
-					std::cout << req->getMain() << std::endl;
-					std::cout << req->getMain().length() << std::endl;
+					
+					// req->setBuffer(buffer, tevent.data);
+					req->setBufferQueue(buffer, tevent.data);
+					std::cout << req->getBuffer() << std::endl;
+					std::cout << req->getBuffer().length() << std::endl;
 					std::cout << "메인문 한번 들어옴" << std::endl;
 
 					// cuncked 일때
