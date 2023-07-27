@@ -2,9 +2,14 @@
 
 Operation::~Operation()
 {
-	if (_requests.empty() == false)
-		_requests.clear();
+	std::map<int, Request*>::iterator it;
+	if (!_requests.empty())
+	{
+		for (it = _requests.begin(); it != _requests.end(); ++it)
+			delete it->second;
+	}
 }
+
 
 void Operation::setServer(const Server& server) 
 {
@@ -28,8 +33,8 @@ int Operation::createBoundSocket(std::string listen)
 	std::vector<std::string> ipPort = util::getToken(listen, ":");
 
 //-------------------------------------------delete
-	std::cout << ipPort[0] << std::endl;
-	std::cout << ipPort[1] << std::endl;
+	// std::cout << ipPort[0] << std::endl;
+	// std::cout << ipPort[1] << std::endl;
 //-------------------------------------------
 
 	uint32_t ip = 0x0000000; 
@@ -141,15 +146,14 @@ void Operation::start() {
 					
 					// req->setBuffer(buffer, tevent.data);
 					req->setBufferTunnel(buffer, tevent.data);
+					// write(1, buffer, tevent.data);
 					if (req->getBufferTunnel().size() == req->getContentLength())
 					{
 						req->setBuffer(buffer, req->getBufferTunnel().size());
 						req->bufferParsing();
-						
 					}
-					std::cout << req->getBuffer() << std::endl;
-					std::cout << req->getBuffer().length() << std::endl;
-					std::cout << "메인문 한번 들어옴" << std::endl;
+					// std::cout << req->getBuffer() << std::endl;
+					// std::cout << req->getBuffer().length() << std::endl;
 
 					// cuncked 일때
 					// if (req->getTransferEncoding() == "chunked")
@@ -163,7 +167,7 @@ void Operation::start() {
 					req->parsing(buffer, tevent.data);
 
 					// --------------------------------------------------------- delete
-					std::cout << "클라이언트에서 날라온 값" << std::endl;
+					// std::cout << "클라이언트에서 날라온 값" << std::endl;
 					//
 					write(1, buffer, tevent.data);
 					std::cout << std::endl;
