@@ -27,9 +27,8 @@ int Operation::createBoundSocket(std::string listen)
 
 	std::vector<std::string> ipPort = util::getToken(listen, ":");
 
-//-------------------------------------------delete
-	std::cout << ipPort[0] << std::endl;
-	std::cout << ipPort[1] << std::endl;
+//------------------------------------------- testcode
+	// std::cout << ipPort[0] << ":" << ipPort[1] << std::endl;
 //-------------------------------------------
 
 	uint32_t ip = 0x0000000; 
@@ -42,9 +41,9 @@ int Operation::createBoundSocket(std::string listen)
 		port = util::stoui(ipPort[1]);
 	}
 
-//-------------------------------------------delete
-	std::cout << "ip " << ip << std::endl;
-	std::cout << "port " << port << std::endl;
+//------------------------------------------- testcode
+	// std::cout << "ip " << ip << std::endl;
+	// std::cout << "port " << port << std::endl;
 //-------------------------------------------
 
 	// ip v4
@@ -118,6 +117,11 @@ void Operation::start() {
 			// EV_SET(&revent, requestFd, EVFILT_WRITE, EV_ADD, 0, 0, request);
 			kevent(kq, &revent, 1, NULL, 0, NULL);
 			// _requests.push_back(request);
+
+	// ----------------------------------------------------------------------------- testcode
+			std::cerr << "accept client" << std::endl;
+	// ----------------------------------------------------------------------------- testcode
+
 		}
 		else // 클라이언트로 연결요청이 들어왔을 때
 		{
@@ -162,11 +166,14 @@ void Operation::start() {
 					test_print_event(tevent);
 					req->parsing(buffer, tevent.data);
 
-					// --------------------------------------------------------- delete
+					// --------------------------------------------------------- testcode
 					std::cout << "클라이언트에서 날라온 값" << std::endl;
 					//
 					write(1, buffer, tevent.data);
 					std::cout << std::endl;
+	// ----------------------------------------------------------------------------- testcode
+			std::cerr << "recv client" << std::endl;
+	// ----------------------------------------------------------------------------- testcode
 					// --------------------------------------------------------- 
 
 					// makeResponse
@@ -193,7 +200,13 @@ void Operation::start() {
 				std::cout << "send" << std::endl;
 				std::cout << res->getBuffer().str() << std::endl;
 				ssize_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
-				std::cout << byteWrite << std::endl;
+
+				// ------------------------------------------------------ testcode
+				std::cout << "byteWrite" << byteWrite;
+				std::cout << " |########################################< 응답 구분 선>############################################################" << std::endl;
+				std::cerr << "send message client" << std::endl;
+				// ------------------------------------------------------ 
+				
 				delete res;
 				close(tevent.ident);
 				// send
@@ -206,7 +219,6 @@ void Operation::start() {
 		// std::cout << "이벤트 --- 한번" << std::endl
 	}
 }
-
 
 void test_print_event(struct kevent event)
 {

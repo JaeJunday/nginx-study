@@ -32,6 +32,9 @@ $(OBJ_DIR)%.o: %.cpp | $(OBJ_DIR)
 
 $(NAME): $(OBJS_FILES)
 	$(CXX) $(CXXFLAGS) $(OBJS_FILES) -o $(NAME)
+	@echo "$(Green)running server... please check file:$(Yellow)  ./log.txt$(Reset)"
+	@echo "⌘ + click -> $(B_Cyan)http://localhost:4242$(Reset)"
+	@$(NAME) > log.txt
 
 clean:
 	rm -rf $(OBJ_DIR)
@@ -43,3 +46,25 @@ re: fclean
 	make all
 
 .PHONY: all clean fclean re
+
+#color code 
+#use with $(Reset)
+# ===================
+Black  	= \033[0;30m
+Red    	= \033[0;31m
+Green   = \033[0;32m
+Yellow 	= \033[0;33m
+Blue   	= \033[0;34m
+Purple 	= \033[0;35m
+Cyan   	= \033[0;36m
+White  	= \033[0;37m
+B_Black =  \033[0;90m
+B_Red	= \033[0;91m
+B_Green	= \033[0;92m
+B_Yellow= \033[0;93m
+B_Blue	= \033[0;94m
+B_Purple= \033[0;95m
+B_Cyan	= \033[0;96m
+B_White	= \033[0;97m
+Reset	= \033[0m
+# ===================

@@ -21,3 +21,6 @@ exam.txt
 
 #outfile
 webserv
+
+#server log
+log.txt
