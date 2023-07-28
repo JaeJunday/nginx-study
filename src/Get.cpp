@@ -59,7 +59,7 @@ void Get::createResponseHeader()
     if (_request->getRequestUrl() == "/")
 	{
 
-		file.open("resource/hello.html");
+		file.open("src/pages/hello.html");
 		if (file.is_open() == false)
             throw std::runtime_error("Error: file not found error");
         tmp << file.rdbuf();
@@ -68,7 +68,7 @@ void Get::createResponseHeader()
 	}
     else
     {
-        file.open("resource/error/404.html");
+        file.open("src/pages/error/404.html");
 		if (file.is_open() == false)
             throw std::runtime_error("Error: file not found error");
         tmp << file.rdbuf();
@@ -84,7 +84,7 @@ void Get::createResponseMain()
 
     if (_request->getRequestUrl() == "/")
 	{
-		file.open("resource/hello.html");
+		file.open("src/pages/hello.html");
 		if (file.is_open() == false)
             throw std::runtime_error("Error: file not found error");
         _buffer << file.rdbuf();
@@ -92,7 +92,7 @@ void Get::createResponseMain()
 	}
     else
     {
-		file.open("resource/error/404.html");
+		file.open("src/pages/error/404.html");
 		if (file.is_open() == false)
             throw std::runtime_error("Error: file not found error2222");
         _buffer << file.rdbuf();

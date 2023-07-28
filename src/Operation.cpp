@@ -30,12 +30,6 @@ int Operation::createBoundSocket(std::string listen)
 	memset((char*)&serverAddr, 0, sizeof(sockaddr_in));
 
 	std::vector<std::string> ipPort = util::getToken(listen, ":");
-
-//-------------------------------------------delete
-	// std::cout << ipPort[0] << std::endl;
-	// std::cout << ipPort[1] << std::endl;
-//-------------------------------------------
-
 	uint32_t ip = 0x0000000; 
 	uint32_t port = 0;
 	if (ipPort.size() == 1)
@@ -93,46 +87,20 @@ void Operation::start() {
 	{
 		nev = kevent(kq, NULL, 0, &tevent, 1, NULL);
 		if (nev == -1)
-		{
-			//kevent error
 			throw std::runtime_error("Error: kevent error");
-		}
-		// 서버로 연결요청이 들어왔을 때 //acceptClient()
+
+		// 서버로 연결요청 왔을때
 		if (tevent.ident == static_cast<uintptr_t>(_servers[0].getSocket()))
-		{
-			int				requestFd;
-			sockaddr_in		requestAddr;
-			socklen_t		requestLen;
-			struct kevent	revent;
-			
-			requestFd = accept(_servers[0].getSocket(), reinterpret_cast<struct sockaddr*>(&requestAddr), &requestLen);
-			if (requestFd == -1)
-				throw std::logic_error("Error: Accept failed");
-
-			// 연결요청 들어오면 객체 생성하고 리스트에 이어붙임
-			Request *request = new Request(requestFd);
-			_requests.insert(std::make_pair(requestFd, request));
-
-			// 메모리 누수 방지
-			// 맵에 request 주소를 저장 -> 프로그램 종료시 맵에 있는 request 주소 들 삭제???? 
-
-			// event 등록이 들어가야한다.
-			EV_SET(&revent, requestFd, EVFILT_READ, EV_ADD, 0, 0, request);
-			// EV_SET(&revent, requestFd, EVFILT_WRITE, EV_ADD, 0, 0, request);
-			kevent(kq, &revent, 1, NULL, 0, NULL);
-			// _requests.push_back(request);
-		}
+			acceptClient(kq);
 		else // 클라이언트로 연결요청이 들어왔을 때 //recv data
 		{
-			// method == POST 일때만 한번 더 받음
-			// GET 이랑 DELETE일때는 한번 더 안받음
-			// POST일 때는 리퀘스트 멤버 버퍼를 만들어서 헤더를 저장해 놓음
 			if (tevent.filter == EVFILT_READ)
 			{
 				char *buffer = new char[tevent.data];
+				// memset(buffer, 0, tevent.data);
+				// std::cout << buffer << std::endl;
 				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 				Request *req = static_cast<Request*>(tevent.udata);
-				// std::cout <<  "bytesRead :: " << bytesRead << std::endl;
 				
 				// recvData()
 				if (bytesRead == false || req->getConnection() == "close")
@@ -177,11 +145,11 @@ void Operation::start() {
 					// makeResponse
 					if (req->getState() != request::POST)
 					{
-						// get, head, delete
+						//makeResponse(&tevent, kq, req);
+						//get, head, delete
 						AResponse* response = new Get(req);
 						// 응답 헤더
 						response->createResponseHeader();
-						// 있을수도있고 없을 수도 있습니다.
 						response->createResponseMain();
 
 						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
@@ -194,14 +162,15 @@ void Operation::start() {
 			// sendData()
 			else if (tevent.filter == EVFILT_WRITE)
 			{	
-				// response주소도 저장해야 하나???
-				AResponse* res = static_cast<AResponse*>(tevent.udata);
-				res->stamp();
-				ssize_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
-				std::cout << res->getBuffer().str() << std::endl;
-				std::cout << "write byte count " << byteWrite << std::endl;
-				delete res;
-				close(tevent.ident);
+				sendData(tevent);
+				// // response주소도 저장해야 하나???
+				// AResponse* res = static_cast<AResponse*>(tevent.udata);
+				// res->stamp();
+				// ssize_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
+				// std::cout << res->getBuffer().str() << std::endl;
+				// std::cout << "write byte count " << byteWrite << std::endl;
+				// delete res;
+				// close(tevent.ident);
 				// send
 				// 리스폰스 객체의 데이터를 소켓으로 send하는 부분	
 				// send(client_fd, result.c_str(), result.length(), 0);
@@ -224,4 +193,51 @@ void test_print_event(struct kevent event)
 	std::cout << "event data : " << event.data << "\n";
 	std::cout << "event udata : " << event.udata << "\n";
 	std::cout << "===============================================\n" << std::endl;
+}
+
+// void Operation::makeResponse(struct kevent *tevent, int kq, Request* req)
+// {
+// 	//get, head, delete
+// 	AResponse* response = new Get(req);
+// 	// 응답 헤더
+// 	response->createResponseHeader();
+// 	// 있을수도있고 없을 수도 있습니다.
+// 	response->createResponseMain();
+
+// 	EV_SET(tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
+// 	// EVFILT_TIMER
+// 	kevent(kq, tevent, 1, NULL, 0, NULL);
+// }
+
+void Operation::sendData(struct kevent& tevent)
+{
+	// response주소도 저장해야 하나???
+	AResponse* res = static_cast<AResponse*>(tevent.udata);
+	res->stamp();
+	ssize_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
+	std::cout << res->getBuffer().str() << std::endl;
+	std::cout << "write byte count " << byteWrite << std::endl;
+	delete res;
+	close(tevent.ident);
+	// send
+	// 리스폰스 객체의 데이터를 소켓으로 send하는 부분	
+	// send(client_fd, result.c_str(), result.length(), 0);
+	// return;
+}
+
+void Operation::acceptClient(int kq)
+{
+	int				requestFd;
+	sockaddr_in		requestAddr;
+	socklen_t		requestLen;
+	struct kevent	revent;
+	
+	requestFd = accept(_servers[0].getSocket(), reinterpret_cast<struct sockaddr*>(&requestAddr), &requestLen);
+	if (requestFd == -1)
+		throw std::logic_error("Error: Accept failed");
+
+	Request *request = new Request(requestFd);
+	_requests.insert(std::make_pair(requestFd, request));
+	EV_SET(&revent, requestFd, EVFILT_READ, EV_ADD, 0, 0, request);
+	kevent(kq, &revent, 1, NULL, 0, NULL);
 }

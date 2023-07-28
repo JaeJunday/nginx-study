@@ -30,6 +30,10 @@ public:
     const std::vector<Server>& getServers() const;
     int createBoundSocket(std::string listen);
     void start();
+
+    void acceptClient(int kq);
+    //void makeResponse(struct Kevent *tevent, int kq, Request* req);
+    void sendData(struct kevent& tevent);
 };
 
 void test_print_event(struct kevent event);
