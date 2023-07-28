@@ -29,11 +29,13 @@ public:
     void setServer(const Server& server);
     const std::vector<Server>& getServers() const;
     int createBoundSocket(std::string listen);
+    int findServer(uintptr_t ident);
     void start();
 
     void acceptClient(int kq);
     //void makeResponse(struct Kevent *tevent, int kq, Request* req);
     void sendData(struct kevent& tevent);
+    void testPipe(std::string buffer);
 };
 
 void test_print_event(struct kevent event);

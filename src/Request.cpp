@@ -185,18 +185,15 @@ void Request::bufferParsing()
 	{
 		int start = _buffer.find("\r\n\r\n") + 4;
 		int end = _buffer.find("\r\n", start) - 1;
-		std::cout << start << std::endl;
-		std::cout << end << std::endl;
-		std::cout << end - start << std::endl;
 		std::string data = _buffer.substr(start, end - start);
 		pData._data = data;
 		_files.push_back(pData);
 	}
-	std::cout << "\n=======================" << std::endl;
-	std::cout << pData._filename << std::endl;
-	std::cout << pData._contentType << std::endl;
-	std::cout << pData._data << std::endl;
-	std::cout << "=======================" << std::endl;
+	// std::cout << "\n=======================" << std::endl;
+	// std::cout << pData._filename << std::endl;
+	// std::cout << pData._contentType << std::endl;
+	// std::cout << pData._data << std::endl;
+	// std::cout << "=======================" << std::endl;
 }
 //         HASH = 0,
 //         HEADER = 1,

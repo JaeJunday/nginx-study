@@ -57,6 +57,16 @@ int Operation::createBoundSocket(std::string listen)
 	return socketFd;
 }
 
+
+
+int Operation::findServer(uintptr_t ident)
+{
+	for (size_t i = 0; i < _servers.size(); ++i)
+		if (_servers[i]._socket == ident)
+			return i;
+}
+
+
 void Operation::start() {
 	// 서버 시작 로직을 구현합니다.
 	// ...
@@ -74,7 +84,6 @@ void Operation::start() {
 		}
 	}
 
-// 서버 찾는 함수를 어디다가 해야하지?????
 	int kq, nev;
 	kq = kqueue();
 	struct kevent event, events[10];
@@ -96,6 +105,7 @@ void Operation::start() {
 		{
 			if (tevent.filter == EVFILT_READ)
 			{
+				// 93 - 94번째줄 이 안에 넣어서 서버 찾게 만들어야 할듯 - semikim
 				char *buffer = new char[tevent.data];
 				// memset(buffer, 0, tevent.data);
 				// std::cout << buffer << std::endl;
@@ -138,8 +148,8 @@ void Operation::start() {
 					// --------------------------------------------------------- delete
 					// std::cout << "클라이언트에서 날라온 값" << std::endl;
 					//
-					write(1, buffer, tevent.data);
-					std::cout << std::endl;
+					// write(1, buffer, tevent.data);
+					// std::cout << std::endl;
 					// --------------------------------------------------------- 
 
 					// makeResponse

@@ -36,7 +36,7 @@ $(NAME): $(OBJS_FILES)
 	$(CXX) $(CXXFLAGS) $(OBJS_FILES) -o $(NAME)
 	@echo "$(Green)running server... please check file:$(Yellow)  ./log.txt$(Reset)"
 	@echo "⌘ + click -> $(B_Cyan)http://localhost:4242$(Reset)"
-	@$(NAME) > log.txt
+	@$(NAME)
 
 clean:
 	rm -rf $(OBJ_DIR)
