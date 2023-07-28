@@ -47,7 +47,7 @@ std::string AResponse::getDate() const
 // 15:53:14 : 0.0.0.0 GET HTTP/1.1 200 Ok ./public 2259
 void AResponse::stamp() const
 {
-    std::cout << getDate() << " : "<< _request->getIp() << " " << _request->getMethod() << " " << _request->getVersion() << " "<< _stateCode << " " << _reasonPhrase;
+    std::cerr << getDate() << " : "<< _request->getIp() << " " << _request->getMethod() << " " << _request->getVersion() << " "<< _stateCode << " " << _reasonPhrase << std::endl;
 }
 
 void AResponse::createResponseMain()

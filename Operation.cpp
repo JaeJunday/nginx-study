@@ -47,8 +47,7 @@ int Operation::createBoundSocket(std::string listen)
 	}
 
 //-------------------------------------------delete
-	std::cout << "ip " << ip << std::endl;
-	std::cout << "port " << port << std::endl;
+	// std::cerr << "ip address" << ipPort[0] << ":" << ipPort[1] << std::endl;
 //-------------------------------------------
 
 	// ip v4
@@ -98,7 +97,7 @@ void Operation::start() {
 			//kevent error
 			throw std::runtime_error("Error: kevent error");
 		}
-		// 서버로 연결요청이 들어왔을 때
+		// 서버로 연결요청이 들어왔을 때 //acceptClient()
 		if (tevent.ident == static_cast<uintptr_t>(_servers[0].getSocket()))
 		{
 			int				requestFd;
@@ -123,7 +122,7 @@ void Operation::start() {
 			kevent(kq, &revent, 1, NULL, 0, NULL);
 			// _requests.push_back(request);
 		}
-		else // 클라이언트로 연결요청이 들어왔을 때
+		else // 클라이언트로 연결요청이 들어왔을 때 //recv data
 		{
 			// method == POST 일때만 한번 더 받음
 			// GET 이랑 DELETE일때는 한번 더 안받음
@@ -134,11 +133,14 @@ void Operation::start() {
 				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 				Request *req = static_cast<Request*>(tevent.udata);
 				// std::cout <<  "bytesRead :: " << bytesRead << std::endl;
+				
+				// recvData()
 				if (bytesRead == false || req->getConnection() == "close")
 				{
 					// 맵에 있는 request 주소 삭제
 					close(req->getSocket());
 					delete req;
+					_requests.erase(tevent.ident);
 				}
 				else if (req->getState() == request::POST)
 				{
@@ -160,7 +162,7 @@ void Operation::start() {
 					// else
 					// {}
 				}
-				else
+				else //makeResponse()
 				{
 					test_print_event(tevent);
 					req->parsing(buffer, tevent.data);
@@ -189,14 +191,15 @@ void Operation::start() {
 				}
 				delete[] buffer;
 			}
+			// sendData()
 			else if (tevent.filter == EVFILT_WRITE)
 			{	
 				// response주소도 저장해야 하나???
 				AResponse* res = static_cast<AResponse*>(tevent.udata);
-				std::cout << "send" << std::endl;
-				std::cout << res->getBuffer().str() << std::endl;
+				res->stamp();
 				ssize_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
-				std::cout << byteWrite << std::endl;
+				std::cout << res->getBuffer().str() << std::endl;
+				std::cout << "write byte count " << byteWrite << std::endl;
 				delete res;
 				close(tevent.ident);
 				// send
