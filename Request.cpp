@@ -65,7 +65,7 @@ void Request::setFieldLind(std::string& fieldLine)
     {
         const std::string hash = "boundary=";
         if (int index = token[1].find(hash))
-            _boundary = std::string(token[1], index + hash.length(), token[1].size() - index);
+            _boundary = "--" + std::string(token[1], index + hash.length(), token[1].size() - index);
         else 
             _contentType = token[1]; 
     } 
@@ -110,6 +110,7 @@ void Request::parsing(char* buf, intptr_t size)
             // if (_transferEncoding == "chunked")
             //     _state = 
         }
+
         std::cout << std::endl;
         std::cout << "우리가 넣은 값" << std::endl;
         std::cout << "method: " << _method << std::endl;
@@ -124,21 +125,6 @@ void Request::parsing(char* buf, intptr_t size)
         std::cout << "boundary: " << _boundary << std::endl;
         std::cout << std::endl;
         
-// std::cout << fieldLine << std::endl;
-        
-            // 1. 개행 기준분리
-            // 2. 연속 공백과 연속개행 체크 
-            // 3. 1줄에서 첫번째 ": " 기준으로 앞은 키, 뒤는 밸류
-//##################################################################################
-            // 4. 키에서 필요한 값만 찾아서 세팅, 키안에 공백있으면 에러, 밸류가 비어있으면 에러
-        // }
-
-            // std::cout << line << std::endl;
-            // 두번째 라인부터 \r\n \r\n 이 나올 때까지 파싱
-            // 만약 \n이 없는 \r이 나온다면 무시하기
-            // 만약 \r\n 이 아닌 \n 만 나온다면 개행과 동일하게 처리
-			// checkOtherLine(line);
-        // } 
 	} catch (std::runtime_error &e) { 
         std::cerr << e.what() << std::endl;
     } catch (std::exception &e) { 
@@ -146,48 +132,72 @@ void Request::parsing(char* buf, intptr_t size)
     }
 }
 
-int Request::getState() const
+std::string removeSpecificCharacter(std::string str, char ch)
 {
-    return _state;
-}
+	size_t pos = str.find(ch);
 
-
-int Request::getSocket() const
-{
-    return _socket;
-}
-
-const std::string& Request::getBuffer() const
-{
-    return _buffer;
+	while (pos != std::string::npos) {
+		str.erase(pos, 1);
+		pos = str.find(ch, pos);
+	}
+	return (str);
 }
 
 void Request::bufferParsing()
 {
-    // std::stringstream bufferStream;
-    // bufferStream << _buffer;
+    int state = file::START;
+	
+    if (_boundary.empty())
+		return;
 
-    // std::string temp;
-    // int state = file::START;
+    std::stringstream bufferStream;
+    bufferStream << _buffer;
+	std::string line;
+	std::vector<std::string> tempstrs;
+	PostData pData;
 
-    // if (getline(bufferStream, temp))
-    //     if (temp != _boundary)
-    //         return;
-
-    // while (getline(bufferStream, temp))
-    // {
-    //     if (temp == _boundary && state == file::START)
-    //         state = file::HASH;
-    //     else if(state == file::HASH)
-    //     {
-    //         size_t i = temp.find("filename=\"");
-    //         if (i == std::string::npos)
-    //     }
-
-    // }
-        
+	while (state != file::HEADER)
+	{
+		getline(bufferStream, line);
+		if (line.erase(line.size() - 1) == _boundary)
+			state = file::HASH;
+		else if (state == file::HASH)
+		{
+			tempstrs = util::getToken(line, ";");
+			for (int i = 0; i < tempstrs.size(); i++)
+			{
+				if (tempstrs[i].find("filename") != std::string::npos)
+				{
+					std::vector<std::string> keyValueStr = util::getToken(tempstrs[i], "=");
+					pData._filename = removeSpecificCharacter(keyValueStr[1], '\"');
+				}
+				else if (tempstrs[i].find("Content-Type") != std::string::npos)
+				{
+					std::vector<std::string> keyValueStr = util::getToken(tempstrs[i], ": ");
+					pData._contentType = keyValueStr[1].erase(0, 1);
+				}
+			}
+		}
+		if (pData._contentType.size() && pData._filename.size())
+			state = file::HEADER;
+	}
+	if (state == file::HEADER)
+	{
+		int start = _buffer.find("\r\n\r\n") + 4;
+		int end = _buffer.find("\r\n", start) - 1;
+		std::cout << start << std::endl;
+		std::cout << end << std::endl;
+		std::cout << end - start << std::endl;
+		std::string data = _buffer.substr(start, end - start);
+		pData._data = data;
+		_files.push_back(pData);
+	}
+	std::cout << "\n=======================" << std::endl;
+	std::cout << pData._filename << std::endl;
+	std::cout << pData._contentType << std::endl;
+	std::cout << pData._data << std::endl;
+	std::cout << "=======================" << std::endl;
 }
-
 //         HASH = 0,
 //         HEADER = 1,
 //         CONTENT = 2,
@@ -223,9 +233,6 @@ unsigned int Request::getContentLength() const
     return _contentLength;
 }
 
-
-
-
 const std::string& Request::getIp() const
 {
     return _ip;
@@ -244,4 +251,20 @@ const std::string& Request::getVersion() const
 const std::string& Request::getRequestUrl() const
 {
     return _requestUrl;
+}
+
+int Request::getState() const
+{
+    return _state;
+}
+
+
+int Request::getSocket() const
+{
+    return _socket;
+}
+
+const std::string& Request::getBuffer() const
+{
+    return _buffer;
 }
