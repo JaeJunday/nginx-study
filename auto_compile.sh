@@ -57,10 +57,10 @@ function compile_file() {
         if [ -f "$THIRD" ]; then
             echo -e "${Green}${Bold}Compile succeeded ! ${Reset}" >&2
         else
-            echo "${B_Red}${Bold}Compile failed: Executable '$THIRD' not found!" >&2
+            echo -e "${B_Red}${Bold}Compile failed: Executable '$THIRD' not found!" >&2
         fi
     else
-        echo "${B_Red}${Bold}Compile failed: Make returned non-zero exit code!${Reset}" >&2
+        echo -e "${B_Red}${Bold}Compile failed: non-zero exit code!${Reset}" >&2
     fi
 }
 
