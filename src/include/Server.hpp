@@ -42,5 +42,5 @@ class Server {
 		const Location& getLocation(int index) const;
 		int getLocationSize() const;
 		void setSocket(int fd);
-		int getSocket() const;
+		uintptr_t getSocket() const;
 };

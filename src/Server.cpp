@@ -94,7 +94,7 @@ void Server::setSocket(int fd)
     _socket = fd;
 }
 
-int Server::getSocket() const
+uintptr_t Server::getSocket() const
 {
     return _socket;
 }
