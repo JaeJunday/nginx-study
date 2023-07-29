@@ -2,9 +2,9 @@
 
 # Makefile에서 정의한 프로젝트 이름을 읽어오는 함수
 function read_makefile_name() {
-    local name_line=$(grep '^NAME\s*=' Makefile)
+    local name_line=$(grep -E '^NAME\s*=' Makefile)
     if [ -n "$name_line" ]; then
-        NAME=$(echo "$name_line" | sed 's/NAME\s*=\s*//')
+        NAME=$(echo "$name_line" | sed -E 's/^NAME\s*=\s*//; s/^[[:space:]]+//')
     else
         echo "Error: NAME not defined in Makefile!" >&2
         exit 1
@@ -31,10 +31,13 @@ function read_makefile_flags() {
 function compile_file() {
     echo "Compiling..." >&2
     if make all -j; then
-        if [ -f "$NAME" ]; then
+        local name_line=$(grep -E '^NAME\s*=' Makefile)
+        NAME=$(echo "$name_line" | sed -E 's/^NAME\s*=\s*//; s/^[[:space:]]+//')
+        THIRD=$(echo "$NAME" | awk '{print $3}')
+        if [ -f "$THIRD" ]; then
             echo "Compile succeeded!" >&2
         else
-            echo "Compiling..." >&2
+            echo "Compile failed: Executable '$THIRD' not found!" >&2
         fi
     else
         echo "Compile failed: Make returned non-zero exit code!" >&2
@@ -59,4 +62,3 @@ done &
 
 # Makefile 감지 실행
 watch_makefile
-echo "\n"
