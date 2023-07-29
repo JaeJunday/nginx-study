@@ -19,7 +19,7 @@ Request::Request(int socket)
 void Request::checkMultipleSpaces(const std::string& str)
 {
     char prev = '\0';
-    for (int i = 0; i < str.size(); ++i) {
+    for (size_t i = 0; i < str.size(); ++i) {
         if ((prev == ' ' || prev == '\n') && prev == str[i])
             throw std::runtime_error("Error: Invalid Octet Space or newLine");
         prev = str[i];
@@ -55,7 +55,7 @@ void Request::setFieldLind(std::string& fieldLine)
     if (token[0].find(' ') != std::string::npos)
         throw std::runtime_error("Error: Header Key have space");
     if (token[0] == "Host") {
-        int mid = token[1].find(":");
+        size_t mid = token[1].find(":");
         if (mid == std::string::npos)
             throw std::runtime_error("Error: Host Error");
         _ip = std::string(token[1], 0, mid);
@@ -164,7 +164,7 @@ void Request::bufferParsing()
 		else if (state == file::HASH)
 		{
 			tempstrs = util::getToken(line, ";");
-			for (int i = 0; i < tempstrs.size(); i++)
+			for (size_t i = 0; i < tempstrs.size(); i++)
 			{
 				if (tempstrs[i].find("filename") != std::string::npos)
 				{
