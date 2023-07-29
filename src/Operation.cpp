@@ -62,8 +62,9 @@ int Operation::createBoundSocket(std::string listen)
 int Operation::findServer(uintptr_t ident)
 {
 	for (size_t i = 0; i < _servers.size(); ++i)
-		if (_servers[i]._socket == ident)
+		if (_servers[i].getSocket() == ident)
 			return i;
+	return 0;
 }
 
 

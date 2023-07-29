@@ -11,6 +11,9 @@ int main(int argc, char **argv)
     //     std::cout << "Error: Invalid number of arguments" << std::endl;
     //     return 1;
     // }
+    std::cout << "running server..." << std::endl;
+    std::cout << "http://127.0.0.1:4242" << std::endl;
+
     Operation operation;
     Configuration config(operation);
     std::string filename = "conf/default.copy.conf";

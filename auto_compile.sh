@@ -51,12 +51,12 @@ function watch_makefile() {
     done
 }
 
-# Makefile 감지 실행
-watch_makefile
-echo "\n"
-
 # 파일 변경 감지 및 컴파일 실행
 echo "Compiling is in process." >&2
 fswatch -o --exclude 'Makefile' $(find . -name '*.cpp' -o -name '*.hpp') | while read events; do
     compile_file
 done &
+
+# Makefile 감지 실행
+watch_makefile
+echo "\n"
