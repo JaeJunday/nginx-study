@@ -12,7 +12,7 @@ Operation::~Operation()
 
 void Operation::setServer(const Server& server) 
 {
-	_servers.push_back(server); 
+	_servers.push_back(server);
 }
 
 const std::vector<Server>& Operation::getServers() const
@@ -40,8 +40,8 @@ int Operation::createBoundSocket(std::string listen)
 		port = util::stoui(ipPort[1]);
 	}
 
-//-------------------------------------------delete
-	// std::cerr << "ip address" << ipPort[0] << ":" << ipPort[1] << std::endl;
+//------------------------------------------- default ip address 
+	std::cerr << "http://" << ipPort[0] << ":" << ipPort[1] << std::endl;
 //-------------------------------------------
 
 	// ip v4

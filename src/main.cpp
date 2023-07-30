@@ -11,8 +11,7 @@ int main(int argc, char **argv)
     //     std::cout << "Error: Invalid number of arguments" << std::endl;
     //     return 1;
     // }
-    std::cout << "running server..." << std::endl;
-    std::cout << "http://127.0.0.1:4242" << std::endl;
+    // cout << int << std::endl;
 
     Operation operation;
     Configuration config(operation);
@@ -27,6 +26,7 @@ int main(int argc, char **argv)
         std::cerr << e.what() << std::endl;
         return 0; 
     }
+
 //////////test line ///////////
     // std::cout << operation._servers[0].getServerName(0) << std::endl;
     // std::cout << operation._servers[0].getErrorPage(0) << std::endl;
