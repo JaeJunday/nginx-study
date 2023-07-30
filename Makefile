@@ -9,7 +9,7 @@ SRCS = main.cpp \
 		Util.cpp
 
 OBJS = $(SRCS:.cpp=.o)
-OBJ_DIR = obj/
+OBJ_DIR = build/
 SRC_DIR = src/
 SRCS_FILES = $(addprefix $(SRC_DIR),$(SRCS))
 OBJS_FILES = $(addprefix $(OBJ_DIR),$(OBJS))
@@ -17,7 +17,7 @@ OBJS_FILES = $(addprefix $(OBJ_DIR),$(OBJS))
 CXX = c++
 
 # CXXFLAGS += -std=c++98 
-CXXFLAGS += -Wall -Wextra #-Werror 
+CXXFLAGS += #-Wall -Wextra #-Werror 
 
 CXXFLAGS += -fsanitize=address -g3 
 
