@@ -267,3 +267,13 @@ const std::string& Request::getBuffer() const
 {
     return _buffer;
 }
+
+const std::vector<PostData>& Request::getFiles() const
+{
+    return _files;
+}
+
+int Request::getFilesSize() const
+{
+    return _files.size();
+}

@@ -44,7 +44,9 @@ class Request
         const std::string& getTransferEncoding() const;
         const std::string& getConnection() const;
         unsigned int getContentLength() const;
-
+        const std::vector<PostData>& getFiles() const
+        int getFilesSize() const;
+        
         const std::string& getBufferTunnel() const;
         void setRequestLine(std::string& requestLine);
         void checkMultipleSpaces(const std::string& str);
