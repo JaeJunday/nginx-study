@@ -38,7 +38,7 @@ int Operation::createBoundSocket(std::string listen)
 		ip = util::convertIp(ipPort[0]); 
 		port = util::stoui(ipPort[1]);
 	}
-//------------------------------------------- default ip address 
+//------------------------------------------- default ip address
 		std::cerr << "http://";
 		if (ipPort.size() == 1)
 			std::cerr << "localhost" << ":" << ipPort[0];
@@ -128,6 +128,7 @@ void Operation::start() {
 					req->setBufferTunnel(buffer, tevent.data);
 
 					//----------------------------------------------- testcode
+					std::cerr << "리시브 데이터" << std::endl;
 					write(1, buffer, tevent.data);
 					//-----------------------------------------------
 
@@ -155,7 +156,8 @@ void Operation::start() {
 						AResponse* response = new Get(req);
 
 						// 응답 헤더
-						response->createResponseHeader();
+						// 어떤걸 요청했는지 확인해서 검사 해서 그걸준다.
+						response->createResponseHeader(_servers[index]);	
 						response->createResponseMain();
 
 						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
@@ -167,7 +169,7 @@ void Operation::start() {
 						AResponse* response = new Post(req);
 
 						// 응답 헤더
-						response->createResponseHeader();
+						response->createResponseHeader(_servers[index]);
 						response->createResponseMain();
 
 						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
@@ -235,8 +237,10 @@ void Operation::sendData(struct kevent& tevent)
 	AResponse* res = static_cast<AResponse*>(tevent.udata);
 	res->stamp();
 	ssize_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
+	//-------------------------------------------------------------  testcode
 	std::cout << res->getBuffer().str() << std::endl;
 	std::cout << "write byte count " << byteWrite << std::endl;
+	//-------------------------------------------------------------
 	delete res;
 	close(tevent.ident);
 	// send
