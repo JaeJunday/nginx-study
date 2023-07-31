@@ -60,7 +60,7 @@ function compile_file() {
             echo -e "${B_Red}${Bold}Compile failed: Executable '$THIRD' not found!" >&2
         fi
     else
-        echo -e "${B_Red}${Bold}Compile failed: non-zero exit code!${Reset}" >&2
+        echo -e "${B_Purple}Compile failed: non-zero exit code!${Reset}" >&2
     fi
 }
 
