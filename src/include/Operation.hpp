@@ -30,10 +30,10 @@ public:
     void setServer(const Server& server);
     const std::vector<Server>& getServers() const;
     int createBoundSocket(std::string listen);
-    int findServer(uintptr_t ident);
+    int findServer(uintptr_t ident) const;
     void start();
 
-    void acceptClient(int kq);
+    void acceptClient(int kq, int index);
     //void makeResponse(struct Kevent *tevent, int kq, Request* req);
     void sendData(struct kevent& tevent);
     void testPipe(std::string buffer);

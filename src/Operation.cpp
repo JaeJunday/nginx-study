@@ -39,7 +39,12 @@ int Operation::createBoundSocket(std::string listen)
 		port = util::stoui(ipPort[1]);
 	}
 //------------------------------------------- default ip address 
-	std::cerr << "http://" << ipPort[0] << ":" << ipPort[1] << std::endl;
+		std::cerr << "http://";
+		if (ipPort.size() == 1)
+			std::cerr << "localhost" << ":" << ipPort[0];
+		else if (ipPort.size() == 2)
+			std::cerr << ipPort[0] << ":" << ipPort[1]; 
+		std::cerr << std::endl;
 //-------------------------------------------
 	// ip address
 	serverAddr.sin_family = AF_INET; 
@@ -51,22 +56,24 @@ int Operation::createBoundSocket(std::string listen)
 	return socketFd;
 }
 
-int Operation::findServer(uintptr_t ident)
+int Operation::findServer(uintptr_t ident) const
 {
-	for (size_t i = 0; i < _servers.size(); ++i)
-		if (_servers[i].getSocket() == ident)
+	for (int i = 0; i < _servers.size(); ++i)
+		if (static_cast<uintptr_t>(_servers[i].getSocket()) == ident)
 			return i;
-	return 0;
+	return -1;
 }
 
 void Operation::start() {
 	// 서버 시작 로직을 구현합니다.
 	// ...
-	// for(int i = 0; i < _servers.size(); ++i)
-	for(int i = 0; i < 1; ++i)
+	for(int i = 0; i < _servers.size(); ++i)
 	{
 		try {
-			_servers[i].setSocket(createBoundSocket(_servers[i].getValue(server::LISTEN)));
+			std::string number = _servers[i].getValue(server::LISTEN);
+			int index = createBoundSocket(number);
+			_servers[i].setSocket(index);
+			// _servers[i].setSocket(createBoundSocket(_servers[i].getValue(server::LISTEN)));
 			fcntl(_servers[i].getSocket(), F_SETFL, O_NONBLOCK);
 			if (listen(_servers[i].getSocket(), SOMAXCONN) == -1)
 				throw std::logic_error("Error: Listen failed");
@@ -80,9 +87,12 @@ void Operation::start() {
 	kq = kqueue();
 	struct kevent event, events[10];
 	struct kevent tevent;	 /* Event triggered */
-
-	EV_SET(&event, _servers[0].getSocket(), EVFILT_READ, EV_ADD, 0, 0, nullptr);
-	kevent(kq, &event, 1, NULL, 0, NULL);
+	
+	for(int i = 0; i < _servers.size(); ++i)
+	{
+		EV_SET(&event, _servers[i].getSocket(), EVFILT_READ, EV_ADD, 0, 0, nullptr);
+		kevent(kq, &event, 1, NULL, 0, NULL);
+	}
 	// loop
 	while (true)
 	{
@@ -91,13 +101,13 @@ void Operation::start() {
 			throw std::runtime_error("Error: kevent error");
 
 		// 서버로 연결요청 왔을때
-		if (tevent.ident == static_cast<uintptr_t>(_servers[0].getSocket()))
-			acceptClient(kq);
+		int index = findServer(tevent.ident);
+		if (index > -1)
+			acceptClient(kq, index);
 		else // 클라이언트로 연결요청이 들어왔을 때 //recv data
 		{
 			if (tevent.filter == EVFILT_READ)
 			{
-				// 93 - 94번째줄 이 안에 넣어서 서버 찾게 만들어야 할듯 - semikim -jaejkim: 동의하는 부분입니다.
 				char *buffer = new char[tevent.data];
 				// memset(buffer, 0, tevent.data);
 				// std::cout << buffer << std::endl;
@@ -159,6 +169,10 @@ void Operation::start() {
 						// 응답 헤더
 						response->createResponseHeader();
 						response->createResponseMain();
+
+						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
+						// EVFILT_TIMER
+						kevent(kq, &tevent, 1, NULL, 0, NULL);
 					}
 				}
 				delete[] buffer;
@@ -184,14 +198,14 @@ void Operation::start() {
 	}
 }
 
-void Operation::acceptClient(int kq)
+void Operation::acceptClient(int kq, int index)
 {
 	int				requestFd;
 	sockaddr_in		requestAddr;
 	socklen_t		requestLen;
 	struct kevent	revent;
 	
-	requestFd = accept(_servers[0].getSocket(), reinterpret_cast<struct sockaddr*>(&requestAddr), &requestLen);
+	requestFd = accept(_servers[index].getSocket(), reinterpret_cast<struct sockaddr*>(&requestAddr), &requestLen);
 	if (requestFd == -1)
 		throw std::logic_error("Error: Accept failed");
 
