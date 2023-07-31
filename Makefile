@@ -6,6 +6,7 @@ SRCS = main.cpp \
 		Request.cpp \
 		AResponse.cpp \
 		Get.cpp \
+		Post.cpp \
 		Util.cpp
 
 OBJS = $(SRCS:.cpp=.o)
@@ -20,6 +21,7 @@ CXX = c++
 CXXFLAGS += #-Wall -Wextra #-Werror 
 
 CXXFLAGS += -fsanitize=address -g3 
+
 
 CXXFLAGS += -O3 # -O2 -O1 -O -Os
 # CXXFLAGS += -g
