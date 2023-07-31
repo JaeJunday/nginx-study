@@ -5,6 +5,8 @@
 #include <ctime>
 #include <sstream>
 #include <fstream>
+#include <vector>
+#include <dirent.h>
 
 #define TIME_SIZE 40
 /*
@@ -15,6 +17,7 @@
 5. **Content-Length (컨텐트 길이):** 응답 바디의 길이를 바이트 단위로 나타냅니다.
 */
 class Request;
+class Server;
 
 class AResponse
 {
@@ -22,15 +25,10 @@ class AResponse
 		std::string		_version;
 		std::string		_stateCode;
 		std::string		_reasonPhrase;
-
 		std::time_t		_date;
-
 		std::string 	_serverName;
-
 		std::string		_contentType;
-			
 		unsigned int	_contentLength;
-
 		std::stringstream	_buffer;
 
 		// 삭제한 request 를 가리킬 가능성이 있는가??
@@ -43,8 +41,8 @@ class AResponse
 		virtual ~AResponse();
 		AResponse(Request* request);
 		std::string getDate() const;
-		virtual void createResponseHeader() =0;
-		virtual void createResponseMain();
+		virtual void createResponseHeader(const Server& server) =0;
+		virtual void createResponseMain() =0;
 		void stamp() const;
 		const std::stringstream& getBuffer() const;
 };

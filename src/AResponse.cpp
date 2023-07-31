@@ -50,10 +50,6 @@ void AResponse::stamp() const
     std::cerr << getDate() << " : "<< _request->getIp() << " " << _request->getMethod() << " " << _request->getVersion() << " "<< _stateCode << " " << _reasonPhrase << std::endl;
 }
 
-void AResponse::createResponseMain()
-{
-}
-
 const std::stringstream& AResponse::getBuffer() const
 {
     return _buffer;
