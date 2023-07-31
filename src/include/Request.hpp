@@ -49,7 +49,7 @@ class Request
         void setRequestLine(std::string& requestLine);
         void checkMultipleSpaces(const std::string& str);
         void setFieldLind(std::string& fieldLine);
-        void setBuffer(char *buffer, int size);
+        void setBuffer();
         void setBufferTunnel(char *buffer, int size);
         const std::string& getBuffer() const;
 };

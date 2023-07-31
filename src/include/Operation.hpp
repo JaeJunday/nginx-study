@@ -2,6 +2,7 @@
 
 #include "AResponse.hpp"
 #include "Get.hpp"
+#include "Post.hpp"
 #include "Server.hpp"
 #include "Request.hpp"
 #include "enum.hpp"

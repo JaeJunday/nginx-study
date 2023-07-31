@@ -113,31 +113,26 @@ void Operation::start() {
 					_requests.erase(tevent.ident);
 				}
 				else if (req->getState() == request::POST)
-				{
-					
+				{	
 					// req->setBuffer(buffer, tevent.data);
 					req->setBufferTunnel(buffer, tevent.data);
-					// write(1, buffer, tevent.data);
+
+					//----------------------------------------------- testcode
+					write(1, buffer, tevent.data);
+					//-----------------------------------------------
+
 					if (req->getBufferTunnel().size() == req->getContentLength())
 					{
-						req->setBuffer(buffer, req->getBufferTunnel().size());
+						req->setBuffer();
 						req->bufferParsing();
 					}
-					// std::cout << req->getBuffer() << std::endl;
-					// std::cout << req->getBuffer().length() << std::endl;
-
-					// cuncked 일때
-					// if (req->getTransferEncoding() == "chunked")
-					// {}
-					// else
-					// {}
 				}
 				else //makeResponse()
 				{
 					test_print_event(tevent);
 					req->parsing(buffer, tevent.data);
 
-					// --------------------------------------------------------- delete
+					// --------------------------------------------------------- testcode
 					// std::cout << "클라이언트에서 날라온 값" << std::endl;
 					//
 					// write(1, buffer, tevent.data);
@@ -147,9 +142,8 @@ void Operation::start() {
 					// makeResponse
 					if (req->getState() != request::POST)
 					{
-						//makeResponse(&tevent, kq, req);
-						//get, head, delete
 						AResponse* response = new Get(req);
+
 						// 응답 헤더
 						response->createResponseHeader();
 						response->createResponseMain();
@@ -157,6 +151,14 @@ void Operation::start() {
 						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
 						// EVFILT_TIMER
 						kevent(kq, &tevent, 1, NULL, 0, NULL);
+					}
+					else if (req->getState() == request::POST)
+					{
+						AResponse* response = new Post(req);
+
+						// 응답 헤더
+						response->createResponseHeader();
+						response->createResponseMain();
 					}
 				}
 				delete[] buffer;

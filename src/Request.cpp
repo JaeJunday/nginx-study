@@ -111,6 +111,7 @@ void Request::parsing(char* buf, intptr_t size)
             //     _state = 
         }
 
+//--------------------------------------------------------------- testcode
         std::cout << std::endl;
         std::cout << "우리가 넣은 값" << std::endl;
         std::cout << "method: " << _method << std::endl;
@@ -124,6 +125,7 @@ void Request::parsing(char* buf, intptr_t size)
         std::cout << "connection: " << _connection << std::endl;
         std::cout << "boundary: " << _boundary << std::endl;
         std::cout << std::endl;
+//---------------------------------------------------------------
         
 	} catch (std::runtime_error &e) { 
         std::cerr << e.what() << std::endl;
@@ -200,9 +202,9 @@ void Request::bufferParsing()
 //         CONTENT = 2,
 //         END = 3
 
-void Request::setBuffer(char *buffer, int size)
+void Request::setBuffer()
 {
-    _buffer += std::string(buffer, size);
+    _buffer = _bufferTunnel;
 }
 
 const std::string& Request::getBufferTunnel() const
