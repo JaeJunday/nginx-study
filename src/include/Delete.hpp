@@ -10,5 +10,6 @@ class Delete : public AResponse
         Delete(Request* request);
 		void createResponseHeader(std::vector<Server> servers); // override
 	    void createResponseMain(); // override
+        void removeFile() const;
 };
 

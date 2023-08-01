@@ -6,7 +6,7 @@ Delete::Delete(Request* request) : AResponse()
     _request = request;
 }
 
-void Delete::createResponseHeader(std::vector<Server> servers)
+void Delete::createResponseHeader(std::vector<Server> servers) //override
 {
     _buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
 	_buffer << "Date: " << getDate() << "\r\n";
@@ -16,4 +16,10 @@ void Delete::createResponseHeader(std::vector<Server> servers)
 
 void Delete::createResponseMain() // override
 {
+    removeFile();
+}
+
+void Delete::removeFile() const
+{
+    ;
 }
