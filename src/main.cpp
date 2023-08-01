@@ -11,6 +11,8 @@ int main(int argc, char **argv)
     //     std::cout << "Error: Invalid number of arguments" << std::endl;
     //     return 1;
     // }
+    // cout << int << std::endl;
+
     Operation operation;
     Configuration config(operation);
     std::string filename = "conf/default.copy.conf";
@@ -21,12 +23,13 @@ int main(int argc, char **argv)
     } 
     catch(std::exception &e) 
     {
-        std::cout << e.what() << std::endl;
-        return 1; 
+        std::cerr << e.what() << std::endl;
+        return 0; 
     }
+
 //////////test line ///////////
     // std::cout << operation._servers[0].getServerName(0) << std::endl;
     // std::cout << operation._servers[0].getErrorPage(0) << std::endl;
     // std::cout << operation._servers[0].getListen() << std::endl;
-
+    return 0;
 }

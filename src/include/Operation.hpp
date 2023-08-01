@@ -1,13 +1,17 @@
 #pragma once
 
+#include "AResponse.hpp"
+#include "Get.hpp"
+#include "Post.hpp"
 #include "Server.hpp"
 #include "Request.hpp"
 #include "enum.hpp"
+#include "Util.hpp"
 
 #include <iostream>
 #include <string>
 #include <vector>
-#include <list>
+#include <map>
 #include <unistd.h>
 #include <fcntl.h>
 #include <netinet/in.h> // sockaddr_in
@@ -17,17 +21,22 @@
 
 #define FALLOW 0
 
-typedef std::list<Request>::iterator ITOR;
-
 class Operation {
 private:
     std::vector<Server> _servers;
-    std::list<Request> _requests;
+    std::map<int, Request *> _requests;
 public:
+    ~Operation();
     void setServer(const Server& server);
     const std::vector<Server>& getServers() const;
-    int createBoundSocket(int port);
+    int createBoundSocket(std::string listen);
+    int findServer(uintptr_t ident) const;
     void start();
+
+    void acceptClient(int kq, int index);
+    //void makeResponse(struct Kevent *tevent, int kq, Request* req);
+    void sendData(struct kevent& tevent);
+    void testPipe(std::string buffer);
 };
 
 void test_print_event(struct kevent event);

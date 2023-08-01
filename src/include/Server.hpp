@@ -35,7 +35,7 @@ class Server {
 	public:
 		// Server();
 		// Server(const Server& other);
-		// Server& operator=(const Server& other);
+		Server& operator=(const Server& other);
 		void setValue(int index, std::string& value);
 		std::string getValue(int index) const;
 		void setLocation(const Location& location);
@@ -43,4 +43,5 @@ class Server {
 		int getLocationSize() const;
 		void setSocket(int fd);
 		int getSocket() const;
+		const std::vector<Location>& getLocations() const;
 };

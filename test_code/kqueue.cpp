@@ -132,7 +132,7 @@ DESCRIPTION
 	EV_CLEAR	  After	the event is retrieved by the user, its	state is re-
 		set.	This is	useful for filters which report	state transi-
 		tions	instead	of the current state.  Note that some filters
-		may automatically set	this flag internally.
+		may automatically set	this flag intunnelly.
 
 	EV_EOF	  Filters may set this flag to indicate	filter-specific	EOF
 		condition.
@@ -364,7 +364,7 @@ DESCRIPTION
 			processing.  data returns the number of times the
 			signal	has occurred since the last call to kevent().
 			This filter automatically sets	the EV_CLEAR flag in-
-			ternally.
+			tunnelly.
 
 	EVFILT_TIMER	 Establishes an	arbitrary timer	identified by ident.
 			When adding a timer, data specifies the moment	to
@@ -374,7 +374,7 @@ DESCRIPTION
 			tains the number of times the timeout has expired
 			since the last	call to	kevent().  For non-monotonic
 			timers, this filter automatically sets	the EV_CLEAR
-			flag internally.
+			flag intunnelly.
 
 			The filter accepts the	following flags	in the fflags
 			argument:
