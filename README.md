@@ -1,4 +1,4 @@
-#강 Webserv
+# Webserv
 
 | Tag name           | Description |
 |:-------------------|:------------|
