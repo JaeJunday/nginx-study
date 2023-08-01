@@ -30,7 +30,7 @@ int Operation::createBoundSocket(std::string listen)
 	memset((char*)&serverAddr, 0, sizeof(sockaddr_in));
 	std::vector<std::string> ipPort = util::getToken(listen, ":");
 	uint32_t ip = 0x0000000; 
-	uint32_t port = 0;
+	uint32_t port = 80;
 	if (ipPort.size() == 1)
 		port = util::stoui(ipPort[0]);
 	else if (ipPort.size() == 2)
