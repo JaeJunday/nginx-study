@@ -17,6 +17,7 @@ class Request
     private:
         int          _state;
         int          _socket;
+        // 서버 포인터로 변경예정
         int          _serverSocket;
 		std::string  _headerBuffer;
         std::string  _buffer;
