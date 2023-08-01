@@ -27,7 +27,7 @@ int main(int argc, char **argv)
         return 0; 
     }
 
-//////////test line ///////////
+//---------------------------------------------- testcode
     // std::cout << operation._servers[0].getServerName(0) << std::endl;
     // std::cout << operation._servers[0].getErrorPage(0) << std::endl;
     // std::cout << operation._servers[0].getListen() << std::endl;
