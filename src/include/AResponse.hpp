@@ -41,7 +41,7 @@ class AResponse
 		virtual ~AResponse();
 		AResponse(Request* request);
 		std::string getDate() const;
-		virtual void createResponseHeader(const Server& server) =0;
+		virtual void createResponseHeader(std::vector<Server> servers) =0;
 		virtual void createResponseMain() =0;
 		void stamp() const;
 		const std::stringstream& getBuffer() const;

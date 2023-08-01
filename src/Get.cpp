@@ -1,6 +1,6 @@
-#include "Get.hpp"
 #include "Request.hpp"
 #include "Server.hpp"
+#include "Get.hpp"
 
 Get::Get() : AResponse()
 { 
@@ -34,8 +34,7 @@ Get& Get::operator=(Get const& rhs)
 
 // ex
 HTTP/1.1 200 OK
-Content-type: text/html
-Context-length: 42
+Content-type: text/html Context-length: 42
 ...
 
 Body line1
@@ -49,7 +48,7 @@ Content-Length: 1024
 */
 
 // PostData 를 어디서 넣어주는가?? - semikim
-void Get::createResponseHeader(const Server& server)
+void Get::createResponseHeader(std::vector<Server> servers)
 {
 	_buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
 	_buffer << "Date: " << getDate() << "\r\n";
@@ -58,25 +57,32 @@ void Get::createResponseHeader(const Server& server)
     std::ifstream	file;
     std::stringstream tmp;
     // 경로에 따라서 맞는 경로의 파일을 오픈
-    std::string found = findLocationPath(server);
-    if (found.empty() != true)
+    std::string found = findLocationPath(servers);
+	std::cerr << "찾은경로" << found << std::endl;
+
+    if (found.length() > 0 || _request->getRequestUrl() == "/")
 	{
+		int serverSocket = _request->getServerSocket();
+		Server server;
+		for (int i = 0; i < servers.size(); ++i) 
+		{
+			if (servers[i].getSocket() == serverSocket)
+				server = servers[i];
+		}
+
+		Location location;
 		std::string filename;
-		for (int i = 0; i < _request->getFilesSize(); ++i) {
-            std::vector<PostData> files = _request->getFiles();
-			filename = findFilename(files);
-			file.open("src/pages/hello.html");
+		for (int i = 0; i < server.getLocationSize(); ++i) 
+		{
+			location = server.getLocation(i);
+			filename = findFilename("./src/pages" + location._path);
+			file.open(filename);
 			if (file.is_open() == false)
 				continue;
-				// throw std::runtime_error("Error: file not found error");
 			tmp << file.rdbuf();
 			_contentLength += tmp.str().length();
 			file.close();	
-		}
-	}
-    else if (_request->getRequestUrl() == "/")
-	{
-
+		}	
 	}
     else
     {
@@ -90,43 +96,53 @@ void Get::createResponseHeader(const Server& server)
 	_buffer << "Content-Length: " << _contentLength << "\r\n\r\n";
 }
 
-const std::string& findFilename(std::vector<PostData>& files)
+
+std::string Get::findFilename(const std::string& filePath) const
 {
-    for (int i = 0; i < files.size(); ++i)
-    {
-        
-			// opendir 디렉터리 파일 이름 읽는 예제
-		const char *dirname = "."; // 현재 디렉토리를 열도록 지정
-		DIR *dir_stream = opendir(dirname);
-		if (dir_stream == NULL) {
-			return ;
-		}
-		struct dirent *entry;
-		while ((entry = readdir(dir_stream)) != NULL) {
-			printf("%s\n", entry->d_name);
-		}
+	// 디렉 토리를 먼저 오픈
+	
+	std::string result;
+	const char *dirname = filePath.c_str(); 
+	DIR *dir_stream = opendir(dirname);
+	if (dir_stream == NULL) {
+		return std::string("");
+	}
+	struct dirent *entry = readdir(dir_stream);
+	if (entry != NULL) 
+	{
 		closedir(dir_stream);
-		return 0;
-    }
+		return  std::string(entry->d_name);
+	}
+	closedir(dir_stream);
+	return result;
 }
 
-const std::string& Get::findLocationPath(const Server& server) const
+std::string Get::findLocationPath(std::vector<Server> servers) const
 {
     std::vector<std::string> path = util::getToken(const_cast<std::string&>(_request->getRequestUrl()), "\\");
     std::string tmp;
+	int i = 0;
+	while (i < servers.size()) 
+	{
+		if (servers[i].getSocket() == _request->getServerSocket())	
+			break;
+		++i;
+	}
+	if (i == servers.size())
+		return tmp;
+
+	std::vector<Location> locations = servers[i].getLocations();
     for (int i = path.size() - 1; i > -1; --i) {
         if (i != path.size() - 1)
             tmp += "\\";
         tmp += path[i];   
-	    Location location;
-		for (int i = 0; i < server.getLocationSize(); ++i)
+		for (int j = 0; j < locations.size(); ++j)
 		{
-			location = server.getLocation(i);
-			if (location._path == tmp)
-			return true;
+			if (locations[i]._path == tmp)
+			return tmp;
 		}
     }
-	return false;
+	return std::string("");
 }
 
 void Get::createResponseMain()
@@ -143,7 +159,8 @@ void Get::createResponseMain()
 	}
     else
     {
-		file.open("src/pages/error/404.html");
+		file.open("src/pages/hello.html");
+		// file.open("src/pages/error/404.html");
 		if (file.is_open() == false)
             throw std::runtime_error("Error: file not found error2222");
         _buffer << file.rdbuf();

@@ -1,10 +1,8 @@
 #include "Request.hpp"
 
-Request::Request(int socket)
-    : _state(0), _socket(socket), _port(0), _contentLength(0)
+Request::Request(int socket, int serverSocket)
+    : _state(0), _socket(socket), _serverSocket(serverSocket), _port(0), _contentLength(0)
 {
-}
-
 // GET / HTTP/1.1
 // Host: 0.0.0.0:4242
 // Connection: keep-alive
@@ -15,6 +13,7 @@ Request::Request(int socket)
 // Accept-Language: en-US,en;q=0.9,ko;q=0.8
 // Transfer-encoding: chunked
 // main
+}
 
 void Request::checkMultipleSpaces(const std::string& str)
 {
@@ -112,19 +111,19 @@ void Request::parsing(char* buf, intptr_t size)
         }
 
 //--------------------------------------------------------------- testcode
-        std::cout << std::endl;
-        std::cout << "우리가 넣은 값" << std::endl;
-        std::cout << "method: " << _method << std::endl;
-        std::cout << "_requestUrl: " <<_requestUrl << std::endl;
-        std::cout << "_version: " << _version << std::endl;
-        std::cout << "_ip: " << _ip << std::endl;
-        std::cout << "port: " << _port << std::endl;
-        std::cout << "c type: " << _contentType << std::endl;
-        std::cout << "c len: " << _contentLength << std::endl;
-        std::cout << "Transfer-encoding: " << _transferEncoding << std::endl;
-        std::cout << "connection: " << _connection << std::endl;
-        std::cout << "boundary: " << _boundary << std::endl;
-        std::cout << std::endl;
+        // std::cout << std::endl;
+        // std::cout << "우리가 넣은 값" << std::endl;
+        // std::cout << "method: " << _method << std::endl;
+        // std::cout << "_requestUrl: " <<_requestUrl << std::endl;
+        // std::cout << "_version: " << _version << std::endl;
+        // std::cout << "_ip: " << _ip << std::endl;
+        // std::cout << "port: " << _port << std::endl;
+        // std::cout << "c type: " << _contentType << std::endl;
+        // std::cout << "c len: " << _contentLength << std::endl;
+        // std::cout << "Transfer-encoding: " << _transferEncoding << std::endl;
+        // std::cout << "connection: " << _connection << std::endl;
+        // std::cout << "boundary: " << _boundary << std::endl;
+        // std::cout << std::endl;
 //---------------------------------------------------------------
         
 	} catch (std::runtime_error &e) { 
@@ -202,6 +201,11 @@ void Request::bufferParsing()
 //         CONTENT = 2,
 //         END = 3
 
+int Request::getServerSocket() const
+{
+    return _serverSocket;
+}
+
 void Request::setBuffer()
 {
     _buffer = _bufferTunnel;
@@ -266,14 +270,4 @@ int Request::getSocket() const
 const std::string& Request::getBuffer() const
 {
     return _buffer;
-}
-
-const std::vector<PostData>& Request::getFiles() const
-{
-    return _files;
-}
-
-int Request::getFilesSize() const
-{
-    return _files.size();
 }

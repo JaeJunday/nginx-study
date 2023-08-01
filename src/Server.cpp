@@ -85,6 +85,11 @@ const Location& Server::getLocation(int index) const {
     return _location[index];
 }
 
+const std::vector<Location>& Server::getLocations() const 
+{
+    return _location;
+}
+
 int Server::getLocationSize() const {
     return _location.size();
 }
@@ -94,7 +99,7 @@ void Server::setSocket(int fd)
     _socket = fd;
 }
 
-uintptr_t Server::getSocket() const
+int Server::getSocket() const
 {
     return _socket;
 }

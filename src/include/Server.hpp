@@ -42,5 +42,6 @@ class Server {
 		const Location& getLocation(int index) const;
 		int getLocationSize() const;
 		void setSocket(int fd);
-		uintptr_t getSocket() const;
+		int getSocket() const;
+		const std::vector<Location>& getLocations() const;
 };

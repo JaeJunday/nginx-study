@@ -99,11 +99,10 @@ void Operation::start() {
 		nev = kevent(kq, NULL, 0, &tevent, 1, NULL);
 		if (nev == -1)
 			throw std::runtime_error("Error: kevent error");
-
 		// 서버로 연결요청 왔을때
 		int index = findServer(tevent.ident);
-		if (index > -1)
-			acceptClient(kq, index);
+		if (index >= 0)
+			acceptClient(kq, index);	
 		else // 클라이언트로 연결요청이 들어왔을 때 //recv data
 		{
 			if (tevent.filter == EVFILT_READ)
@@ -113,7 +112,10 @@ void Operation::start() {
 				// std::cout << buffer << std::endl;
 				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 				Request *req = static_cast<Request*>(tevent.udata);
-				
+				//----------------------------------------------- testcode
+					std::cerr << "리시브 데이터" << std::endl;
+					write(1, buffer, tevent.data);
+				//-----------------------------------------------	
 				// recvData()
 				if (bytesRead == false || req->getConnection() == "close")
 				{
@@ -128,8 +130,8 @@ void Operation::start() {
 					req->setBufferTunnel(buffer, tevent.data);
 
 					//----------------------------------------------- testcode
-					std::cerr << "리시브 데이터" << std::endl;
-					write(1, buffer, tevent.data);
+					// std::cerr << "리시브 데이터" << std::endl;
+					// write(1, buffer, tevent.data);
 					//-----------------------------------------------
 
 					if (req->getBufferTunnel().size() == req->getContentLength())
@@ -140,7 +142,7 @@ void Operation::start() {
 				}
 				else //makeResponse()
 				{
-					test_print_event(tevent);
+					// test_print_event(tevent);
 					req->parsing(buffer, tevent.data);
 
 					// --------------------------------------------------------- testcode
@@ -157,7 +159,11 @@ void Operation::start() {
 
 						// 응답 헤더
 						// 어떤걸 요청했는지 확인해서 검사 해서 그걸준다.
-						response->createResponseHeader(_servers[index]);	
+						//----------------------------------------------- testcode
+						//std::cerr << index << std::endl;
+						//----------------------------------------------- 
+
+						response->createResponseHeader(_servers);	
 						response->createResponseMain();
 
 						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
@@ -169,7 +175,7 @@ void Operation::start() {
 						AResponse* response = new Post(req);
 
 						// 응답 헤더
-						response->createResponseHeader(_servers[index]);
+						response->createResponseHeader(_servers);
 						response->createResponseMain();
 
 						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
@@ -211,7 +217,7 @@ void Operation::acceptClient(int kq, int index)
 	if (requestFd == -1)
 		throw std::logic_error("Error: Accept failed");
 
-	Request *request = new Request(requestFd);
+	Request *request = new Request(requestFd, _servers[index].getSocket());
 	_requests.insert(std::make_pair(requestFd, request));
 	EV_SET(&revent, requestFd, EVFILT_READ, EV_ADD, 0, 0, request);
 	kevent(kq, &revent, 1, NULL, 0, NULL);
@@ -239,7 +245,7 @@ void Operation::sendData(struct kevent& tevent)
 	ssize_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
 	//-------------------------------------------------------------  testcode
 	std::cout << res->getBuffer().str() << std::endl;
-	std::cout << "write byte count " << byteWrite << std::endl;
+	// std::cout << "write byte count " << byteWrite << std::endl;
 	//-------------------------------------------------------------
 	delete res;
 	close(tevent.ident);
@@ -249,14 +255,14 @@ void Operation::sendData(struct kevent& tevent)
 	// return;
 }
 
-void test_print_event(struct kevent event)
-{
-	std::cout << "\n===============================================\n";
-	std::cout << "event ident : " << event.ident << "\n";
-	std::cout << "event filter : " << event.filter << "\n";
-	std::cout << "event flags : " << event.flags << "\n";
-	std::cout << "event fflags : " << event.fflags << "\n";
-	std::cout << "event data : " << event.data << "\n";
-	std::cout << "event udata : " << event.udata << "\n";
-	std::cout << "===============================================\n" << std::endl;
-}
+// oid test_print_event(struct kevent event)
+// {
+// 	std::cout << "\n===============================================\n";
+// 	std::cout << "event ident : " << event.ident << "\n";
+// 	std::cout << "event filter : " << event.filter << "\n";
+// 	std::cout << "event flags : " << event.flags << "\n";
+// 	std::cout << "event fflags : " << event.fflags << "\n";
+// 	std::cout << "event data : " << event.data << "\n";
+// 	std::cout << "event udata : " << event.udata << "\n";
+// 	std::cout << "===============================================\n" << std::endl;
+// }
