@@ -139,7 +139,7 @@ void Operation::start() {
 					{
 						/* GET, POST, DELETE 따라 만들어지는 reponse가 다르다 - kyeonkim */
 						/* 함수로 뺄 부분 - kyoenkim*/
-						AResponse* response = new Get(req); // 임시로 GET으로 만듬.
+						AResponse* response = selectMethod(req); // 임시로 GET으로 만듬.
 						// 응답 헤더
 						// 어떤걸 요청했는지 확인해서 검사 해서 그걸준다.
 						//----------------------------------------------- testcode
@@ -174,6 +174,18 @@ void Operation::start() {
 			}
 		}
 	}
+}
+
+AResponse* Operation::selectMethod(Request* req) const
+{
+	AResponse *result;
+	if (req->getMethod() == "GET")
+		result = new Get(req);
+	if (req->getMethod() == "POST")
+		result = new Post(req);
+	if (req->getMethod() == "DELETE")	
+		result = new Delete(req);
+	return result;
 }
 
 void Operation::acceptClient(int kq, int index)

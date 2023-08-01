@@ -7,6 +7,7 @@ SRCS = main.cpp \
 		AResponse.cpp \
 		Get.cpp \
 		Post.cpp \
+		Delete.cpp \
 		Util.cpp
 
 OBJS = $(SRCS:.cpp=.o)
