@@ -2,6 +2,7 @@
 
 #include "enum.hpp"
 #include "Util.hpp"
+#include "Server.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -15,10 +16,14 @@ struct PostData{ std::string _data; std::string _filename; std::string _contentT
 class Request
 {
     private:
+        // 서버 참조자로 변경예정
+        const Server&      _server;
+        // const Location&    _location;
+
         int          _state;
         int          _socket;
-        // 서버 포인터로 변경예정
         int          _serverSocket;
+
 		std::string  _headerBuffer;
         std::string  _buffer;
         std::string  _method;
@@ -34,7 +39,7 @@ class Request
         // std::string _bufferTunnel;
         std::string _boundary;
     public:
-        Request(int socket, int serverSocket);
+        Request(int socket, int serverSocket, const Server& server);
         void parsing(char* buf, intptr_t size);
         void bufferParsing();
         int getSocket() const;
@@ -49,6 +54,8 @@ class Request
         const std::string& getConnection() const;
         unsigned int getContentLength() const;
         const std::string& getBufferTunnel() const;
+        // const Location& getLocation() const;
+
         void setRequestLine(std::string& requestLine);
         void checkMultipleSpaces(const std::string& str);
         void setFieldLind(std::string& fieldLine);

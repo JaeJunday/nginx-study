@@ -1,6 +1,6 @@
 #include "Util.hpp"
 
-std::vector<std::string> util::getToken(std::string& str, const std::string& delimiters)
+std::vector<std::string> util::getToken(const std::string& str, const std::string& delimiters)
 {
     std::vector<std::string> result;
     size_t start = 0;

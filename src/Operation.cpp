@@ -179,6 +179,20 @@ void Operation::start() {
 AResponse* Operation::selectMethod(Request* req) const
 {
 	AResponse *result;
+	
+	// limit except를 보려고 하니, 아무리 봐도 리퀘스트가 서버랑 로케이션 데이터를 들고 있는게 맞는지 아니면 요소들만 따로 저장해야 하는건지 모르겠음 
+	// std::vector<std::string> allowMethod = util::getToken(req->getLocation()._limitExcept, " ");
+	// int i = 0;
+	// while(i < allowMethod.size())
+	// {
+	// 	if (allowMethod[i] == req->getMethod())
+	// 		break;
+	// 	++i;
+	// }
+	// error 처리 허용되지 않은 메서드 입니다. 
+	// if (i == allowMethod.size())
+	// 	return NULL;
+
 	if (req->getMethod() == "GET")
 		result = new Get(req);
 	if (req->getMethod() == "POST")
@@ -199,7 +213,7 @@ void Operation::acceptClient(int kq, int index)
 	if (requestFd == -1)
 		throw std::logic_error("Error: Accept failed");
 
-	Request *request = new Request(requestFd, _servers[index].getSocket());
+	Request *request = new Request(requestFd, _servers[index].getSocket(), _servers[index]);
 	_requests.insert(std::make_pair(requestFd, request));
 	EV_SET(&revent, requestFd, EVFILT_READ, EV_ADD, 0, 0, request);
 	kevent(kq, &revent, 1, NULL, 0, NULL);

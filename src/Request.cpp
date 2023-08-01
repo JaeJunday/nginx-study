@@ -1,7 +1,7 @@
 #include "Request.hpp"
 
-Request::Request(int socket, int serverSocket)
-    : _state(0), _socket(socket), _serverSocket(serverSocket), _port(0), _contentLength(0)
+Request::Request(int socket, int serverSocket, const Server& server)
+    : _server(server), _state(0), _socket(socket), _serverSocket(serverSocket), _port(0), _contentLength(0)
 {
 // GET / HTTP/1.1
 // Host: 0.0.0.0:4242
@@ -271,3 +271,8 @@ const std::string& Request::getBuffer() const
 {
     return _buffer;
 }
+
+// const Location& Request::getLocation() const
+// {
+//     return _location;
+// }
