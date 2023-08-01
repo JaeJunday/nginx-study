@@ -42,4 +42,5 @@ public:
     AResponse* selectMethod(Request* req) const;
 };
 
+// remove testcase function
 void test_print_event(struct kevent event);
