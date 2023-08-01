@@ -188,6 +188,7 @@ void Get::createResponseMain()
 {
     std::ifstream	file;
 
+// ------------------------------------- 만들 main이 어떤파일인지 저장할 변수가 필요하고, 그걸 열어서 리턴해줘야함 - jaejkim
     if (_request->getRequestUrl() == "/")
 	{
 		file.open("src/pages/hello.html");
