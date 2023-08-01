@@ -76,10 +76,11 @@ namespace request
 {
     enum REQUEST
     {
-        GET = 0,
-        POST = 1,
-        DELETE = 2,
-        HEAD = 3
+		READY = 0,
+		DONE = 1,
+        POST = 2,
+        GET = 3,
+        DELETE = 4
     };
 }
 

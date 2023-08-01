@@ -83,13 +83,14 @@ void Request::parsing(char* buf, intptr_t size)
 	{
         // 헤더 끝줄 찾기
         std::string buffer(buf, size);
-        int headerBoundary = buffer.find("\r\n\r\n");
-        if (headerBoundary == -1)
-            std::cout << "not found : send error page";
-
+		_headerBuffer += buffer;
+		int headerBoundary = _headerBuffer.find("\r\n\r\n");
+		if (headerBoundary == std::string::npos)
+			return ;
+		_state = request::DONE;
         // 첫번째 라인일때 - Refactoring 나중에 함수로 뺀다 - kyeonkim
-        int endLine = buffer.find("\r\n");
-        std::string requestLine(buffer, 0, endLine);
+        int endLine = _headerBuffer.find("\r\n");
+        std::string requestLine(_headerBuffer, 0, endLine);
         setRequestLine(requestLine);
 
         // 둘째줄부터 끝줄까지
@@ -97,18 +98,17 @@ void Request::parsing(char* buf, intptr_t size)
         int newEndLine;
         endLine += 2;
         while (endLine < headerBoundary) { 
-            newEndLine = buffer.find("\r\n", endLine);
-            std::string fieldLine(buffer, endLine, newEndLine - endLine);
+            newEndLine = _headerBuffer.find("\r\n", endLine);
+            std::string fieldLine(_headerBuffer, endLine, newEndLine - endLine);
 
             setFieldLind(fieldLine);
             endLine = newEndLine + 2;
         }
+		int start = headerBoundary + 4;
+		if (_headerBuffer.size() - start != 0)
+			_buffer = _headerBuffer.substr(start, _headerBuffer.size() - start);
         if (_method == "POST")
-        {
             _state = request::POST;
-            // if (_transferEncoding == "chunked")
-            //     _state = 
-        }
 
 //--------------------------------------------------------------- testcode
         // std::cout << std::endl;
@@ -206,20 +206,20 @@ int Request::getServerSocket() const
     return _serverSocket;
 }
 
-void Request::setBuffer()
+void Request::setBuffer(char *buffer, int size)
 {
-    _buffer = _bufferTunnel;
+	_buffer += std::string(buffer, size);   
 }
 
-const std::string& Request::getBufferTunnel() const
-{
-    return _bufferTunnel;
-}
+// const std::string& Request::getBufferTunnel() const
+// {
+//     return _bufferTunnel;
+// }
 
-void Request::setBufferTunnel(char *buffer, int size)
-{
-    _bufferTunnel += std::string(buffer, size);   
-}
+// void Request::setBufferTunnel(char *buffer, int size)
+// {
+//     _bufferTunnel += std::string(buffer, size);   
+// }
 
 const std::string& Request::getConnection() const
 {

@@ -74,6 +74,8 @@ request 요청이 dir 인 경우,
 auto index off && index X = 보여줄게 없다?
 auto index on && index X = 목록 보여주기
 
+index 옵션이 있고 request 요청이 dir 인 경우, 경로 끝에 index value 값을 무조건 붙여서 찾는다. - kyeonkim
+
 ㅣ
 */
 
@@ -88,7 +90,8 @@ void Get::createResponseHeader(std::vector<Server> servers)
 
     // 경로에 따라서 맞는 경로의 파일을 오픈
     std::string found = findLocationPath(servers);
-	std::cerr << "찾은경로" << found << std::endl;
+	std::cerr << "찾은경로 : " << found << std::endl;
+	found = "find"; // 임시 데이터 - kyeonkim
 
     if (found.length() > 0 || _request->getRequestUrl() == "/")
 	{
@@ -109,13 +112,14 @@ void Get::createResponseHeader(std::vector<Server> servers)
 			location = server.getLocation(i);
 			// .                    -location _root
 			filename = findFilename("./src/pages" + location._path);
+			filename = "./src/pages/hello.html"; // 임시 데이터 - kyoenkim
 			file.open(filename);
 			if (file.is_open() == false)
 				continue;
 			tmp << file.rdbuf();
 			_contentLength += tmp.str().length();
 			file.close();	
-		}	
+		}
 	}
     else
     {

@@ -108,12 +108,10 @@ void Operation::start() {
 			if (tevent.filter == EVFILT_READ)
 			{
 				char *buffer = new char[tevent.data];
-				// memset(buffer, 0, tevent.data);
-				// std::cout << buffer << std::endl;
 				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 				Request *req = static_cast<Request*>(tevent.udata);
 				//----------------------------------------------- testcode
-					std::cerr << "리시브 데이터" << std::endl;
+					std::cerr << "===========recv 데이터====================" << std::endl;
 					write(1, buffer, tevent.data);
 				//-----------------------------------------------	
 				// recvData()
@@ -124,60 +122,33 @@ void Operation::start() {
 					delete req;
 					_requests.erase(tevent.ident);
 				}
-				else if (req->getState() == request::POST)
-				{	
-					// req->setBuffer(buffer, tevent.data);
-					req->setBufferTunnel(buffer, tevent.data);
-
-					//----------------------------------------------- testcode
-					// std::cerr << "리시브 데이터" << std::endl;
-					// write(1, buffer, tevent.data);
-					//-----------------------------------------------
-
-					if (req->getBufferTunnel().size() == req->getContentLength())
-					{
-						req->setBuffer();
-						req->bufferParsing();
-					}
-				}
-				else //makeResponse()
+				else
 				{
-					// test_print_event(tevent);
-					req->parsing(buffer, tevent.data);
-
-					// --------------------------------------------------------- testcode
-					std::cout << "클라이언트에서 날라온 값" << std::endl;
-					//
-					write(1, buffer, tevent.data);
-					// std::cout << std::endl;
-					// --------------------------------------------------------- 
-
-					// makeResponse
-					if (req->getState() != request::POST)
+					if (req->getState() == request::READY) //makeResponse()
+						req->parsing(buffer, tevent.data);
+					else if (req->getState() == request::POST)
 					{
-						AResponse* response = new Get(req);
-
+						if (req->getTransferEncoding() == "chunked")
+						{
+							// chunked code ...
+						}
+						else
+							req->setBuffer(buffer, tevent.data);
+					}
+					if (req->getBuffer().size() == req->getContentLength())
+					{
+						/* GET, POST, DELETE 따라 만들어지는 reponse가 다르다 - kyeonkim */
+						/* 함수로 뺄 부분 - kyoenkim*/
+						AResponse* response = new Get(req); // 임시로 GET으로 만듬.
 						// 응답 헤더
 						// 어떤걸 요청했는지 확인해서 검사 해서 그걸준다.
 						//----------------------------------------------- testcode
 						//std::cerr << index << std::endl;
 						//----------------------------------------------- 
-
-						response->createResponseHeader(_servers);	
-						response->createResponseMain();
-
-						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
-						// EVFILT_TIMER
-						kevent(kq, &tevent, 1, NULL, 0, NULL);
-					}
-					else if (req->getState() == request::POST)
-					{
-						AResponse* response = new Post(req);
-
-						// 응답 헤더
 						response->createResponseHeader(_servers);
 						response->createResponseMain();
-
+						/* END ========== */
+						/* 반환 받은 reponse로 이벤트를 건다 - kyeonkim */
 						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
 						// EVFILT_TIMER
 						kevent(kq, &tevent, 1, NULL, 0, NULL);
@@ -185,7 +156,6 @@ void Operation::start() {
 				}
 				delete[] buffer;
 			}
-			// sendData()
 			else if (tevent.filter == EVFILT_WRITE)
 			{	
 				sendData(tevent);
@@ -244,7 +214,7 @@ void Operation::sendData(struct kevent& tevent)
 	res->stamp();
 	ssize_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
 	//-------------------------------------------------------------  testcode
-	std::cout << res->getBuffer().str() << std::endl;
+	// std::cout << res->getBuffer().str() << std::endl;
 	// std::cout << "write byte count " << byteWrite << std::endl;
 	//-------------------------------------------------------------
 	delete res;

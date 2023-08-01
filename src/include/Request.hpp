@@ -18,6 +18,7 @@ class Request
         int          _state;
         int          _socket;
         int          _serverSocket;
+		std::string  _headerBuffer;
         std::string  _buffer;
         std::string  _method;
 		std::string  _requestUrl;
@@ -29,7 +30,7 @@ class Request
         unsigned int _contentLength;
         std::string  _transferEncoding;
         std::vector<PostData> _files;
-        std::string _bufferTunnel;
+        // std::string _bufferTunnel;
         std::string _boundary;
     public:
         Request(int socket, int serverSocket);
@@ -50,7 +51,7 @@ class Request
         void setRequestLine(std::string& requestLine);
         void checkMultipleSpaces(const std::string& str);
         void setFieldLind(std::string& fieldLine);
-        void setBuffer();
+        void setBuffer(char *buffer, int size);
         void setBufferTunnel(char *buffer, int size);
         const std::string& getBuffer() const;
 };
