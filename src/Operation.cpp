@@ -146,9 +146,9 @@ void Operation::start() {
 					req->parsing(buffer, tevent.data);
 
 					// --------------------------------------------------------- testcode
-					// std::cout << "클라이언트에서 날라온 값" << std::endl;
+					std::cout << "클라이언트에서 날라온 값" << std::endl;
 					//
-					// write(1, buffer, tevent.data);
+					write(1, buffer, tevent.data);
 					// std::cout << std::endl;
 					// --------------------------------------------------------- 
 
