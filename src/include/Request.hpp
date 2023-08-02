@@ -18,7 +18,7 @@ class Request
     private:
         // 서버 참조자로 변경예정
         const Server&      _server;
-        // const Location&    _location;
+        // Location*    _location;
 
         int          _state;
         int          _socket;

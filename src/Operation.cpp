@@ -189,7 +189,7 @@ AResponse* Operation::selectMethod(Request* req) const
 	// 		break;
 	// 	++i;
 	// }
-	// error 처리 허용되지 않은 메서드 입니다. 
+	// error 처리 허용되지 않은 메서드 입니다. >> 에러 코드에 맞게 던져준다.
 	// if (i == allowMethod.size())
 	// 	return NULL;
 
