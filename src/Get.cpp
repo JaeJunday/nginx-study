@@ -153,6 +153,7 @@ std::string Get::findLocationPath() const
 	int min = 0;
 		// index
 		// root 	
+  
 	for (int i = 0; i < locations.size(); ++i) {		
 		int pathLength = locations[i]._path.length();
 		if (_request->getRequestUrl().compare(0, pathLength, locations[i]._path) == 0)
@@ -164,21 +165,33 @@ std::string Get::findLocationPath() const
 			}
 		}
 	}	
+
 	if (min == false)
 	{
+		std::cerr << "no location" << std::endl;
 		// error code bad request? 맞는 로케이션이 없는 경우
 	}
 	std::string result;
 
 //------------------------------------------------------------------- testcode
+    std::cerr <<  "ㅋㅋ 반대임 요청은 /로 오고 컨피그는 \\로 루트 저장해서 못찾고있는거였음" << std::endl;
+	location = locations[0];
+	std::cerr << "requesturl: " << _request->getRequestUrl() << std::endl;
+	std::cerr << "locationPath: " << locations[0]._path << std::endl;
+	std::cerr << std::endl;
+	
+	std::cerr << "socket: " << server.getSocket() << std::endl;
 	std::cerr << "요쳥 url 문자열: " << _request->getRequestUrl() << std::endl;
 	std::cerr << "로케이션 경로 문자열: " << location._path << std::endl;
+	std::cerr << std::endl;
 
-	std::cerr << "로케이션 루트 문자열:" << location._root << std::endl;
-	std::cerr << "서버 루트 문자열:" << server.getRoot() << std::endl;
+	std::cerr << "로케이션 루트 문자열: " << location._root << std::endl;
+	std::cerr << "서버 루트 문자열: " << server.getRoot() << std::endl;
+	std::cerr << std::endl;
 
-	std::cerr << "로케이션 인덱스 문자열" << location._index << std::endl;
-	std::cerr << "서버 인덱스 문자열" << server.getIndex() << std::endl;
+	std::cerr << "로케이션 인덱스 문자열: " << location._index << std::endl;
+	std::cerr << "서버 인덱스 문자열: " << server.getIndex() << std::endl;
+	std::cerr << std::endl;
 
 	// std::cerr << "바뀔 문자열" << std::endl;
 //------------------------------------------------------------------- 

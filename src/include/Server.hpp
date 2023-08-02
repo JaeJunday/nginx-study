@@ -22,6 +22,7 @@ struct Location
 	std::string	_limitExcept; // 메서드 제한
 	std::string	_tryFiles;
 };
+
 class Server {
 	private:
 		std::vector<std::string>	_serverName;
@@ -34,7 +35,7 @@ class Server {
     	int 						_socket;
 	public:
 		// Server();
-		// Server(const Server& other);
+		Server(const Server& other);
 		Server& operator=(const Server& other);
 		void setValue(int index, std::string& value);
 		std::string getValue(int index) const;
@@ -43,7 +44,7 @@ class Server {
 		int getLocationSize() const;
 		void setSocket(int fd);
 		int getSocket() const;
-		const std::string& getLoot() const;
+		const std::string& getRoot() const;
 		const std::string& getIndex() const;
 		const std::vector<Location>& getLocations() const;
 };
