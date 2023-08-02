@@ -96,17 +96,8 @@ void Get::createResponseHeader()
 
     if (found.length() > 0 || _request->getRequestUrl() == "/")
 	{
-		// ----------------------------------------------------------- refactor
-		int serverSocket = _request->getServerSocket();
-		Server server;
-		for (int i = 0; i < servers.size(); ++i)
-		{
-			if (servers[i].getSocket() == serverSocket)
-				server = servers[i];
-		}
-		// -----------------------------------------------------------
-
 		Location location;
+		const Server server = _request->getServer();
 		std::string filename;
 		for (int i = 0; i < server.getLocationSize(); ++i) 
 		{
@@ -134,7 +125,6 @@ void Get::createResponseHeader()
 	_buffer << "Content-Length: " << _contentLength << "\r\n\r\n";
 }
 
-
 std::string Get::findFilename(const std::string& filePath) const
 {
 	// 디렉 토리를 먼저 오픈
@@ -157,13 +147,12 @@ std::string Get::findFilename(const std::string& filePath) const
 
 std::string Get::findLocationPath() const
 {
-	const Server& server = _request->getServer();
+	const Server server = _request->getServer();
 	const std::vector<Location>& locations = server.getLocations();
 	Location location;
 	int min = 0;
 		// index
-		// root 
-		
+		// root 	
 	for (int i = 0; i < locations.size(); ++i) {		
 		int pathLength = locations[i]._path.length();
 		if (_request->getRequestUrl().compare(0, pathLength, locations[i]._path) == 0)
@@ -179,20 +168,33 @@ std::string Get::findLocationPath() const
 	{
 		// error code bad request? 맞는 로케이션이 없는 경우
 	}
-
 	std::string result;
+
+//------------------------------------------------------------------- testcode
+	std::cerr << "요쳥 url 문자열: " << _request->getRequestUrl() << std::endl;
+	std::cerr << "로케이션 경로 문자열: " << location._path << std::endl;
+
+	std::cerr << "로케이션 루트 문자열:" << location._root << std::endl;
+	std::cerr << "서버 루트 문자열:" << server.getRoot() << std::endl;
+
+	std::cerr << "로케이션 인덱스 문자열" << location._index << std::endl;
+	std::cerr << "서버 인덱스 문자열" << server.getIndex() << std::endl;
+
+	// std::cerr << "바뀔 문자열" << std::endl;
+//------------------------------------------------------------------- 
+
 	// min이 false 가 아니라면 가장 fit 한 로케이션을 찾은 상태
 	if (location._root.empty() != true)
 	{
 	}
-	else if (server.getLoot().empty() != true)	
+	else if (server.getRoot().empty() != true)	
 	{
 	}
 
-	if (location._index)
+	if (location._index.empty() != true)
 	{
 	}
-	else if (server._index)
+	else if (server.getIndex().empty() != true)
 	{
 	}
 	return result;
