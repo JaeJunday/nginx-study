@@ -262,7 +262,7 @@ const std::string& Request::getBuffer() const
     return _buffer;
 }
 
-const Server& getServer() const
+const Server& Request::getServer() const
 {
     return _server;
 }

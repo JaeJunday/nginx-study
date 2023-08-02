@@ -145,7 +145,7 @@ void Operation::start() {
 						//----------------------------------------------- testcode
 						//std::cerr << index << std::endl;
 						//----------------------------------------------- 
-						response->createResponseHeader(_servers);
+						response->createResponseHeader();
 						response->createResponseMain();
 						/* END ========== */
 						/* 반환 받은 reponse로 이벤트를 건다 - kyeonkim */

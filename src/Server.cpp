@@ -104,12 +104,12 @@ int Server::getSocket() const
     return _socket;
 }
 		
-const std::string& Server::getLoot() const;
+const std::string& Server::getRoot() const
 {
     return _root;
 }
 
-const std::string& Server::getIndex() const;
+const std::string& Server::getIndex() const
 {
     return _index;
 }

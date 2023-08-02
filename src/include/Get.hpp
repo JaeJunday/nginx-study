@@ -14,6 +14,6 @@ class Get : public AResponse
         Get& operator=(Get const& rhs);
         void createResponseHeader(); //override
 		void createResponseMain(); //override
-        std::string findLocationPath(std::vector<Server> servers) const;
+        std::string findLocationPath() const;
         std::string findFilename(const std::string& filePath) const;
 };
