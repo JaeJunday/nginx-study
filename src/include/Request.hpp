@@ -17,7 +17,7 @@ class Request
 {
     private:
         const Server&			_server;
-        // Location*	 	_location;
+        Location*	 	_location;
 
         int          	_state;
         int          	_socket;
@@ -59,4 +59,6 @@ class Request
         void setBuffer(char *buffer, int size);
         void setBufferTunnel(char *buffer, int size);
         const std::string& getBuffer() const;
+        Location* getLocation() const;
+        void setLocation(Location* location);
 };

@@ -268,6 +268,17 @@ const Server& Request::getServer() const
 }
 
 
+Location* Request::getLocation() const
+{
+    return _locaion;
+}
+     
+void Request::setLocation(Location* location)
+{
+    _location = location;
+}
+
+
 // const Location& Request::getLocation() const
 // {
 //     return _location;

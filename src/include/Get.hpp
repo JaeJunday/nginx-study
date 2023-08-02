@@ -15,5 +15,5 @@ class Get : public AResponse
         void createResponseHeader(); //override
 		void createResponseMain(); //override
         std::string findLocationPath() const;
-        std::string findFilename(const std::string& filePath) const;
+        void openPath(const std::string& path) const;
 };

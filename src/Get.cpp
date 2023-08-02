@@ -64,152 +64,122 @@ void Get::createResponseHeader()
 	_buffer << "Date: " << getDate() << "\r\n";
 	_buffer << "Server: " << _serverName << "\r\n";
 	_buffer << "Content-Type: " << _contentType << "\r\n";
-    std::ifstream	file;
-    std::stringstream tmp;
+    // std::ifstream	file;
+    // std::stringstream tmp;
 
     // 경로에 따라서 맞는 경로의 파일을 오픈
-    std::string found = findLocationPath();
-	std::cerr << "찾은경로 : " << found << std::endl;
-	found = "find"; // 임시 데이터 - kyeonkim
-
-    if (found.length() > 0 || _request->getRequestUrl() == "/")
-	{
-		Location location;
-		const Server server = _request->getServer();
-		std::string filename;
-		for (int i = 0; i < server.getLocationSize(); ++i) 
-		{
-			location = server.getLocation(i);
-			// .                    -location _root
-			filename = findFilename("./src/pages" + location._path);
-			filename = "./src/pages/hello.html"; // 임시 데이터 - kyoenkim
-			file.open(filename);
-			if (file.is_open() == false)
-				continue;
-			tmp << file.rdbuf();
-			_contentLength += tmp.str().length();
-			file.close();	
-		}
-	}
-    else
-    {
-        file.open("src/pages/error/404.html");
-		if (file.is_open() == false)
-            throw std::runtime_error("Error: file not found error");
-        tmp << file.rdbuf();
-        _contentLength = tmp.str().length();
-        file.close();
-    }
+    std::string path = findLocationPath();
+	// --------------------------------------------------- testcode
+	// std::cerr << "찾은경로 : " << path << std::endl;
+	// --------------------------------------------------- 
+	openPath(path);
 	_buffer << "Content-Length: " << _contentLength << "\r\n\r\n";
 }
 
-std::string Get::findFilename(const std::string& filePath) const
+void Get::openPath(const std::string& path) const
 {
-	// 디렉 토리를 먼저 오픈
-	
-	std::string result;
-	const char *dirname = filePath.c_str(); 
-	DIR *dir_stream = opendir(dirname);
-	if (dir_stream == NULL) {
-		return std::string("");
-	}
-	struct dirent *entry = readdir(dir_stream);
-	if (entry != NULL) 
+    std::ifstream	file;
+    std::stringstream tmp;
+	DIR *dir_stream = opendir(path.c_str());
+	if (dir_stream == NULL) 
 	{
-		closedir(dir_stream);
-		return  std::string(entry->d_name);
+		close(dir_stream);
+		file.open(dirname);
+		if (file.is_open() == true)
+		{
+			tmp << file.rdbuf();
+			_contentLength += tmp.str().length();
+			_buffer << tmp;
+			file.close();
+		}
+		else 
+			//server errorcode
 	}
-	closedir(dir_stream);
-	return result;
+	else // 만약에 오토 인덱스라면 다 읽어서 보여주기 그게 아니면 보여줄거없음
+	{
+		if (_request->getLocation()._autoindex == "on")
+		{
+			struct dirent *entry;
+			while (entry != NULL)
+			{
+				*entry = readdir(dir_stream);
+				_buffer << std::string(entry.d_name) + "\n";
+			}
+			_contentLength = _buffer.str().length();
+			closedir(dir_stream);
+		}
+		else
+		{
+			// 보여줄게 없다는 메시지를 띄운다(state code는 200으로 처리한다. 왜냐하면 폴더는 있기 때문에).	
+		}
+	}
 }
 
 std::string Get::findLocationPath() const
 {
 	const Server server = _request->getServer();
 	const std::vector<Location>& locations = server.getLocations();
+	std::string result = _request->getRequestUrl();
 	Location location;
-	int min = 0;
-		// index
-		// root 	
-  
+	int length = 0;
+	if (result.empty())
+	{
+		// 경로가 없는 경우 errorcode
+	}
 	for (int i = 0; i < locations.size(); ++i) {		
 		int pathLength = locations[i]._path.length();
 		if (_request->getRequestUrl().compare(0, pathLength, locations[i]._path) == 0)
 		{
-			if (min < pathLength)
+			if (length < pathLength)
 			{
-				min = pathLength;
+				length = pathLength;
 				location = locations[i];
 			}
 		}
-	}	
-
-	if (min == false)
+ 	}
+	if (length == false)
 	{
-		std::cerr << "no location" << std::endl;
-		// error code bad request? 맞는 로케이션이 없는 경우
+		// std::cerr << "no location" << std::endl;
+		// no location errorcode
 	}
-	std::string result;
+	_request->setLocation(location);
+	if (!location._root.empty())
+	{
+		result.erase(0, length);
+		result = location._root + result;
+	}
+	else if (!server.getRoot().empty())	
+	{
+		result.erase(0, length);
+		result = server.getRoot() + result;
+	}
+	if (!location._index.empty())
+		result += "/" + location._index;
+	else if (!server.getIndex().empty())
+		result += "/" + server.getIndex();
+	return result;
 
 //------------------------------------------------------------------- testcode
-    std::cerr <<  "ㅋㅋ 반대임 요청은 /로 오고 컨피그는 \\로 루트 저장해서 못찾고있는거였음" << std::endl;
-	location = locations[0];
-	std::cerr << "requesturl: " << _request->getRequestUrl() << std::endl;
-	std::cerr << "locationPath: " << locations[0]._path << std::endl;
-	std::cerr << std::endl;
+    // std::cerr <<  "ㅋㅋ 반대임 요청은 /로 오고 컨피그는 \\로 루트 저장해서 못찾고있는거였음" << std::endl; // ㅋㅋㅋ - kyeonkim
+	// std::cerr << "requesturl: " << _request->getRequestUrl() << std::endl;
+	// std::cerr << "locationPath: " << location._path << std::endl;
+	// std::cerr << std::endl;
 	
-	std::cerr << "socket: " << server.getSocket() << std::endl;
-	std::cerr << "요쳥 url 문자열: " << _request->getRequestUrl() << std::endl;
-	std::cerr << "로케이션 경로 문자열: " << location._path << std::endl;
-	std::cerr << std::endl;
+	// std::cerr << "socket: " << server.getSocket() << std::endl;
+	// std::cerr << "요쳥 url 문자열: " << _request->getRequestUrl() << std::endl;
+	// std::cerr << "로케이션 경로 문자열: " << location._path << std::endl;
+	// std::cerr << std::endl;
 
-	std::cerr << "로케이션 루트 문자열: " << location._root << std::endl;
-	std::cerr << "서버 루트 문자열: " << server.getRoot() << std::endl;
-	std::cerr << std::endl;
+	// std::cerr << "로케이션 루트 문자열: " << location._root << std::endl;
+	// std::cerr << "서버 루트 문자열: " << server.getRoot() << std::endl;
+	// std::cerr << std::endl;
 
-	std::cerr << "로케이션 인덱스 문자열: " << location._index << std::endl;
-	std::cerr << "서버 인덱스 문자열: " << server.getIndex() << std::endl;
-	std::cerr << std::endl;
-
+	// std::cerr << "로케이션 인덱스 문자열: " << location._index << std::endl;
+	// std::cerr << "서버 인덱스 문자열: " << server.getIndex() << std::endl;
+	// std::cerr << std::endl;
 	// std::cerr << "바뀔 문자열" << std::endl;
 //------------------------------------------------------------------- 
-
-	// min이 false 가 아니라면 가장 fit 한 로케이션을 찾은 상태
-	if (location._root.empty() != true)
-	{
-	}
-	else if (server.getRoot().empty() != true)	
-	{
-	}
-
-	if (location._index.empty() != true)
-	{
-	}
-	else if (server.getIndex().empty() != true)
-	{
-	}
-	return result;
 }
 
 void Get::createResponseMain()
-{
-    std::ifstream	file;
-
-    if (_request->getRequestUrl() == "/")
-	{
-		file.open("src/pages/hello.html");
-		if (file.is_open() == false)
-            throw std::runtime_error("Error: file not found error");
-        _buffer << file.rdbuf();
-        file.close();
-	}
-    else
-    {
-		file.open("src/pages/hello.html");
-		// file.open("src/pages/error/404.html");
-		if (file.is_open() == false)
-            throw std::runtime_error("Error: file not found error2222");
-        _buffer << file.rdbuf();
-        file.close();
-    }
-}
+{}
