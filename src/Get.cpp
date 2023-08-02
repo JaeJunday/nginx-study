@@ -79,6 +79,7 @@ index 옵션이 있고 request 요청이 dir 인 경우, 경로 끝에 index val
 ㅣ
 */
 
+
 void Get::createResponseHeader(std::vector<Server> servers)
 {
 	_buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";

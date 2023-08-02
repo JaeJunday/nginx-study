@@ -1,18 +1,8 @@
 #include "Request.hpp"
 
-Request::Request(int socket, int serverSocket)
-    : _state(0), _socket(socket), _serverSocket(serverSocket), _port(0), _contentLength(0)
+Request::Request(int socket, const Server& server)
+    : _server(server), _state(0), _socket(socket), _port(0), _contentLength(0)
 {
-// GET / HTTP/1.1
-// Host: 0.0.0.0:4242
-// Connection: keep-alive
-// Upgrade-Insecure-Requests1
-// User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36
-// Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
-// Accept-Encoding: gzip, deflate
-// Accept-Language: en-US,en;q=0.9,ko;q=0.8
-// Transfer-encoding: chunked
-// main
 }
 
 void Request::checkMultipleSpaces(const std::string& str)
@@ -201,10 +191,10 @@ void Request::bufferParsing()
 //         CONTENT = 2,
 //         END = 3
 
-int Request::getServerSocket() const
-{
-    return _serverSocket;
-}
+// int Request::getServerSocket() const
+// {
+//     return _serverSocket;
+// }
 
 void Request::setBuffer(char *buffer, int size)
 {
@@ -271,3 +261,14 @@ const std::string& Request::getBuffer() const
 {
     return _buffer;
 }
+
+const Server& getServer() const
+{
+    return _server;
+}
+
+
+// const Location& Request::getLocation() const
+// {
+//     return _location;
+// }

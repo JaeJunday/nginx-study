@@ -187,7 +187,7 @@ void Operation::acceptClient(int kq, int index)
 	if (requestFd == -1)
 		throw std::logic_error("Error: Accept failed");
 
-	Request *request = new Request(requestFd, _servers[index].getSocket());
+	Request *request = new Request(requestFd, _servers[index]);
 	_requests.insert(std::make_pair(requestFd, request));
 	EV_SET(&revent, requestFd, EVFILT_READ, EV_ADD, 0, 0, request);
 	kevent(kq, &revent, 1, NULL, 0, NULL);
