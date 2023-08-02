@@ -103,3 +103,13 @@ int Server::getSocket() const
 {
     return _socket;
 }
+		
+const std::string& Server::getLoot() const;
+{
+    return _root;
+}
+
+const std::string& Server::getIndex() const;
+{
+    return _index;
+}
