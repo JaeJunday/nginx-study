@@ -26,28 +26,6 @@ Get& Get::operator=(Get const& rhs)
 }	
 
 /*
-// 형식
-<버전> <상태 코드> <사유 구절>
-<헤더>
-
-<본문>
-
-// ex
-HTTP/1.1 200 OK
-Content-type: text/html Context-length: 42
-...
-
-Body line1
-Body line2
-...
-HTTP/1.1 200 OK
-Date: Tue, 20 Jul 2023 12:34:56 GMT
-Server: Apache/2.4.38 (Unix)
-Content-Type: text/html; charset=UTF-8
-Content-Length: 1024
-*/
-
-/*
 
 	- loop을 돌면서 location _path 의 길이를 세서 location _path 길이까지만 request _url과 비교를 한다.
 	- if request _url와 location _path이 같은데 길이가 이전 길이보다 길다면 해당 _path의 location 구조체를 가지고 있는다.
