@@ -1,8 +1,8 @@
 #include "Server.hpp"
 
-// Server::Server()
-// {
-// }
+Server::Server()
+{
+}
 
 Server::Server(const Server& other)
     : _serverName(other._serverName),

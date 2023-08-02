@@ -34,7 +34,7 @@ class Server {
 		std::vector<Location>		_location;
     	int 						_socket;
 	public:
-		// Server();
+		Server();
 		Server(const Server& other);
 		Server& operator=(const Server& other);
 		void setValue(int index, std::string& value);
