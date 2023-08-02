@@ -17,7 +17,7 @@ class Request
 {
     private:
         const Server&			_server;
-        Location*	 	_location;
+        // Location*	 	_location;
 
         int          	_state;
         int          	_socket;
@@ -43,6 +43,7 @@ class Request
         int getSocket() const;
         // int getServerSocket() const;
         int getState() const;
+        const Server& getServer() const;
 
         const std::string& getIp() const;
         const std::string& getMethod() const;

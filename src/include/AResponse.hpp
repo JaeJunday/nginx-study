@@ -32,7 +32,7 @@ class AResponse
 		std::stringstream	_buffer;
 
 		// 삭제한 request 를 가리킬 가능성이 있는가??
-		Request*		_request;	
+		Request*		_request;
 		
 		AResponse(const AResponse& src); 
 		AResponse& operator=(AResponse const& rhs);
@@ -41,7 +41,7 @@ class AResponse
 		virtual ~AResponse();
 		AResponse(Request* request);
 		std::string getDate() const;
-		virtual void createResponseHeader(std::vector<Server> servers) =0;
+		virtual void createResponseHeader() =0;
 		virtual void createResponseMain() =0;
 		void stamp() const;
 		const std::stringstream& getBuffer() const;

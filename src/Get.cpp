@@ -80,7 +80,7 @@ index 옵션이 있고 request 요청이 dir 인 경우, 경로 끝에 index val
 */
 
 
-void Get::createResponseHeader(std::vector<Server> servers)
+void Get::createResponseHeader()
 {
 	_buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
 	_buffer << "Date: " << getDate() << "\r\n";
@@ -90,7 +90,7 @@ void Get::createResponseHeader(std::vector<Server> servers)
     std::stringstream tmp;
 
     // 경로에 따라서 맞는 경로의 파일을 오픈
-    std::string found = findLocationPath(servers);
+    std::string found = findLocationPath();
 	std::cerr << "찾은경로 : " << found << std::endl;
 	found = "find"; // 임시 데이터 - kyeonkim
 
@@ -155,34 +155,47 @@ std::string Get::findFilename(const std::string& filePath) const
 	return result;
 }
 
-std::string Get::findLocationPath(std::vector<Server> servers) const
+std::string Get::findLocationPath() const
 {
-    std::vector<std::string> path = util::getToken(const_cast<std::string&>(_request->getRequestUrl()), "/");
-    std::string tmp;
-
-// 서버를 찾는게 아니라 포인터로 바로 가져올 수 있게 변경
-// --------------------------------------------------------------------------- refactor
-	int i = 0;
-	while (i < servers.size()) 
-	{
-		if (servers[i].getSocket() == _request->getServerSocket())	
-			break;
-		++i;
-	}
-// --------------------------------------------------------------------------- 
-
-	std::vector<Location> locations = servers[i].getLocations();
-    for (int i = path.size() - 1; i > -1; --i) {
-        if (i != path.size() - 1)
-            tmp += "/";
-        tmp += path[i];   
-		for (int j = 0; j < locations.size(); ++j)
+	const Server& server = _request->getServer();
+	const std::vector<Location>& locations = server.getLocations();
+	Location location;
+	int min = 0;
+		// index
+		// root 
+		
+	for (int i = 0; i < locations.size(); ++i) {		
+		int pathLength = locations[i]._path.length();
+		if (_request->getRequestUrl().compare(0, pathLength, locations[i]._path) == 0)
 		{
-			if (locations[i]._path == tmp)
-			return tmp;
+			if (min < pathLength)
+			{
+				min = pathLength;
+				location = locations[i];
+			}
 		}
-    }
-	return std::string("");
+	}	
+	if (min == false)
+	{
+		// error code bad request? 맞는 로케이션이 없는 경우
+	}
+
+	std::string result;
+	// min이 false 가 아니라면 가장 fit 한 로케이션을 찾은 상태
+	if (location._root.empty() != true)
+	{
+	}
+	else if (server.getLoot().empty() != true)	
+	{
+	}
+
+	if (location._index)
+	{
+	}
+	else if (server._index)
+	{
+	}
+	return result;
 }
 
 void Get::createResponseMain()

@@ -8,7 +8,7 @@ class Post : public AResponse
     private:
     public:
         Post(Request* request);
-		void createResponseHeader(std::vector<Server> servers); // override
+		void createResponseHeader(); // override
 	    void createResponseMain(); // override
 };
 

@@ -138,7 +138,7 @@ void Operation::start() {
 					if (req->getBuffer().size() == req->getContentLength())
 					{
 						/* GET, POST, DELETE 따라 만들어지는 reponse가 다르다 - kyeonkim */
-						/* 함수로 뺄 부분 - kyoenkim*/
+						/* 함수로 뺄 부분 - kyoenkim*/	
 						AResponse* response = new Get(req); // 임시로 GET으로 만듬.
 						// 응답 헤더
 						// 어떤걸 요청했는지 확인해서 검사 해서 그걸준다.

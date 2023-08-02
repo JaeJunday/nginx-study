@@ -6,7 +6,7 @@ Post::Post(Request* request) : AResponse()
     _request = request;
 }
 
-void Post::createResponseHeader(std::vector<Server> servers)
+void Post::createResponseHeader()
 {
     _buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
 	_buffer << "Date: " << getDate() << "\r\n";
