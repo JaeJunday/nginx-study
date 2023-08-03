@@ -53,6 +53,7 @@ class Request
         const std::string& getConnection() const;
         unsigned int getContentLength() const;
         const std::string& getBufferTunnel() const;
+        Location* getLocation() const;
         // const Location& getLocation() const;
 
         void setRequestLine(std::string& requestLine);
@@ -61,6 +62,5 @@ class Request
         void setBuffer(char *buffer, int size);
         void setBufferTunnel(char *buffer, int size);
         const std::string& getBuffer() const;
-        Location* getLocation() const;
         void setLocation(Location* location);
 };

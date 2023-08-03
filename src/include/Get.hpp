@@ -13,7 +13,7 @@ class Get : public AResponse
         virtual ~Get();
         Get& operator=(Get const& rhs);
         void createResponse(); //override
-        std::string findLocationPath() const;
+        // std::string findLocationPath() const;
         void openPath(const std::string& path);
 		void fileProcess(const std::string& filePath);
 };
