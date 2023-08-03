@@ -13,7 +13,3 @@ void Post::createResponse()
 	_buffer << "Server: " << _serverName << "\r\n";
 	_buffer << "Content-Type: " << _contentType << "\r\n";
 }
-
-void Post::createResponseMain() // override
-{
-}

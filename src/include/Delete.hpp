@@ -8,8 +8,7 @@ class Delete : public AResponse
     private:
     public:
         Delete(Request* request);
-		void createResponseHeader(std::vector<Server> servers); // override
-	    void createResponseMain(); // override
+		void createResponse(); // override
         void removeFile() const;
 };
 
