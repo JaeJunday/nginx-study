@@ -1,3 +1,4 @@
+import sys
 import os
 
 def parse_multipart_data(data, boundary):
@@ -18,7 +19,7 @@ def parse_multipart_data(data, boundary):
             if "Content-Type:" in line:
                 content_type = line.split(": ")[1].split(";")[0]
         if header and content:
-                files.append((filename, content_type, content))
+            files.append((filename, content_type, content))
     return files
 
 def create_files(files, output_dir="."):
@@ -28,25 +29,33 @@ def create_files(files, output_dir="."):
             file.write(content)
 
 if __name__ == "__main__":
-    data = b"""
-------WebKitFormBoundaryI9BGvGlAfS2IafJH
-Content-Disposition: form-data; name="name"; filename="test.txt"
-Content-Type: text/plain
+#     data = b"""
+# ------WebKitFormBoundaryI9BGvGlAfS2IafJH
+# Content-Disposition: form-data; name="name"; filename="test.txt"
+# Content-Type: text/plain
 
-------------<start>-------------
--------------<end>--------------
+# ------------<start>-------------
+# -------------<end>--------------
 
-------WebKitFormBoundaryI9BGvGlAfS2IafJH
-Content-Disposition: form-data; name="name"; filename="test2.txt"
-Content-Type: text/plain
+# ------WebKitFormBoundaryI9BGvGlAfS2IafJH
+# Content-Disposition: form-data; name="name"; filename="test2.txt"
+# Content-Type: text/plain
 
-------------<start>-------------
--------------<end>--------------
+# ------------<start>-------------
+# -------------<end>--------------
 
-------WebKitFormBoundaryI9BGvGlAfS2IafJH--
-"""
+# ------WebKitFormBoundaryI9BGvGlAfS2IafJH--
+# """
+    data = sys.stdin.read()
     output_directory = "./public"
-    boundary = "------WebKitFormBoundaryI9BGvGlAfS2IafJH"
+    # boundary = "------WebKitFormBoundaryI9BGvGlAfS2IafJH"
+    boundary = os.environ.get("BOUNDARY")
+    print("START========================================================PYTHON!!!!!")
+    print(data)
+	# print(boundary)
+	# for key, value in os.environ.items():
+		# print(f"{key}: {value}")
+    print("END =========================================================PYTHON!!!!!")
     parsed_files = parse_multipart_data(data, boundary)
     for filename, content_type, content in parsed_files:
         print(filename)

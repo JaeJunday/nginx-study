@@ -49,6 +49,7 @@ class Request
         const std::string& getTransferEncoding() const;
         const std::string& getConnection() const;
         unsigned int getContentLength() const;
+        const std::string& getBoundary() const;
 
         void setRequestLine(std::string& requestLine);
         void checkMultipleSpaces(const std::string& str);

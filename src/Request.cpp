@@ -253,3 +253,9 @@ void Request::setLocation(Location* location)
 {
     _location = location;
 }
+
+const std::string& Request::getBoundary() const
+{
+	return _boundary;
+}
+

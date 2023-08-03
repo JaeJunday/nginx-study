@@ -5,6 +5,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <cstdlib>
 
 class Post : public AResponse
 {
