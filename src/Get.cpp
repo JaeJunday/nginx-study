@@ -52,6 +52,7 @@ void Get::fileProcess(const std::string& filePath)
 	else 
 	{
 		std::cerr << "not serverpath" << std::endl;
+		std::cerr << "path: " << filePath << std::endl;
 		//server errorcode
 	}
 }

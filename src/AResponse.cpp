@@ -81,6 +81,7 @@ std::string AResponse::findLocationPath() const
  	}
 	if (length == false)
 	{
+		exit(1);
 		// no location errorcode
 	}
 	if (!location._root.empty())
@@ -93,5 +94,8 @@ std::string AResponse::findLocationPath() const
 		result.erase(0, length);
 		result = server.getRoot() + result;
 	}
+	if (result.size() > 1 && result[result.size() - 1] == '/')
+		result.erase(result.size() - 1, 1);
+		std::cerr << "result: " << result << std::endl;
 	return result;
 }

@@ -33,7 +33,7 @@ void Delete::checkLimitExcept() const
             return;
         }
     }
-    // throw 405; 
+    throw 405; 
 }
 
 void Delete::removeFile(std::string file) const
