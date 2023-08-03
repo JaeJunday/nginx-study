@@ -2,6 +2,9 @@
 
 #include "AResponse.hpp"
 #include "Server.hpp"
+#include <iostream>
+#include <unistd.h>
+#include <sys/wait.h>
 
 class Post : public AResponse
 {

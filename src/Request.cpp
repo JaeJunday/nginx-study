@@ -180,36 +180,12 @@ void Request::bufferParsing()
 		pData._data = data;
 		_files.push_back(pData);
 	}
-	// std::cout << "\n=======================" << std::endl;
-	// std::cout << pData._filename << std::endl;
-	// std::cout << pData._contentType << std::endl;
-	// std::cout << pData._data << std::endl;
-	// std::cout << "=======================" << std::endl;
 }
-//         HASH = 0,
-//         HEADER = 1,
-//         CONTENT = 2,
-//         END = 3
-
-// int Request::getServerSocket() const
-// {
-//     return _serverSocket;
-// }
 
 void Request::setBuffer(char *buffer, int size)
 {
 	_buffer += std::string(buffer, size);   
 }
-
-// const std::string& Request::getBufferTunnel() const
-// {
-//     return _bufferTunnel;
-// }
-
-// void Request::setBufferTunnel(char *buffer, int size)
-// {
-//     _bufferTunnel += std::string(buffer, size);   
-// }
 
 const std::string& Request::getConnection() const
 {
@@ -277,9 +253,3 @@ void Request::setLocation(Location* location)
 {
     _location = location;
 }
-
-
-// const Location& Request::getLocation() const
-// {
-//     return _location;
-// }
