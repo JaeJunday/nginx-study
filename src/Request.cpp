@@ -270,7 +270,7 @@ const Server& Request::getServer() const
 
 Location* Request::getLocation() const
 {
-    return _locaion;
+    return _location;
 }
      
 void Request::setLocation(Location* location)

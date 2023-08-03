@@ -124,7 +124,7 @@ void Operation::start() {
 				}
 				else
 				{
-					if (req->getState() == request::READY) //makeResponse()
+					if (req->getState() == request::READY)
 						req->parsing(buffer, tevent.data);
 					else if (req->getState() == request::POST)
 					{
@@ -138,19 +138,21 @@ void Operation::start() {
 					if (req->getBuffer().size() == req->getContentLength())
 					{
 						/* GET, POST, DELETE 따라 만들어지는 reponse가 다르다 - kyeonkim */
-						/* 함수로 뺄 부분 - kyoenkim*/	
-						AResponse* response = new Get(req); // 임시로 GET으로 만듬.
-						// 응답 헤더
-						// 어떤걸 요청했는지 확인해서 검사 해서 그걸준다.
-						//----------------------------------------------- testcode
-						//std::cerr << index << std::endl;
-						//----------------------------------------------- 
-						response->createResponseHeader();
-						response->createResponseMain();
-						/* END ========== */
-						/* 반환 받은 reponse로 이벤트를 건다 - kyeonkim */
+						AResponse* response = new Get(req); // 임시로 GET으로 만듬
+						try
+						{
+							response->createResponse();
+						}
+						catch(const int errnum)
+						{
+							// error function >>> parameter(errnum)
+							std::cerr << "errnum : " << errnum << std::endl;
+						}
+						catch(const std::exception& e)
+						{
+							std::cerr << e.what() << std::endl;
+						}
 						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
-						// EVFILT_TIMER
 						kevent(kq, &tevent, 1, NULL, 0, NULL);
 					}
 				}
@@ -198,7 +200,7 @@ void Operation::acceptClient(int kq, int index)
 // 	//get, head, delete
 // 	AResponse* response = new Get(req);
 // 	// 응답 헤더
-// 	response->createResponseHeader();
+// 	response->createResponse();
 // 	// 있을수도있고 없을 수도 있습니다.
 // 	response->createResponseMain();
 

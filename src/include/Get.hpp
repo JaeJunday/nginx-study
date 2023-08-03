@@ -12,8 +12,8 @@ class Get : public AResponse
         Get(Request* request);
         virtual ~Get();
         Get& operator=(Get const& rhs);
-        void createResponseHeader(); //override
-		void createResponseMain(); //override
+        void createResponse(); //override
         std::string findLocationPath() const;
-        void openPath(const std::string& path) const;
+        void openPath(const std::string& path);
+		void fileProcess(const std::string& filePath);
 };

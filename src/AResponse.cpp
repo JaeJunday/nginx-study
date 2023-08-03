@@ -7,7 +7,8 @@ AResponse::AResponse()
   _reasonPhrase("OK"),
   _serverName("My Server"),
   _contentType("text/html"),
-  _contentLength(0) ,_request(NULL)
+  _contentLength(0),
+  _request(NULL)
 {
     /* Constructor Implementation */
 }

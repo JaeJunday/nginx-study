@@ -8,7 +8,6 @@ class Post : public AResponse
     private:
     public:
         Post(Request* request);
-		void createResponseHeader(); // override
-	    void createResponseMain(); // override
+		void createResponse(); // override
 };
 
