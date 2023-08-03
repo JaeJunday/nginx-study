@@ -53,6 +53,8 @@ class Request
         const std::string& getConnection() const;
         unsigned int getContentLength() const;
         const std::string& getBufferTunnel() const;
+        // const Location& getLocation() const;
+
         void setRequestLine(std::string& requestLine);
         void checkMultipleSpaces(const std::string& str);
         void setFieldLind(std::string& fieldLine);

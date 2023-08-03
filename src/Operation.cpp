@@ -30,7 +30,7 @@ int Operation::createBoundSocket(std::string listen)
 	memset((char*)&serverAddr, 0, sizeof(sockaddr_in));
 	std::vector<std::string> ipPort = util::getToken(listen, ":");
 	uint32_t ip = 0x0000000; 
-	uint32_t port = 0;
+	uint32_t port = 80;
 	if (ipPort.size() == 1)
 		port = util::stoui(ipPort[0]);
 	else if (ipPort.size() == 2)
@@ -138,7 +138,7 @@ void Operation::start() {
 					if (req->getBuffer().size() == req->getContentLength())
 					{
 						/* GET, POST, DELETE 따라 만들어지는 reponse가 다르다 - kyeonkim */
-						AResponse* response = new Get(req); // 임시로 GET으로 만듬
+						AResponse* response = selectMethod(req); // 임시로 GET으로 만듬
 						try
 						{
 							response->createResponse();
@@ -176,6 +176,32 @@ void Operation::start() {
 			}
 		}
 	}
+}
+
+AResponse* Operation::selectMethod(Request* req) const
+{
+	AResponse *result;
+	
+	// limit except를 보려고 하니, 아무리 봐도 리퀘스트가 서버랑 로케이션 데이터를 들고 있는게 맞는지 아니면 요소들만 따로 저장해야 하는건지 모르겠음 
+	// std::vector<std::string> allowMethod = util::getToken(req->getLocation()._limitExcept, " ");
+	// int i = 0;
+	// while(i < allowMethod.size())
+	// {
+	// 	if (allowMethod[i] == req->getMethod())
+	// 		break;
+	// 	++i;
+	// }
+	// error 처리 허용되지 않은 메서드 입니다. >> 에러 코드에 맞게 던져준다.
+	// if (i == allowMethod.size())
+	// 	return NULL;
+
+	if (req->getMethod() == "GET")
+		result = new Get(req);
+	if (req->getMethod() == "POST")
+		result = new Post(req);
+	if (req->getMethod() == "DELETE")
+		result = new Delete(req);
+	return result;
 }
 
 void Operation::acceptClient(int kq, int index)

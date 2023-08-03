@@ -3,6 +3,7 @@
 #include "AResponse.hpp"
 #include "Get.hpp"
 #include "Post.hpp"
+#include "Delete.hpp"
 #include "Server.hpp"
 #include "Request.hpp"
 #include "enum.hpp"
@@ -37,6 +38,9 @@ public:
     //void makeResponse(struct Kevent *tevent, int kq, Request* req);
     void sendData(struct kevent& tevent);
     void testPipe(std::string buffer);
+
+    AResponse* selectMethod(Request* req) const;
 };
 
+// remove testcase function
 void test_print_event(struct kevent event);
