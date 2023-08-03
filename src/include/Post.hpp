@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <cstdlib>
+#include <sys/event.h>  // kqueue
+#include <algorithm> // min
 
 class Post : public AResponse
 {

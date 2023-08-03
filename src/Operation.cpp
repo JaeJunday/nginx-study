@@ -111,8 +111,8 @@ void Operation::start() {
 				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 				Request *req = static_cast<Request*>(tevent.udata);
 				//----------------------------------------------- testcode
-					std::cerr << "===========recv 데이터====================" << std::endl;
-					write(1, buffer, tevent.data);
+					// std::cerr << "===========recv 데이터====================" << std::endl;
+					// write(1, buffer, tevent.data);
 				//-----------------------------------------------	
 				// recvData()
 				if (bytesRead == false || req->getConnection() == "close")

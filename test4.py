@@ -16,6 +16,12 @@ def create_files(parsed_data, output_directory):
         content_type = data.content_type
         file_data = data.data
 
+        # 바이너리 파일 처리
+        if content_type and '/' in content_type:
+            _, ext = content_type.split('/')
+            if ext:
+                filename = f"{filename}.{ext}"
+
         output_path = os.path.join(output_directory, filename)
         with open(output_path, 'wb') as file:
             file.write(file_data)
@@ -53,22 +59,30 @@ def parse_multipart_formdata(body, boundary):
     return form_data_list
 
 # 바운더리 변수
-# boundary = '------WebKitFormBoundary6m96NktxJuonr108'
 boundary = os.environ.get("BOUNDARY")
 output_directory = "./public"
+
 # 테스트를 위한 HTTP 본문 예제 (바이트로 변환)
-# http_body = (f'{boundary}\r\nContent-Disposition: form-data; name="name"; filename="test.txt"\r\nContent-Type: text/plain\r\n\r\n#######################\r\n#######################\r\n#######################\r\n#######################\r\n#######################\r\n#######################\r\n#######################\r\n#######################\r\n{boundary}\r\nContent-Disposition: form-data; name="name"; filename="test2.txt"\r\nContent-Type: text/plain\r\n\r\n#######################\r\n#######################\r\n#######################\r\n#######################\r\n#########0##############\r\n#######################\r\n#######################\r\n#######################\r\n{boundary}--').encode('utf-8')
-http_body = sys.stdin.read().encode('utf-8')
+http_body = sys.stdin.buffer.read()
 
 # 함수 호출하여 객체로 변환
 parsed_data = parse_multipart_formdata(http_body, boundary)
 
 # 결과 출력
-for data in parsed_data:
-    print(f"Filename: {data.filename}")
-    print(f"Content-Type: {data.content_type}")
-    data_lines = data.data.decode('utf-8').strip()
-    print("Data: ")
-    print(data_lines)
-    print("\n")
+# for data in parsed_data:
+#     print(f"Filename: {data.filename}")
+#     print(f"Content-Type: {data.content_type}")
+
+#     # 바이너리 파일은 바이너리 데이터로 출력
+#     if data.content_type and '/' not in data.content_type:
+#         data_lines = data.data.decode('utf-8').strip()
+#         print("Data: ")
+#         print(data_lines)
+#     else:
+#         print("Data: ")
+#         print(data.data)
+
+#     print("\n")
+
+# 파일 생성
 create_files(parsed_data, output_directory)
