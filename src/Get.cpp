@@ -30,7 +30,6 @@ void Get::createResponse()
 	_buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
 	_buffer << "Date: " << getDate() << "\r\n";
 	_buffer << "Server: " << _serverName << "\r\n";
-	_buffer << "Content-Type: " << _contentType << "\r\n";
     std::string path = findLocationPath();
 	openPath(path);
 }
@@ -40,11 +39,13 @@ void Get::fileProcess(const std::string& filePath)
     std::ifstream		file;
     std::stringstream	tmp;
 
+	std::cerr << "filePath: " << filePath << std::endl;
 	file.open(filePath.c_str());
 	if (file.is_open() == true)
 	{
 		tmp << file.rdbuf();
 		_contentLength += tmp.str().length();
+		_buffer << "Content-Type: " << _contentType << "\r\n";
 		_buffer << "Content-Length: " << _contentLength << "\r\n\r\n";
 		_buffer << tmp.str();
 		file.close();
@@ -60,6 +61,7 @@ void Get::fileProcess(const std::string& filePath)
 void Get::openPath(const std::string& path)
 {
 	std::string relativePath = "." + path;
+	std::cerr << "relative: " << relativePath << std::endl;
 	DIR *dir_stream = opendir(relativePath.c_str());
 	
 	if (dir_stream == NULL) 
@@ -81,12 +83,18 @@ void Get::openPath(const std::string& path)
 		else if (_request->getLocation()->_autoindex == "on")
 		{
 			struct dirent *entry;
-			while (entry != NULL)
+			std::stringstream tmp;
+			while (true)
 			{
 				entry = readdir(dir_stream);
-				_buffer << std::string(entry->d_name) + "\n";
+				if (entry == NULL)
+					break;
+				tmp << std::string(entry->d_name) << "\n";
+				_contentLength += tmp.str().length();
 			}
-			_contentLength = _buffer.str().length();
+			_buffer << "Content-Type: " << "text/plane" << "\r\n";
+			_buffer << "Content-Length: " << _contentLength << "\r\n\r\n";
+			_buffer << tmp.str();
 			closedir(dir_stream);
 		}
 		else
