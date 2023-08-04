@@ -1,6 +1,5 @@
 #pragma once
 
-
 namespace server
 {
     enum SERVER
@@ -84,7 +83,6 @@ namespace request
     };
 }
 
-
 namespace file
 {
     enum STATE
@@ -94,5 +92,14 @@ namespace file
         CONTENT = 2,
         END = 3,
         START = 4
+    };
+}
+
+namespace event
+{
+    enum STATE
+    {
+        READ = -1,
+        WRITE = -2
     };
 }
