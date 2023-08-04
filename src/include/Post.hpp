@@ -15,6 +15,8 @@ class Post : public AResponse
     public:
         Post(Request* request);
 		void createResponse(); // override
+        void childProcess(int *writeFd, int *readFd);
 		void uploadFile(int fd, int kq);
+        const std::string& printResult(int fd, int kq);
 };
 

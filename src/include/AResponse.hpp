@@ -7,8 +7,10 @@
 #include <fstream>
 #include <vector>
 #include <dirent.h>
+#include <fcntl.h>
 
 #define TIME_SIZE 40
+#define PIPESIZE 42000
 /*
 1. **Status-Line (상태 라인):** HTTP 응답의 첫 번째 줄로, 프로토콜 버전, 상태 코드 및 상태 메시지로 구성됩니다. <버전> <상태 코드> <사유 구절>
 2. **Date (날짜):** 응답이 생성된 시간을 나타내는 정보입니다.
