@@ -41,4 +41,5 @@ class AResponse
 		virtual void createResponse() =0;
 		void stamp() const;
 		const std::stringstream& getBuffer() const;
+		std::string findLocationPath() const;
 };

@@ -56,3 +56,47 @@ const std::stringstream& AResponse::getBuffer() const
 {
     return _buffer;
 }
+
+std::string AResponse::findLocationPath() const
+{
+	const Server server = _request->getServer();
+	const std::vector<Location>& locations = server.getLocations();
+	std::string result = _request->getRequestUrl();
+	Location location;
+	int length = 0;
+	if (result.empty())
+	{
+		// 경로가 없는 경우 errorcode
+	}
+	for (int i = 0; i < locations.size(); ++i) {		
+		int pathLength = locations[i]._path.length();
+		if (_request->getRequestUrl().compare(0, pathLength, locations[i]._path) == 0)
+		{
+			if (length < pathLength)
+			{
+				length = pathLength;
+				location = locations[i];
+				_request->setLocation(const_cast<Location *>(&_request->getServer().getLocation(i)));
+			}
+		}
+ 	}
+	if (length == false)
+	{
+		exit(1);
+		// no location errorcode
+	}
+	if (!location._root.empty())
+	{
+		result.erase(0, length);
+		result = location._root + result;
+	}
+	else if (!server.getRoot().empty())	
+	{
+		result.erase(0, length);
+		result = server.getRoot() + result;
+	}
+	if (result.size() > 1 && result[result.size() - 1] == '/')
+		result.erase(result.size() - 1, 1);
+		std::cerr << "result: " << result << std::endl;
+	return result;
+}

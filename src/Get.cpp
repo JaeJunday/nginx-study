@@ -23,112 +23,84 @@ Get& Get::operator=(Get const& rhs)
 
 void Get::createResponse()
 {
-	_buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
-	_buffer << "Date: " << getDate() << "\r\n";
-	_buffer << "Server: " << _serverName << "\r\n";
-	_buffer << "Content-Type: " << _contentType << "\r\n";
     std::string path = findLocationPath();
 	openPath(path);
-}
-
-void Get::fileProcess(const std::string& filePath)
-{
-    std::ifstream		file;
-    std::stringstream	tmp;
-
-	file.open(filePath.c_str());
-	if (file.is_open() == true)
-	{
-		tmp << file.rdbuf();
-		_contentLength += tmp.str().length();
-		_buffer << "Content-Length: " << _contentLength << "\r\n\r\n";
-		_buffer << tmp.str();
-		file.close();
-	}
-	else 
-	{
-		std::cerr << "not serverpath" << std::endl;
-		//server errorcode
-	}
 }
 
 void Get::openPath(const std::string& path)
 {
 	std::string relativePath = "." + path;
-	DIR *dir_stream = opendir(relativePath.c_str());
+	std::cerr << "relative: " << relativePath << std::endl;
+	DIR *dirStream = opendir(relativePath.c_str());
+	std::stringstream body;
 	
-	if (dir_stream == NULL) 
-		fileProcess(relativePath);
+	if (dirStream == NULL) 
+		fileProcess(relativePath, body);
 	else
 	{
 		if (!_request->getLocation()->_index.empty())
 		{
-			closedir(dir_stream);
 			relativePath += "/" + _request->getLocation()->_index;
-			fileProcess(relativePath);
+			fileProcess(relativePath, body);
 		}
 		else if (!_request->getServer().getRoot().empty())
 		{
-			closedir(dir_stream);
 			relativePath += "/" + _request->getServer().getRoot();
-			fileProcess(relativePath);
+			fileProcess(relativePath, body);
 		}
 		else if (_request->getLocation()->_autoindex == "on")
-		{
-			struct dirent *entry;
-			while (entry != NULL)
-			{
-				entry = readdir(dir_stream);
-				_buffer << std::string(entry->d_name) + "\n";
-			}
-			_contentLength = _buffer.str().length();
-			closedir(dir_stream);
-		}
+			autoIndexProcess(dirStream, body);	
 		else
 		{
-			closedir(dir_stream);
 			std::cerr << "no file" << std::endl;
 			// 보여줄게 없다는 메시지를 띄운다(state errorcode는 200으로 처리한다. 왜냐하면 폴더는 있기 때문에).
 		}
 	}
+	closedir(dirStream);
+	pushBuffer(body);
 }
 
-std::string Get::findLocationPath() const
+void Get::fileProcess(const std::string& filePath, std::stringstream& body)
 {
-	const Server server = _request->getServer();
-	const std::vector<Location>& locations = server.getLocations();
-	std::string result = _request->getRequestUrl();
-	Location location;
-	int length = 0;
-	if (result.empty())
+    std::ifstream		file;
+
+	std::cerr << "filePath: " << filePath << std::endl;
+	file.open(filePath.c_str());
+	if (file.is_open() == true)
 	{
-		// 경로가 없는 경우 errorcode
+		body << file.rdbuf();
+		_contentType = 
+		_contentLength += body.str().length();
+		file.close();
 	}
-	for (int i = 0; i < locations.size(); ++i) {		
-		int pathLength = locations[i]._path.length();
-		if (_request->getRequestUrl().compare(0, pathLength, locations[i]._path) == 0)
-		{
-			if (length < pathLength)
-			{
-				length = pathLength;
-				location = locations[i];
-				_request->setLocation(const_cast<Location *>(&_request->getServer().getLocation(i)));
-			}
-		}
- 	}
-	if (length == false)
+	else 
 	{
-		// no location errorcode
+		std::cerr << "not serverpath" << std::endl;
+		std::cerr << "path: " << filePath << std::endl;
+		//server errorcode
 	}
-	if (!location._root.empty())
+}
+
+void Get::autoIndexProcess(DIR* dirStream, std::stringstream& body)
+{
+	struct dirent *entry;
+	while (true)
 	{
-		result.erase(0, length);
-		result = location._root + result;
+		entry = readdir(dirStream);
+		if (entry == NULL)
+			break;
+		body << std::string(entry->d_name) << "\n";
+		_contentLength += body.str().length();
 	}
-	else if (!server.getRoot().empty())	
-	{
-		result.erase(0, length);
-		result = server.getRoot() + result;
-	}
-	return result;
+	_contentType = "text/plane";
+}
+
+void Get::pushBuffer(std::stringstream& body)
+{
+	_buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
+	_buffer << "Date: " << getDate() << "\r\n";
+	_buffer << "Server: " << _serverName << "\r\n";
+	_buffer << "Content-Type: " << _contentType << "\r\n";
+	_buffer << "Content-Length: " << _contentLength << "\r\n\r\n";
+	_buffer << body.str();
 }

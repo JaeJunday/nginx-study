@@ -51,13 +51,13 @@ class Request
         const std::string& getConnection() const;
         unsigned int getContentLength() const;
         const std::string& getBoundary() const;
-
+        Location* getLocation() const;
+        
         void setRequestLine(std::string& requestLine);
         void checkMultipleSpaces(const std::string& str);
         void setFieldLind(std::string& fieldLine);
         void setBuffer(char *buffer, int size);
         const std::string& getBuffer() const;
-        Location* getLocation() const;
         void setLocation(Location* location);
         void setEventState(int eventState);
         int getEventState() const;
