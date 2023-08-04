@@ -6,7 +6,6 @@ struct PostData;
 
 class Get : public AResponse
 {
-    private:
     public:
         Get();
         Get(Request* request);
@@ -15,5 +14,7 @@ class Get : public AResponse
         void createResponse(); //override
         // std::string findLocationPath() const;
         void openPath(const std::string& path);
-		void fileProcess(const std::string& filePath);
+        void fileProcess(const std::string& filePath, std::stringstream& body);
+        void pushBuffer(std::stringstream& body);
+		void autoIndexProcess(DIR* dirStream, std::stringstream& body);
 };
