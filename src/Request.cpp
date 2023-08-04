@@ -268,3 +268,154 @@ int Request::getEventState() const
 {
     return _eventState;
 }
+
+bool Request::checkDeque(Request* req, size_t& lenToSave, std::string& updatedBuffer)
+{
+	bool head = false;
+
+	if (_chunkedBuffer.empty() == false && \
+		_chunkedBuffer.back()._len != _chunkedBuffer.back()._saved.length())
+	{
+		Buffer prevBuffer = _chunkedBuffer.back();
+		_chunkedBuffer.pop_back();
+	    lenToSave = prevBuffer._len;
+		if (lenToSave != 0)
+			head = true;
+		updatedBuffer = prevBuffer._saved;
+	}
+	return head;
+}
+
+void Request::endChunkedParsing(Request* req)
+{
+	std::deque<struct Buffer> chunked = _chunkedBuffer;
+	int totalLen = 0;
+	std::string mergedBuffer;
+
+	while (chunked.size())
+	{
+		struct Buffer buf = chunked.back();
+		totalLen += buf._len;
+		mergedBuffer += buf._saved;
+		chunked.pop_back();
+	}
+    // ---------------------------------------- testcode
+    std::cerr << "totalLen:" << totalLen << std::endl;
+
+    //std::cerr << "mergedBuffer\n" << mergedBuffer << std::endl;
+    // ---------------------------------------- testcode
+	// req->changeBuffer(mergedBuffer);
+	// req->setContentLength(totalLen);
+    _buffer = mergedBuffer;
+    _contentLength = totalLen;
+
+}
+
+bool Request::parseChunkedData(Request* req, bool head, int lenToSave, const std::string& updatedBuffer)
+{
+    int start = 0;
+    std::string str;
+    size_t i = 0;
+    size_t j = 0;
+	
+    while (1)
+    {
+        if (head == false)
+        {
+			i = updatedBuffer.find("\r\n", start);
+            if (i != std::string::npos)
+            {
+                char *end = NULL;
+                str = updatedBuffer.substr(start, i - start);
+                if (str.empty() == false)
+                {
+                    lenToSave = std::strtol(str.c_str(), &end, 16);
+                	if (lenToSave == 0)
+                	{
+                    	// end chunked!!
+						endChunkedParsing(req);
+                    	return (true);
+                	}
+				}
+                head = true;
+                i += 2;
+            }
+            else
+            {
+                Buffer buf;
+                str = updatedBuffer.substr(start, std::string::npos);
+                if (str.empty() == false)
+				{
+					buf._saved = str;
+                	buf._len = 0;
+                	_chunkedBuffer.push_back(buf);
+				}
+                break;
+            }
+        }
+        if (head == true)
+        {
+			
+			Buffer buf;
+			buf._len = lenToSave;
+            const char* st = updatedBuffer.c_str();
+            const char* p = updatedBuffer.c_str() + i;
+            const char* mid = p;
+            
+            while (1)
+            {
+                if (updatedBuffer.length() == (p - st))
+                {
+                    j = std::string::npos;
+                    break;
+                }
+		  	    if (lenToSave == (p - mid))
+                {
+                    j = p - mid;
+                    break;
+                }
+                ++p;
+            }
+			
+            if (j != std::string::npos)
+            {
+                str = updatedBuffer.substr(i, p - mid); 
+                if (str.empty() == false)
+                {
+                    if (str.size() == lenToSave)
+                    {
+                        buf._saved = str;
+                		_chunkedBuffer.push_back(buf);
+                    }
+                    else // ------------------------------ testcode  debug
+                    {
+                        std::cerr << "len false" << std::endl;
+                    }
+                    // ------------------------------------ testcode debug
+                }
+                head = false;
+            }
+            else
+            {
+                str = updatedBuffer.substr(i, p - st); 
+                if (str.empty() == false)
+                {
+                    buf._saved = str;
+                    _chunkedBuffer.push_back(buf);
+                }
+                break;
+            }
+            if (j != std::string::npos)
+                j += 2;
+			else
+				break;
+        }
+        start += j;
+    }
+    return (false);
+}
+
+std::deque<struct Buffer>& Request::getChunkedBuffer()
+{
+	return _chunkedBuffer;
+}

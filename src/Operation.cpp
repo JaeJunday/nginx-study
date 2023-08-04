@@ -128,28 +128,34 @@ void Operation::start() {
 						req->parsing(buffer, tevent.data);
 					else if (req->getState() == request::POST)
 					{
-						if (req->getTransferEncoding() == "chunked")
-						{
-							// chunked code ...
-						}
-						else
+						if (req->getTransferEncoding() != "chunked")
 							req->setBuffer(buffer, tevent.data);
+					}
+					if (req->getTransferEncoding() == "chunked")
+					{
+						bool head = false;
+						size_t lenToSave = 0;
+                        
+						if (req->getBuffer().empty() == false && req->getChunkedBuffer().empty() == true)
+							req->parseChunkedData(req, head, lenToSave, req->getBuffer());
+						else
+						{
+							std::string updatedBuffer;
+							head = req->checkDeque(req, lenToSave, updatedBuffer);
+							updatedBuffer += std::string(buffer, tevent.data);
+							req->parseChunkedData(req, head, lenToSave, updatedBuffer);
+						}
 					}
 					if (req->getBuffer().size() == req->getContentLength())
 					{
 						/* GET, POST, DELETE 따라 만들어지는 reponse가 다르다 - kyeonkim */
 						AResponse* response = selectMethod(req, kq); // 임시로 GET으로 만듬
-						try
-						{
+						try {
 							response->createResponse();
-						}
-						catch(const int errnum)
-						{
+						} catch(const int errnum) {
 							// error function >>> parameter(errnum)
 							std::cerr << "errnum : " << errnum << std::endl;
-						}
-						catch(const std::exception& e)
-						{
+						} catch(const std::exception& e) {
 							std::cerr << e.what() << std::endl;
 						}
 						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
