@@ -55,8 +55,8 @@ void Get::openPath(const std::string& path)
 			std::cerr << "no file" << std::endl;
 			// 보여줄게 없다는 메시지를 띄운다(state errorcode는 200으로 처리한다. 왜냐하면 폴더는 있기 때문에).
 		}
+		closedir(dirStream);
 	}
-	closedir(dirStream);
 	pushBuffer(body);
 }
 

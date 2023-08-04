@@ -18,9 +18,7 @@ def create_files(parsed_data, output_directory):
 
         # 바이너리 파일 처리
         if content_type and '/' in content_type:
-            _, ext = content_type.split('/')
-            if ext:
-                filename = f"{filename}.{ext}"
+            filename = f"{filename}"
 
         output_path = os.path.join(output_directory, filename)
         with open(output_path, 'wb') as file:
