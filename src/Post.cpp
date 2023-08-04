@@ -10,6 +10,32 @@ Post::Post(Request* request) : AResponse()
     _request = request;
 }
 
+void Post::uploadFile(int fd, int kq)
+{
+	struct kevent	tevent;
+	int				ret;
+	int				size = 0;
+	std::string		data = _request->getBuffer();
+	size_t			writeSize;
+
+	while (true)
+	{
+		ret = kevent(kq, nullptr, 0, &tevent, 1, nullptr);
+		if (ret == -1) 
+			std::cerr << "kevent error: " << std::strerror(errno) << std::endl;
+		if (size >= data.length())
+			break;
+		if (tevent.filter == EVFILT_WRITE)
+		{
+			writeSize = std::min((size_t)tevent.data, data.size() - size);
+			// 여기서 데이터를 적절하게 처리하거나 필요한 크기로 분할하여 처리
+			// 예를 들면 데이터를 파일에 쓰는 것도 가능
+			write(fd, data.c_str() + size, writeSize);
+			size += tevent.data;
+		}
+	}
+}
+
 void Post::createResponse()
 {
     _buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
@@ -21,12 +47,8 @@ void Post::createResponse()
 	int writeFd[2]; // parent(w) -> child(r)
 	int readFd[2]; // child(w) -> parent(r)
 	struct kevent event;
-	struct kevent tevent;
 	int kq2, ret;
-	int size = 0;
-	std::string data = _request->getBuffer();
 
-	// std::cerr << "HERE!!!POST!!!!!" << std::endl;
     pipe(writeFd);
 	kq2 = kqueue();
 	// EV_SET(&event, fd[0], EVFILT_READ, EV_ADD, 0, 0, nullptr);
@@ -53,21 +75,7 @@ void Post::createResponse()
     }
     // 부모 프로세스에서 파이프를 닫습니다.
     close(writeFd[0]);
-	while (true)
-	{
-		ret = kevent(kq2, nullptr, 0, &tevent, 1, nullptr);
-		if (ret == -1) 
-			std::cerr << "kevent error: " << std::strerror(errno) << std::endl;
-		if (size >= data.length())
-			break;
-		if (tevent.filter == EVFILT_WRITE)
-		{
-			// 여기서 데이터를 적절하게 처리하거나 필요한 크기로 분할하여 처리
-			// 예를 들면 데이터를 파일에 쓰는 것도 가능
-			write(writeFd[1], data.c_str() + size, tevent.data);
-			size += tevent.data;
-		}
-	}
+	uploadFile(writeFd[1], kq2);
     close(writeFd[1]);
     // 자식 프로세스가 종료될 때까지 기다립니다.
     waitpid(pid, NULL, 0);

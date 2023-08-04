@@ -15,5 +15,6 @@ class Post : public AResponse
     public:
         Post(Request* request);
 		void createResponse(); // override
+		void uploadFile(int fd, int kq);
 };
 
