@@ -58,7 +58,7 @@ void Post::childProcess(int *writeFd, int *readFd)
 	close(readFd[1]);
 	setenv("BOUNDARY", _request->getBoundary().c_str(), true);
 	extern char** environ;
-	const char* scriptPath = "test4.py";  // 실행할 파이썬 스크립트의 경로
+	const char* scriptPath = "upload_cgi.py";  // 실행할 파이썬 스크립트의 경로
 	char* const args[] = {const_cast<char*>("python3"), const_cast<char*>(scriptPath), nullptr};
 	// execve 함수로 파이썬 스크립트 실행
 	if (execve("/usr/bin/python3", args, environ) == -1) {
