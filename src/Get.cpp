@@ -31,27 +31,6 @@ void Get::createResponse()
 	openPath(path);
 }
 
-void Get::fileProcess(const std::string& filePath, std::stringstream& body)
-{
-    std::ifstream		file;
-
-	std::cerr << "filePath: " << filePath << std::endl;
-	file.open(filePath.c_str());
-	if (file.is_open() == true)
-	{
-		body << file.rdbuf();
-		_contentType = 
-		_contentLength += body.str().length();
-		file.close();
-	}
-	else 
-	{
-		std::cerr << "not serverpath" << std::endl;
-		std::cerr << "path: " << filePath << std::endl;
-		//server errorcode
-	}
-}
-
 void Get::openPath(const std::string& path)
 {
 	std::string relativePath = "." + path;
@@ -83,6 +62,27 @@ void Get::openPath(const std::string& path)
 	}
 	closedir(dirStream);
 	pushBuffer(body);
+}
+
+void Get::fileProcess(const std::string& filePath, std::stringstream& body)
+{
+    std::ifstream		file;
+
+	std::cerr << "filePath: " << filePath << std::endl;
+	file.open(filePath.c_str());
+	if (file.is_open() == true)
+	{
+		body << file.rdbuf();
+		_contentType = 
+		_contentLength += body.str().length();
+		file.close();
+	}
+	else 
+	{
+		std::cerr << "not serverpath" << std::endl;
+		std::cerr << "path: " << filePath << std::endl;
+		//server errorcode
+	}
 }
 
 void Get::autoIndexProcess(DIR* dirStream, std::stringstream& body)
