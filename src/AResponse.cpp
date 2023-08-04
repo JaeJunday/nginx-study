@@ -1,14 +1,15 @@
 #include "AResponse.hpp"
 #include "Request.hpp"
 
-AResponse::AResponse()
+AResponse::AResponse(int kq)
 : _version("HTTP/1.1"), 
   _stateCode("200"), 
   _reasonPhrase("OK"),
   _serverName("My Server"),
   _contentType("text/html"),
   _contentLength(0),
-  _request(NULL)
+  _request(NULL),
+  _kq(kq)
 {
     /* Constructor Implementation */
 }

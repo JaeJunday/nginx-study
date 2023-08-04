@@ -1,4 +1,5 @@
 #include "Util.hpp"
+#include "Request.hpp"
 
 std::vector<std::string> util::getToken(const std::string& str, const std::string& delimiters)
 {
@@ -39,4 +40,55 @@ uint32_t util::convertIp(std::string& ipStr)
         ip |= octet << shift;
     }
     return ip;
+}
+
+void util::setEvent(Request *req, int kq, int filter)
+{
+    struct kevent event;
+
+    // DELETE
+    if (req->getEventState() == event::READ && filter == event::WRITE)
+    {
+        EV_SET(&event, req->getSocket(), EVFILT_READ, EV_DELETE, 0, 0, req);
+        kevent(kq, &event, 1, NULL, 0, NULL);
+    }
+    else if (req->getEventState() == event::WRITE && filter == event::READ)
+    { 
+        EV_SET(&event, req->getSocket(), EVFILT_WRITE, EV_DELETE, 0, 0, req);
+        kevent(kq, &event, 1, NULL, 0, NULL);
+    }
+    // ADD
+    if (filter == event::READ)
+    {
+        EV_SET(&event, req->getSocket(), EVFILT_READ, EV_ADD, 0, 0, req);
+        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
+            std::cerr << "invalid Read event set" << std::endl;
+        req->setEventState(event::READ);
+    }
+    else if (filter == event::WRITE)
+    {
+        EV_SET(&event, req->getSocket(), EVFILT_WRITE, EV_ADD, 0, 0, req);
+        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
+            std::cerr << "invalid Write event set" << std::endl;
+        req->setEventState(event::READ);
+    }
+}
+
+void util::setEvent(int fd, int kq, int filter)
+{
+    struct kevent event;
+
+    // ADD
+    if (filter == event::READ)
+    {
+        EV_SET(&event, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
+            std::cerr << "invalid Read event set" << std::endl;
+    }
+    else if (filter == event::WRITE)
+    {
+        EV_SET(&event, fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
+        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
+            std::cerr << "invalid Write event set" << std::endl;
+    }
 }

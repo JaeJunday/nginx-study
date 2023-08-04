@@ -34,6 +34,7 @@ class Request
         std::string     _transferEncoding;
         std::vector<PostData> _files;
         std::string     _boundary;
+        int             _eventState;
     public:
         Request(int socket, const Server& server);
         void parsing(char* buf, intptr_t size);
@@ -58,4 +59,6 @@ class Request
         const std::string& getBuffer() const;
         Location* getLocation() const;
         void setLocation(Location* location);
+        void setEventState(int eventState);
+        int getEventState() const;
 };

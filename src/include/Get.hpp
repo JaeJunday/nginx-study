@@ -8,8 +8,7 @@ class Get : public AResponse
 {
     private:
     public:
-        Get();
-        Get(Request* request);
+        Get(Request* request, int kq);
         virtual ~Get();
         Get& operator=(Get const& rhs);
         void createResponse(); //override

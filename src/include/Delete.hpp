@@ -7,7 +7,7 @@ class Delete : public AResponse
 {
     private:
     public:
-        Delete(Request* request);
+        Delete(Request* request, int kq);
 		void createResponse(); // override
         void removeFile() const;
 };

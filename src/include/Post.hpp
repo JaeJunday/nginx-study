@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Util.hpp"
 #include "AResponse.hpp"
 #include "Server.hpp"
 #include <iostream>
@@ -11,9 +12,8 @@
 
 class Post : public AResponse
 {
-    private:
     public:
-        Post(Request* request);
+        Post(Request* request, int kq);
 		void createResponse(); // override
         void childProcess(int *writeFd, int *readFd);
 		void uploadFile(int fd, int kq);

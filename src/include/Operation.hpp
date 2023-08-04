@@ -38,8 +38,8 @@ public:
     //void makeResponse(struct Kevent *tevent, int kq, Request* req);
     void sendData(struct kevent& tevent);
     void testPipe(std::string buffer);
-
-    AResponse* selectMethod(Request* req) const;
+    
+    AResponse* selectMethod(Request* req, int kq) const;
 };
 
 // remove testcase function

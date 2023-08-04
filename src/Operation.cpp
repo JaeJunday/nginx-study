@@ -102,7 +102,7 @@ void Operation::start() {
 		// 서버로 연결요청 왔을때
 		int index = findServer(tevent.ident);
 		if (index >= 0)
-			acceptClient(kq, index);	
+			acceptClient(kq, index);
 		else // 클라이언트로 연결요청이 들어왔을 때 //recv data
 		{
 			if (tevent.filter == EVFILT_READ)
@@ -138,7 +138,7 @@ void Operation::start() {
 					if (req->getBuffer().size() == req->getContentLength())
 					{
 						/* GET, POST, DELETE 따라 만들어지는 reponse가 다르다 - kyeonkim */
-						AResponse* response = selectMethod(req); // 임시로 GET으로 만듬
+						AResponse* response = selectMethod(req, kq); // 임시로 GET으로 만듬
 						try
 						{
 							response->createResponse();
@@ -178,7 +178,7 @@ void Operation::start() {
 	}
 }
 
-AResponse* Operation::selectMethod(Request* req) const
+AResponse* Operation::selectMethod(Request* req, int kq) const
 {
 	AResponse *result;
 	
@@ -196,11 +196,11 @@ AResponse* Operation::selectMethod(Request* req) const
 	// 	return NULL;
 
 	if (req->getMethod() == "GET")
-		result = new Get(req);
+		result = new Get(req, kq);
 	if (req->getMethod() == "POST")
-		result = new Post(req);
+		result = new Post(req, kq);
 	if (req->getMethod() == "DELETE")
-		result = new Delete(req);
+		result = new Delete(req, kq);
 	return result;
 }
 
@@ -217,8 +217,7 @@ void Operation::acceptClient(int kq, int index)
 
 	Request *request = new Request(requestFd, _servers[index]);
 	_requests.insert(std::make_pair(requestFd, request));
-	EV_SET(&revent, requestFd, EVFILT_READ, EV_ADD, 0, 0, request);
-	kevent(kq, &revent, 1, NULL, 0, NULL);
+	util::setEvent(request, kq, EVFILT_READ);
 }
 
 // void Operation::makeResponse(struct kevent *tevent, int kq, Request* req)

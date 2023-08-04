@@ -1,7 +1,7 @@
 #include "Request.hpp"
 
 Request::Request(int socket, const Server& server)
-    : _server(server), _state(0), _socket(socket), _port(0), _contentLength(0)
+    : _server(server), _state(0), _socket(socket), _port(0), _contentLength(0), _eventState(0)
 {
 }
 
@@ -187,6 +187,11 @@ void Request::setBuffer(char *buffer, int size)
 	_buffer += std::string(buffer, size);   
 }
 
+void Request::setEventState(int eventState)
+{
+    _eventState = eventState;
+}
+
 const std::string& Request::getConnection() const
 {
     return _connection;
@@ -259,3 +264,7 @@ const std::string& Request::getBoundary() const
 	return _boundary;
 }
 
+int Request::getEventState() const
+{
+    return _eventState;
+}

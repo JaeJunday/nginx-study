@@ -1,7 +1,7 @@
 #include "Delete.hpp"
 #include "Request.hpp"
 
-Delete::Delete(Request* request) : AResponse()
+Delete::Delete(Request* request, int kq) : AResponse(kq)
 {
     _request = request;
 }

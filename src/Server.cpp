@@ -62,7 +62,6 @@ std::string Server::getValue(int index) const
         case server::LISTEN:
             return (_listen);
         case server::ERROR:
-            return _serverName[index];
             return (_errorPage[index]);
         case server::INDEX:
             return (_index);

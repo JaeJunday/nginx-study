@@ -2,11 +2,7 @@
 #include "Server.hpp"
 #include "Get.hpp"
 
-Get::Get() : AResponse()
-{ 
-}
-
-Get::Get(Request* request) : AResponse()
+Get::Get(Request* request, int kq) : AResponse(kq)
 {
     _request = request;
 }
