@@ -1,4 +1,5 @@
 #include "Operation.hpp"
+#include "Server.hpp"
 
 Operation::~Operation()
 {
@@ -111,7 +112,7 @@ void Operation::start() {
 				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 				Request *req = static_cast<Request*>(tevent.udata);
 				//----------------------------------------------- testcode
-					// std::cerr << "===========recv 데이터====================" << std::endl;
+					 //std::cerr << "===========recv 데이터====================" << std::endl;
 					// write(1, buffer, tevent.data);
 				//-----------------------------------------------	
 				// recvData()
@@ -133,18 +134,15 @@ void Operation::start() {
 					}
 					if (req->getTransferEncoding() == "chunked")
 					{
-						bool head = false;
-						size_t lenToSave = 0;
-                        
 						if (req->getBuffer().empty() == false && req->getChunkedBuffer().empty() == true)
-							req->parseChunkedData(req, head, lenToSave, req->getBuffer());
+                            req->parseChunkedData(req, req->getBuffer());
 						else
 						{
 							std::string updatedBuffer;
-							head = req->checkDeque(req, lenToSave, updatedBuffer);
-							updatedBuffer += std::string(buffer, tevent.data);
-							req->parseChunkedData(req, head, lenToSave, updatedBuffer);
+							updatedBuffer = std::string(buffer, tevent.data);
+							req->parseChunkedData(req, updatedBuffer);
 						}
+                        
 					}
 					if (req->getBuffer().size() == req->getContentLength())
 					{
