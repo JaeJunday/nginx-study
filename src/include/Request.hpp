@@ -69,8 +69,8 @@ class Request
 		void setEventState(int eventState);
 		int getEventState() const;
 		// chunked=========================
-		bool checkDeque(Request* req, size_t& lenToSave, std::string& updatedBuffer);
+		bool checkDeque(Request* req, int& lenToSave, std::string& updatedBuffer);
 		void endChunkedParsing(Request* req);
-		bool parseChunkedData(Request* req, bool head, int lenToSave, const std::string& updatedBuffer);
+		bool parseChunkedData(Request* req, const std::string& updatedBuffer);
 		std::deque<struct Buffer>& getChunkedBuffer();
 };
