@@ -246,6 +246,7 @@ void Operation::sendData(struct kevent& tevent)
 	AResponse* res = static_cast<AResponse*>(tevent.udata);
 	res->stamp();
 	ssize_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
+	std::cerr << "==============================response data==============================" << std::endl;
 	std::cerr << res->getBuffer().str().c_str() << std::endl;
 	//-------------------------------------------------------------  testcode
 	// std::cout << res->getBuffer().str() << std::endl;

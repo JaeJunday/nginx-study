@@ -38,7 +38,13 @@ void Get::openPath(const std::string& path)
 		fileProcess(relativePath, body);
 	else
 	{
-		if (!_request->getLocation()->_index.empty())
+		if (!_request->getLocation()->_tryFiles.empty())
+		{
+			if (_request->getLocation()->_tryFiles != "/")
+				relativePath += "/" + _request->getLocation()->_tryFiles;
+			fileProcess(relativePath, body);
+		}
+		else if (!_request->getLocation()->_index.empty())
 		{
 			relativePath += "/" + _request->getLocation()->_index;
 			fileProcess(relativePath, body);
