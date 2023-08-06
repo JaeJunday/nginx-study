@@ -1,5 +1,4 @@
 #include "Operation.hpp"
-#include "Server.hpp"
 
 Operation::~Operation()
 {
