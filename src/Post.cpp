@@ -47,14 +47,29 @@ void Post::childProcess(int *writeFd, int *readFd)
 	dup2(readFd[1], STDOUT_FILENO);
 	close(readFd[0]);
 	close(readFd[1]);
-	setenv("BOUNDARY", _request->getBoundary().c_str(), true);
-	extern char** environ;
-	const char* scriptPath = "upload_cgi.py";  // 실행할 파이썬 스크립트의 경로
-	char* const args[] = {const_cast<char*>("python3"), const_cast<char*>(scriptPath), nullptr};
-	// execve 함수로 파이썬 스크립트 실행
-	if (execve("/usr/bin/python3", args, environ) == -1) {
-		perror("execve");  // 오류 처리
+	if (_request->getTransferEncoding() == "chunked")
+	{
+		const char* scriptPath = "./src/cgi/chunked_upload_cgi.py";  // 실행할 파이썬 스크립트의 경로
+		char* const args[] = {const_cast<char*>("python3"), const_cast<char*>(scriptPath), nullptr};
+		setenv("FILENAME", _request->getChunkedFilename().c_str(), true);
+		setenv("CONTENT_TYPE", _request->getContentType().c_str(), true);
+		extern char** environ;
+		if (execve("/usr/bin/python3", args, environ) == -1) {
+			perror("execve");  // 오류 처리
+		}
 	}
+	else
+	{
+		const char* scriptPath = "./src/cgi/upload_cgi.py";  // 실행할 파이썬 스크립트의 경로
+		char* const args[] = {const_cast<char*>("python3"), const_cast<char*>(scriptPath), nullptr};
+		setenv("BOUNDARY", _request->getBoundary().c_str(), true);
+		extern char** environ;
+		// execve 함수로 파이썬 스크립트 실행
+		if (execve("/usr/bin/python3", args, environ) == -1) {
+			perror("execve");  // 오류 처리
+		}
+	}
+
 }
 
 void Post::uploadFile(int fd, int kq)
@@ -81,7 +96,7 @@ void Post::uploadFile(int fd, int kq)
 	}
 }
 
-const std::string& Post::printResult(int fd, int kq)
+const std::string Post::printResult(int fd, int kq)
 {
 	struct	kevent tevent;
 	size_t	size = 0;

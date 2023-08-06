@@ -11,7 +11,6 @@
 #include <queue>
 #include <fcntl.h> 
 #include <deque>
-struct PostData{ std::string _data; std::string _filename; std::string _contentType; };
 
 struct Buffer
 {
@@ -38,14 +37,13 @@ class Request
 		std::string     _contentType;
 		unsigned int    _contentLength;
 		std::string     _transferEncoding;
-		std::vector<PostData> _files;
+		std::string		_chunkedFilename;
 		std::string     _boundary;
 		int             _eventState;
 		std::deque<Buffer> _chunkedBuffer;
 	public:
 		Request(int socket, const Server& server);
 		void parsing(char* buf, intptr_t size);
-		void bufferParsing();
 		int getSocket() const;
 		int getState() const;
 		const Server& getServer() const;
@@ -59,7 +57,8 @@ class Request
 		unsigned int getContentLength() const;
 		const std::string& getBoundary() const;
 		Location* getLocation() const;
-		
+
+		const std::string& getContentType();
 		void setRequestLine(std::string& requestLine);
 		void checkMultipleSpaces(const std::string& str);
 		void setFieldLind(std::string& fieldLine);
@@ -69,6 +68,7 @@ class Request
 		void setEventState(int eventState);
 		int getEventState() const;
 		// chunked=========================
+		const std::string& getChunkedFilename();
 		bool checkDeque(Request* req, int& lenToSave, std::string& updatedBuffer);
 		void endChunkedParsing(Request* req);
 		bool parseChunkedData(Request* req, const std::string& updatedBuffer);

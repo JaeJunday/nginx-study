@@ -53,7 +53,7 @@ void Request::setFieldLind(std::string& fieldLine)
     if (token[0] == "Content-Type")
     {
         const std::string hash = "boundary=";
-        if (int index = token[1].find(hash))
+        if (int index = token[1].find(hash) != std::string::npos)
             _boundary = "--" + std::string(token[1], index + hash.length(), token[1].size() - index);
         else 
             _contentType = token[1]; 
@@ -132,54 +132,6 @@ std::string removeSpecificCharacter(std::string str, char ch)
 		pos = str.find(ch, pos);
 	}
 	return (str);
-}
-
-void Request::bufferParsing()
-{
-    int state = file::START;
-	
-    if (_boundary.empty())
-		return;
-
-    std::stringstream bufferStream;
-    bufferStream << _buffer;
-	std::string line;
-	std::vector<std::string> tempstrs;
-	PostData pData;
-
-	while (state != file::HEADER)
-	{
-		getline(bufferStream, line);
-		if (line.erase(line.size() - 1) == _boundary)
-			state = file::HASH;
-		else if (state == file::HASH)
-		{
-			tempstrs = util::getToken(line, ";");
-			for (size_t i = 0; i < tempstrs.size(); i++)
-			{
-				if (tempstrs[i].find("filename") != std::string::npos)
-				{
-					std::vector<std::string> keyValueStr = util::getToken(tempstrs[i], "=");
-					pData._filename = removeSpecificCharacter(keyValueStr[1], '\"');
-				}
-				else if (tempstrs[i].find("Content-Type") != std::string::npos)
-				{
-					std::vector<std::string> keyValueStr = util::getToken(tempstrs[i], ": ");
-					pData._contentType = keyValueStr[1].erase(0, 1);
-				}
-			}
-		}
-		if (pData._contentType.size() && pData._filename.size())
-			state = file::HEADER;
-	}
-	if (state == file::HEADER)
-	{
-		int start = _buffer.find("\r\n\r\n") + 4;
-		int end = _buffer.find("\r\n", start) - 1;
-		std::string data = _buffer.substr(start, end - start);
-		pData._data = data;
-		_files.push_back(pData);
-	}
 }
 
 void Request::setBuffer(char *buffer, int size)
@@ -269,6 +221,17 @@ int Request::getEventState() const
     return _eventState;
 }
 
+const std::string& Request::getContentType()
+{
+    return _contentType;
+}
+
+
+const std::string& Request::getChunkedFilename()
+{
+    return _chunkedFilename;
+}
+
 bool Request::checkDeque(Request* req, int& lenToSave, std::string& updatedBuffer)
 {
 	bool head = false;
@@ -291,6 +254,10 @@ void Request::endChunkedParsing(Request* req)
 	std::deque<struct Buffer> chunked = _chunkedBuffer;
 	int totalLen = 0;
 	std::string mergedBuffer;
+    std::vector<std::string> url = util::getToken(_requestUrl, "/");
+
+    if (url.size() >= 1)
+        _chunkedFilename = url[url.size() - 1];
 
 	while (chunked.size())
 	{
@@ -311,7 +278,10 @@ void Request::endChunkedParsing(Request* req)
 	// req->setContentLength(totalLen);
     _buffer = mergedBuffer;
     _contentLength = totalLen;
-
+    // std::cerr << "=============chunked data====================" << std::endl;
+    // std::cerr << _chunkedFilename << std::endl;
+    // std::cerr << _contentType << std::endl;
+    // std::cerr << _buffer << std::endl;
 }
 
 
@@ -343,6 +313,7 @@ bool Request::parseChunkedData(Request* req, const std::string& updatedBuffer)
                 	if (lenToSave == 0)
                 	{
 						endChunkedParsing(req);
+                        // updatedBuffer 에 데이터가 남아 있다면 다음에 들어오는 요청 헤더일수도 있기 때문에 보관해야 한다.... ㅜㅜ -semikim
                     	return (true);
                 	}
 				}
@@ -397,6 +368,10 @@ bool Request::parseChunkedData(Request* req, const std::string& updatedBuffer)
                     // ------------------------------------ testcode debug
                 }
                 head = false;
+                if (e != std::string::npos)
+                    e += 2;
+                else
+                    break;
             }
             else
             {
@@ -408,10 +383,6 @@ bool Request::parseChunkedData(Request* req, const std::string& updatedBuffer)
                 }
                 break;
             }
-            if (e != std::string::npos)
-                e += 2;
-			else
-				break;
         }
         start = e;
     }
