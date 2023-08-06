@@ -294,10 +294,10 @@ void Request::endChunkedParsing(Request* req)
 
 	while (chunked.size())
 	{
-		struct Buffer buf = chunked.back();
+		struct Buffer buf = chunked.front();
 		totalLen += buf._len;
 		mergedBuffer += buf._saved;
-		chunked.pop_back();
+		chunked.pop_front();
 	}
     // ---------------------------------------- testcode
     std::cerr << "totalLen:" << totalLen << std::endl;

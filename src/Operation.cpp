@@ -125,6 +125,7 @@ void Operation::start() {
 				}
 				else
 				{
+
 					if (req->getState() == request::READY)
 						req->parsing(buffer, tevent.data);
 					else if (req->getState() == request::POST)
