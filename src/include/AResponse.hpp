@@ -3,8 +3,8 @@
 #include <iostream> 
 #include <string> 
 #include <ctime>
-#include <sstream>
-#include <fstream>
+#include <sstream> 
+#include <fstream> 
 #include <vector>
 #include <dirent.h>
 #include <fcntl.h>
@@ -43,4 +43,5 @@ class AResponse
 		const std::stringstream& getBuffer() const;
 		std::string findLocationPath() const;
 		void checkLimitExcept() const;
+		std::string findContentType(const std::string& filePath);
 };
