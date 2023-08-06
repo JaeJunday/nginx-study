@@ -112,7 +112,7 @@ void Operation::start() {
 				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 				Request *req = static_cast<Request*>(tevent.udata);
 				//----------------------------------------------- testcode
-					 //std::cerr << "===========recv 데이터====================" << std::endl;
+					//std::cerr << "===========recv 데이터====================" << std::endl;
 					// write(1, buffer, tevent.data);
 				//-----------------------------------------------	
 				// recvData()
@@ -138,9 +138,9 @@ void Operation::start() {
                             req->parseChunkedData(req, req->getBuffer());
 						else
 						{
-							std::string updatedBuffer;
-							updatedBuffer = std::string(buffer, tevent.data);
-							req->parseChunkedData(req, updatedBuffer);
+							//updatedBuffer = std::string(buffer, tevent.data);
+							req->parseChunkedData(req, std::string(buffer, tevent.data));
+							//req->parseChunkedData(req, updatedBuffer);
 						}
                         
 					}

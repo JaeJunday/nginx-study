@@ -304,6 +304,9 @@ void Request::endChunkedParsing(Request* req)
     std::cerr << " length:" <<  _contentLength << std::endl;
     //std::cerr << "mergedBuffer\n" << mergedBuffer << std::endl;
     // ---------------------------------------- testcode
+	
+	// -totalLen 이 0일 때 오류 처리 해야함 - semikim
+	
 	// req->changeBuffer(mergedBuffer);
 	// req->setContentLength(totalLen);
     _buffer = mergedBuffer;
