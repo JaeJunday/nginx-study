@@ -42,4 +42,5 @@ class AResponse
 		void stamp() const;
 		const std::stringstream& getBuffer() const;
 		std::string findLocationPath() const;
+		void checkLimitExcept() const;
 };

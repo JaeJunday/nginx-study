@@ -61,7 +61,7 @@ class Request
 		const std::string& getContentType();
 		void setRequestLine(std::string& requestLine);
 		void checkMultipleSpaces(const std::string& str);
-		void setFieldLind(std::string& fieldLine);
+		void setFieldLine(std::string& fieldLine);
 		void setBuffer(char *buffer, int size);
 		const std::string& getBuffer() const;
 		void setLocation(Location* location);

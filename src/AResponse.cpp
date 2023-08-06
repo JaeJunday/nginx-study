@@ -85,6 +85,7 @@ std::string AResponse::findLocationPath() const
 		exit(1);
 		// no location errorcode
 	}
+	checkLimitExcept();
 	if (!location._root.empty())
 	{
 		result.erase(0, length);
@@ -100,3 +101,27 @@ std::string AResponse::findLocationPath() const
 		std::cerr << "result: " << result << std::endl;
 	return result;
 }
+
+void AResponse::checkLimitExcept() const
+{	
+	std::string limit = _request->getLocation()->_limitExcept;
+	if (!limit.empty())
+	{	
+		std::vector<std::string> allowMethod = util::getToken(limit, " ");
+		int limitSize = allowMethod.size();
+		if (limitSize)
+		{
+			int i = 0;
+			while(i < limitSize)
+			{
+				if (allowMethod[i] == _request->getMethod())
+					break;
+				++i;
+			}
+			if (i == allowMethod.size())
+				throw 405;
+		}
+	}
+}
+// std::cerr << "here1" << std::endl;
+// std::cerr << "here2" << std::endl;

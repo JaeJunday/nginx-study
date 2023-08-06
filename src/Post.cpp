@@ -12,9 +12,11 @@ Post::Post(Request* request, int kq) : AResponse(kq)
 
 void Post::createResponse()
 {
+	checkLimitExcept();
     _buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
 	_buffer << "Date: " << getDate() << "\r\n";
 	_buffer << "Server: " << _serverName << "\r\n";
+	// 이거 나중에 넣는걸로 바꿔줘야함
 	_buffer << "Content-Type: " << _contentType << "\r\n";
 
 	int writeFd[2]; // parent(w) -> child(r)

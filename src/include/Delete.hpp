@@ -12,6 +12,5 @@ class Delete : public AResponse
         Delete(Request* request, int kq);
 		void createResponse(); // override
         void removeFile(std::string file) const;
-        void checkLimitExcept() const;
+        // void checkLimitExcept() const;
 };
-
