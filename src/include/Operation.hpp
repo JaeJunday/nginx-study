@@ -8,6 +8,7 @@
 #include "Request.hpp"
 #include "enum.hpp"
 #include "Util.hpp"
+#include "Error.hpp"
 
 #include <iostream>
 #include <string>

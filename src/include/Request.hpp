@@ -3,7 +3,6 @@
 #include "enum.hpp"
 #include "Util.hpp"
 #include "Server.hpp"
-
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -15,7 +14,7 @@
 struct Buffer
 {
 	std::string	_saved;
-	int			_len;
+	size_t		_len;
 };
 
 class Request
@@ -69,7 +68,7 @@ class Request
 		int getEventState() const;
 		// chunked=========================
 		const std::string& getChunkedFilename();
-		bool checkDeque(Request* req, int& lenToSave, std::string& updatedBuffer);
+		bool checkDeque(Request* req, size_t& lenToSave, std::string& updatedBuffer);
 		void endChunkedParsing(Request* req);
 		bool parseChunkedData(Request* req, const std::string& updatedBuffer);
 		std::deque<struct Buffer>& getChunkedBuffer();

@@ -82,7 +82,6 @@ void Operation::start() {
 			continue;
 		}
 	}
-
 	int kq, nev;
 	kq = kqueue();
 	struct kevent event, events[10];
@@ -124,39 +123,39 @@ void Operation::start() {
 				}
 				else
 				{
-
-					if (req->getState() == request::READY)
-						req->parsing(buffer, tevent.data);
-					else if (req->getState() == request::POST)
-					{
-						if (req->getTransferEncoding() != "chunked")
-							req->setBuffer(buffer, tevent.data);
-					}
-					if (req->getTransferEncoding() == "chunked")
-					{
-						if (req->getBuffer().empty() == false && req->getChunkedBuffer().empty() == true)
-                            req->parseChunkedData(req, req->getBuffer());
-						else
+		
+					try{
+						if (req->getState() == request::READY)
+							req->parsing(buffer, tevent.data);
+						else if (req->getState() == request::POST)
 						{
-							//updatedBuffer = std::string(buffer, tevent.data);
-							req->parseChunkedData(req, std::string(buffer, tevent.data));
-							//req->parseChunkedData(req, updatedBuffer);
-						}                  
-					}
-					if (req->getBuffer().size() == req->getContentLength())
-					{
-						/* GET, POST, DELETE 따라 만들어지는 reponse가 다르다 - kyeonkim */
-						AResponse* response = selectMethod(req, kq); // 임시로 GET으로 만듬
-						try {
-							response->createResponse();
-						} catch(const int errnum) {
-							// error function >>> parameter(errnum)
-							std::cerr << "errnum : " << errnum << std::endl;
-						} catch(const std::exception& e) {
-							std::cerr << e.what() << std::endl;
+							if (req->getTransferEncoding() != "chunked")
+								req->setBuffer(buffer, tevent.data);
 						}
-						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
-						kevent(kq, &tevent, 1, NULL, 0, NULL);
+						if (req->getTransferEncoding() == "chunked")
+						{
+							if (req->getBuffer().empty() == false && req->getChunkedBuffer().empty() == true)
+								req->parseChunkedData(req, req->getBuffer());
+							else
+							{
+								//updatedBuffer = std::string(buffer, tevent.data);
+								req->parseChunkedData(req, std::string(buffer, tevent.data));
+								//req->parseChunkedData(req, updatedBuffer);
+							}
+						}
+						if (req->getBuffer().size() == req->getContentLength())
+						{
+							AResponse* response = selectMethod(req, kq);
+							response->createResponse();
+							EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
+							kevent(kq, &tevent, 1, NULL, 0, NULL);
+						}
+					} catch(const int errnum) {
+						std::cerr << "errnum : " << errnum << std::endl;
+						sendErrorPage(tevent.ident, errnum);
+						close(tevent.ident);
+					} catch(const std::exception& e) {
+						std::cerr << "exception error : " << e.what() << std::endl;
 					}
 				}
 				delete[] buffer;
@@ -164,18 +163,6 @@ void Operation::start() {
 			else if (tevent.filter == EVFILT_WRITE)
 			{	
 				sendData(tevent);
-				// // response주소도 저장해야 하나???
-				// AResponse* res = static_cast<AResponse*>(tevent.udata);
-				// res->stamp();
-				// ssize_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
-				// std::cout << res->getBuffer().str() << std::endl;
-				// std::cout << "write byte count " << byteWrite << std::endl;
-				// delete res;
-				// close(tevent.ident);
-				// send
-				// 리스폰스 객체의 데이터를 소켓으로 send하는 부분	
-				// send(client_fd, result.c_str(), result.length(), 0);
-				// return;
 			}
 		}
 	}
@@ -184,26 +171,17 @@ void Operation::start() {
 AResponse* Operation::selectMethod(Request* req, int kq) const
 {
 	AResponse *result;
-	
-	// limit except를 보려고 하니, 아무리 봐도 리퀘스트가 서버랑 로케이션 데이터를 들고 있는게 맞는지 아니면 요소들만 따로 저장해야 하는건지 모르겠음 
-	// std::vector<std::string> allowMethod = util::getToken(req->getLocation()._limitExcept, " ");
-	// int i = 0;
-	// while(i < allowMethod.size())
-	// {
-	// 	if (allowMethod[i] == req->getMethod())
-	// 		break;
-	// 	++i;
-	// }
-	// error 처리 허용되지 않은 메서드 입니다. >> 에러 코드에 맞게 던져준다.
-	// if (i == allowMethod.size())
-	// 	return NULL;
-
-	if (req->getMethod() == "GET")
+	const std::string method = req->getMethod();
+	std::cerr << "============method==================" << std::endl;
+	std::cerr << method << std::endl;
+	if (method.empty())
+		throw 404;
+	if (method == "GET")
 		result = new Get(req, kq);
-	if (req->getMethod() == "POST")
+	if (method == "POST")
 		result = new Post(req, kq);
-	if (req->getMethod() == "DELETE")
-		result = new Delete(req, kq);
+	if (method == "DELETE")
+		result = new Delete(req, kq);	
 	return result;
 }
 
@@ -222,6 +200,7 @@ void Operation::acceptClient(int kq, int index)
 	_requests.insert(std::make_pair(requestFd, request));
 	util::setEvent(request, kq, EVFILT_READ);
 }
+
 
 // void Operation::makeResponse(struct kevent *tevent, int kq, Request* req)
 // {

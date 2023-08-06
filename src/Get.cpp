@@ -75,7 +75,7 @@ void Get::fileProcess(const std::string& filePath, std::stringstream& body)
 	if (file.is_open() == true)
 	{
 		body << file.rdbuf();
-		_contentType = 
+		_contentType = findContentType(filePath);
 		_contentLength += body.str().length();
 		file.close();
 	}
@@ -98,7 +98,7 @@ void Get::autoIndexProcess(DIR* dirStream, std::stringstream& body)
 		body << std::string(entry->d_name) << "\n";
 		_contentLength += body.str().length();
 	}
-	_contentType = "text/plane";
+	_contentType = "text/plain";
 }
 
 void Get::pushBuffer(std::stringstream& body)

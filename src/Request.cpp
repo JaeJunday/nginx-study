@@ -20,33 +20,44 @@ void Request::setRequestLine(std::string& requestLine)
     checkMultipleSpaces(requestLine);
     std::vector<std::string> token = util::getToken(requestLine, " ");
 
+    std::cerr << "========================requestLine========================" << std::endl;
+    std::cerr << requestLine << std::endl;
+
     if (token.size() != 3)
-        throw std::runtime_error("Error: Request Line size error");
-        
+    {
+        std::cerr << "Error: Request Line size error" << std::endl;
+        throw 400;
+    }
     if (!(token[0] == "GET" || token[0] == "HEAD" || token[0] == "DELETE" || token[0] == "POST"))
-        throw std::runtime_error("Error: method error");
+        throw 400;
     if (token[2] != "HTTP/1.1")
-        throw std::runtime_error("Error: version error");
+        throw 400;
     _method = token[0];
     _requestUrl = token[1];
     _version = token[2];
 }
 
-void Request::setFieldLind(std::string& fieldLine)
+void Request::setFieldLine(std::string& fieldLine)
 {
     checkMultipleSpaces(fieldLine);
     std::vector<std::string> token = util::getToken(fieldLine, ": ");
     token[1].erase(0, 1);
     if (token.size() != 2)
-        throw std::runtime_error("Error: Header error");
+        throw 401;
+        //throw std::runtime_error("Error: Header error");
     if (token[0].empty() || token[1].empty())
-        throw std::runtime_error("Error: Header Key Value Empty");
+        throw 402;
+        // throw std::runtime_error("Error: Header Key Value Empty");
     if (token[0].find(' ') != std::string::npos)
-        throw std::runtime_error("Error: Header Key have space");
+        throw 403;
+        // throw std::runtime_error("Error: Header Key have space");
     if (token[0] == "Host") {
         size_t mid = token[1].find(":");
         if (mid == std::string::npos)
-            throw std::runtime_error("Error: Host Error");
+        {
+            std:: cerr << "ERROR : HOST ERROR" << std::endl;
+            throw 404;
+        }
         _ip = std::string(token[1], 0, mid);
         _port = util::stoui(std::string(token[1], mid + 1, token[1].size() - (mid + 1)));
     }
@@ -66,61 +77,38 @@ void Request::setFieldLind(std::string& fieldLine)
         _connection = token[1];
 }
 
-// http://0.0.0.0:4242
 void Request::parsing(char* buf, intptr_t size)
 {
-    try 
-	{
-        // 헤더 끝줄 찾기
-        std::string buffer(buf, size);
-		_headerBuffer += buffer;
-		int headerBoundary = _headerBuffer.find("\r\n\r\n");
-		if (headerBoundary == std::string::npos)
-			return ;
-		_state = request::DONE;
-        // 첫번째 라인일때 - Refactoring 나중에 함수로 뺀다 - kyeonkim
-        int endLine = _headerBuffer.find("\r\n");
-        std::string requestLine(_headerBuffer, 0, endLine);
-        setRequestLine(requestLine);
+    std::cerr << "========================parsing========================" << std::endl;
+    // 헤더 끝줄 찾기
+    std::string buffer(buf, size);
+    _headerBuffer += buffer;
+    int headerBoundary = _headerBuffer.find("\r\n\r\n");
+    if (headerBoundary == std::string::npos)
+        return ;
+    _state = request::DONE;
+    // 첫번째 라인일때 - Refactoring 나중에 함수로 뺀다 - kyeonkim
+    // 한줄 밖에 없을 때 find 조건이 -1이 나와버림. 한줄도 넣어서 검사해야함 - kyeonkim
+    int endLine = _headerBuffer.find("\r\n");
+    std::string requestLine(_headerBuffer, 0, endLine);
+    setRequestLine(requestLine);
 
-        // 둘째줄부터 끝줄까지
-        //int secondLine = buffer.find("\r\n", endLine + 2);
-        int newEndLine;
-        endLine += 2;
-        while (endLine < headerBoundary) { 
-            newEndLine = _headerBuffer.find("\r\n", endLine);
-            std::string fieldLine(_headerBuffer, endLine, newEndLine - endLine);
+    // 둘째줄부터 끝줄까지
+    //int secondLine = buffer.find("\r\n", endLine + 2);
+    int newEndLine;
+    endLine += 2;
+    while (endLine < headerBoundary) { 
+        newEndLine = _headerBuffer.find("\r\n", endLine);
+        std::string fieldLine(_headerBuffer, endLine, newEndLine - endLine);
 
-            setFieldLind(fieldLine);
-            endLine = newEndLine + 2;
-        }
-		int start = headerBoundary + 4;
-		if (_headerBuffer.size() - start != 0)
-			_buffer = _headerBuffer.substr(start, _headerBuffer.size() - start);
-        if (_method == "POST")
-            _state = request::POST;
-
-//--------------------------------------------------------------- testcode
-        // std::cout << std::endl;
-        // std::cout << "우리가 넣은 값" << std::endl;
-        // std::cout << "method: " << _method << std::endl;
-        // std::cout << "_requestUrl: " <<_requestUrl << std::endl;
-        // std::cout << "_version: " << _version << std::endl;
-        // std::cout << "_ip: " << _ip << std::endl;
-        // std::cout << "port: " << _port << std::endl;
-        // std::cout << "c type: " << _contentType << std::endl;
-        // std::cout << "c len: " << _contentLength << std::endl;
-        // std::cout << "Transfer-encoding: " << _transferEncoding << std::endl;
-        // std::cout << "connection: " << _connection << std::endl;
-        // std::cout << "boundary: " << _boundary << std::endl;
-        // std::cout << std::endl;
-//---------------------------------------------------------------
-        
-	} catch (std::runtime_error &e) { 
-        std::cerr << e.what() << std::endl;
-    } catch (std::exception &e) { 
-        std::cerr << e.what() << std::endl;
+        setFieldLine(fieldLine);
+        endLine = newEndLine + 2;
     }
+    int start = headerBoundary + 4;
+    if (_headerBuffer.size() - start != 0)
+        _buffer = _headerBuffer.substr(start, _headerBuffer.size() - start);
+    if (_method == "POST")
+        _state = request::POST;
 }
 
 std::string removeSpecificCharacter(std::string str, char ch)
@@ -232,7 +220,7 @@ const std::string& Request::getChunkedFilename()
     return _chunkedFilename;
 }
 
-bool Request::checkDeque(Request* req, int& lenToSave, std::string& updatedBuffer)
+bool Request::checkDeque(Request* req, size_t& lenToSave, std::string& updatedBuffer)
 {
 	bool head = false;
 
@@ -242,7 +230,7 @@ bool Request::checkDeque(Request* req, int& lenToSave, std::string& updatedBuffe
 		Buffer prevBuffer = _chunkedBuffer.back();
 		_chunkedBuffer.pop_back();
 	    lenToSave = prevBuffer._len;
-		if (lenToSave != -1)
+		if (lenToSave != 0)
 			head = true;
 		updatedBuffer = prevBuffer._saved;
 	}
@@ -252,9 +240,14 @@ bool Request::checkDeque(Request* req, int& lenToSave, std::string& updatedBuffe
 void Request::endChunkedParsing(Request* req)
 {
 	std::deque<struct Buffer> chunked = _chunkedBuffer;
-	int totalLen = 0;
+	size_t totalLen = 0;
 	std::string mergedBuffer;
     std::vector<std::string> url = util::getToken(_requestUrl, "/");
+
+	// \r\n\r\n 만 남았는지 check하는 로직 추가하고, 
+	// 그 외의 데이터가 들어 왔으면 다시 버퍼에 붙여서 parsing에 들어 가게 한다.
+
+	// chunked send함수를 따로 빼준다. 불필요한 stringcopy를 줄이기 위해 -semikim
 
     if (url.size() >= 1)
         _chunkedFilename = url[url.size() - 1];
@@ -287,12 +280,12 @@ void Request::endChunkedParsing(Request* req)
 
 bool Request::parseChunkedData(Request* req, const std::string& updatedBuffer)
 {
-    int start = 0;
+    size_t start = 0;
     std::string str;
     size_t i = 0;
     size_t e = 0;
     bool head = false;
-    int lenToSave = -1;
+    size_t lenToSave = 0;
 
     std::string tmp;
 
@@ -314,6 +307,7 @@ bool Request::parseChunkedData(Request* req, const std::string& updatedBuffer)
                 	{
 						endChunkedParsing(req);
                         // updatedBuffer 에 데이터가 남아 있다면 다음에 들어오는 요청 헤더일수도 있기 때문에 보관해야 한다.... ㅜㅜ -semikim
+                        // \r\n\r\n 을 제거하고...... 어떻게 이어주지...............
                     	return (true);
                 	}
 				}
@@ -327,7 +321,7 @@ bool Request::parseChunkedData(Request* req, const std::string& updatedBuffer)
                 if (str.empty() == false)
 				{
 					buf._saved = str;
-                	buf._len = -1;
+                	buf._len = 0;
                 	_chunkedBuffer.push_back(buf);
 				}
                 break;
