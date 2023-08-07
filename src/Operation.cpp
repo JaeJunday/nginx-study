@@ -110,14 +110,15 @@ void Operation::start() {
 				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 				Request *req = static_cast<Request*>(tevent.udata);
 				//----------------------------------------------- testcode
-					std::cerr << "===========recv 데이터====================" << std::endl;
+					std::cerr << " ----------------------------------------------- recv" << tevent.ident << std::endl;
 					write(1, buffer, tevent.data);
 					std::cerr << std::endl;
 				//-----------------------------------------------	
 				// recvData()
 				if (bytesRead == false || req->getConnection() == "close")
 				{
-					// 맵에 있는 request 주소 삭제
+					// 맵에 있는 request 주소 삭제 testcode
+					std::cerr << "###################### client end ##############################" << std::endl;
 					close(req->getSocket());
 					delete req;
 					_requests.erase(tevent.ident);
@@ -135,6 +136,7 @@ void Operation::start() {
 						}
 						if (req->getTransferEncoding() == "chunked")
 						{
+							std::cerr << "==================chunked=====================" << std::endl;
 							if (req->getBuffer().empty() == false && req->getChunkedBuffer().empty() == true)
 								req->parseChunkedData(req, req->getBuffer());
 							else
@@ -144,8 +146,14 @@ void Operation::start() {
 								//req->parseChunkedData(req, updatedBuffer);
 							}
 						}
-						if (req->getBuffer().size() == req->getContentLength())
+						if (req->getMethod().size() && req->getBuffer().size() == req->getContentLength())
 						{
+							// --------------------------------------------------- testcode
+							//std::cerr << "req->getBuffer().size():" << req->getBuffer().size() << std::endl;
+							//std::cerr << "req->getContentLe().size():" << req->getContentLength() << std::endl;
+							
+							if (req->getMethod() == "POST" && (req->getContentLength() == 0 || req->getBuffer().size() == 0))
+								throw 400;
 							AResponse* response = selectMethod(req, kq);
 							response->createResponse();
 							EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
@@ -173,10 +181,9 @@ AResponse* Operation::selectMethod(Request* req, int kq) const
 {
 	AResponse *result;
 	const std::string method = req->getMethod();
+	// testcode
 	std::cerr << "============method==================" << std::endl;
 	std::cerr << method << std::endl;
-	if (method.empty())
-		throw 408;
 	if (method == "GET")
 		result = new Get(req, kq);
 	if (method == "POST")

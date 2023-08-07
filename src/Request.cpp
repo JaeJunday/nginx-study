@@ -20,16 +20,17 @@ void Request::setRequestLine(std::string& requestLine)
     checkMultipleSpaces(requestLine);
     std::vector<std::string> token = util::getToken(requestLine, " ");
 
-    std::cerr << "========================requestLine========================" << std::endl;
-    std::cerr << requestLine << std::endl;
+    // testcode
+    // std::cerr << "========================requestLine========================" << std::endl;
+    // std::cerr << requestLine << std::endl;
 
     if (token.size() != 3)
     {
         std::cerr << "Error: Request Line size error" << std::endl;
         throw 400;
     }
-    if (!(token[0] == "GET" || token[0] == "HEAD" || token[0] == "DELETE" || token[0] == "POST"))
-        throw 400;
+    if (!(token[0] == "GET" || token[0] == "DELETE" || token[0] == "POST"))
+        throw 405;
     if (token[2] != "HTTP/1.1")
         throw 400;
     _method = token[0];
@@ -79,7 +80,8 @@ void Request::setFieldLine(std::string& fieldLine)
 
 void Request::parsing(char* buf, intptr_t size)
 {
-    std::cerr << "========================parsing========================" << std::endl;
+    // testcode
+    // std::cerr << "========================parsing========================" << std::endl;
     // 헤더 끝줄 찾기
     std::string buffer(buf, size);
     _headerBuffer += buffer;

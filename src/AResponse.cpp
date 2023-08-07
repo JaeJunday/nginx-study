@@ -18,7 +18,6 @@ AResponse::AResponse(Request* request) : _request(request)
 {
     /* Constructor Implementation */
 }
-
 AResponse::AResponse(const AResponse& src)
 {
     /* Copy Constructor Implementation */
@@ -68,7 +67,7 @@ std::string AResponse::findLocationPath() const
 	{
 		// 경로가 없는 경우 errorcode
 	}
-	for (int i = 0; i < locations.size(); ++i) {		
+	for (int i = 0; i < locations.size(); ++i) {
 		int pathLength = locations[i]._path.length();
 		if (_request->getRequestUrl().compare(0, pathLength, locations[i]._path) == 0)
 		{
@@ -123,8 +122,6 @@ void AResponse::checkLimitExcept() const
 		}
 	}
 }
-// std::cerr << "here1" << std::endl;
-// std::cerr << "here2" << std::endl;
 
 std::string AResponse::findContentType(const std::string& filePath)
 {
@@ -145,40 +142,4 @@ std::string AResponse::findContentType(const std::string& filePath)
 			return inputType[i];
 	}
 	return "";
-	// if (fileExtension == "html")
-	// 	_contentType = "text/html";
-	// else if (fileExtension == "css")
-	// 	_contentType = "text/css";
-	// else if (fileExtension == "javascript")
-	// 	_contentType = "text/javascript";
-	// else if (fileExtension == "csv")
-	// 	_contentType = "text/csv";
-	// else if (fileExtension == "json")
-	// 	_contentType = "application json";
-	// else if (fileExtension == "jpeg")
-	// 	_contentType = "image/jpeg";
-	// else if (fileExtension == "png")
-	// 	_contentType = "image/png";
-	// else if (fileExtension == "gif")
-	// 	_contentType = "image/gif";
-	// else if (fileExtension == "bmp")
-	// 	_contentType = "image/bmp";
-	// else if (fileExtension == "webp")
-	// 	_contentType = "web/webp";
-	// else if (fileExtension == "mpeg")
-	// 	_contentType = "audio/mpeg";
-	// else if (fileExtension == "wav")
-	// 	_contentType = "audio/wav";
-	// else if (fileExtension == "ogg")
-	// 	_contentType = "audio/ogg";
-	// else if (fileExtension == "mp4")
-	// 	_contentType = "video/mp4";
-	// else if (fileExtension == "webm")
-	// 	_contentType = "video/webm";
-	// else if (fileExtension == "pdf")
-	// 	_contentType = "application/pdf";
-	// else if (fileExtension == "zip")
-	// 	_contentType = "application/zip";
-	// else if (fileExtension == "xml")
-	// 	_contentType = "application/xml";
 }
