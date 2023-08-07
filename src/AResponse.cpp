@@ -38,7 +38,7 @@ AResponse& AResponse::operator=(AResponse const& rhs)
     return *this;
 }
 
-std::string AResponse::getDate() const
+std::string AResponse::getDate()
 {
     std::time_t now = std::time(NULL);
     char timeStamp[TIME_SIZE];

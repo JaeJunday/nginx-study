@@ -1,5 +1,7 @@
 #pragma once 
 
+#include "AResponse.hpp"
+
 #include <iostream>
 #include <fstream>
 #include <sstream>

@@ -4,11 +4,12 @@ void pushErrorBuffer(ErrorData& data, std::string body)
 {
     std::stringstream responseData;
 
-    responseData << "HTTP/1.1" << " " << data._stateCode << " " << "Not Found" << "\r\n";
-	// responseData << "Date: " << getDate() << "\r\n";
-	responseData << "Server: My Server" << "\r\n";
-	responseData << "Content-Type: text/html" << "\r\n";
-	responseData << "Content-Length: " << data._contentLength << "\r\n\r\n";
+    responseData << "HTTP/1.1" << " " << data._stateCode << " " << data._reasonPhrase << "\r\n";
+	responseData << "Content-Type: text/html; charset=UTF-8" << "\r\n";
+	// responseData << "Server: My Server" << "\r\n";
+    responseData << "Referrer-Policy: no-referrer" << "\r\n";
+	responseData << "Content-Length: " << data._contentLength << "\r\n";
+	responseData << "Date: " << AResponse::getDate() << "\r\n\r\n";
 	responseData << body;
     data._buffer = responseData.str();
     std::cerr << data._buffer << std::endl;
@@ -24,21 +25,45 @@ void sendErrorPage(int fd, int errnum)
     memset(&errorData, 0, sizeof(errorData));
     switch (errnum) {
         case 400:
+            errorData._reasonPhrase = "Bad Request"; break;
+        case 401:
+            errorData._reasonPhrase = "Unauthorized"; break;
         case 404:
+            errorData._reasonPhrase = "Not Found"; break;
         case 405:
-        {
-            errorData._stateCode = errnum;
-            filePath = "./src/pages/error/404.html";
-            file.open(filePath.c_str());
-            if (file.is_open())
-            {
-                body << file.rdbuf();
-                errorData._contentLength += body.str().length();
-                file.close();
-                pushErrorBuffer(errorData, body.str());
-                send(fd, errorData._buffer.c_str(), errorData._buffer.length(), 0);
-            }
-            break;
-        }
+            errorData._reasonPhrase = "Method Not Allowed"; break;
+        case 408:
+            errorData._reasonPhrase = "Request Timeout"; break;
+        case 412:
+            errorData._reasonPhrase = "Precondition Failed"; break;
+        case 505:
+            errorData._reasonPhrase = "HTTP Version Not Supported"; break;
+
+    }
+    errorData._stateCode = errnum;
+    filePath = "./src/pages/error/404.html";
+    file.open(filePath.c_str());
+    if (file.is_open())
+    {
+        body << file.rdbuf();
+        errorData._contentLength += body.str().length();
+        file.close();
+        pushErrorBuffer(errorData, body.str());
+        send(fd, errorData._buffer.c_str(), errorData._buffer.length(), 0);
     }
 }
+
+/*
+HTTP/1.0 400 Bad Request
+Content-Type: text/html; charset=UTF-8
+Referrer-Policy: no-referrer
+Content-Length: 1555
+Date: Mon, 07 Aug 2023 05:40:36 GMT
+*/
+/*
+HTTP/1.1 400 Bad Request
+Content-Type: text/html; charset=UTF-8
+Referrer-Policy: no-referrer
+Content-Length: 346
+Date: Mon, 07 Aug 2023 14:44:52 GMT
+*/

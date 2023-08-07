@@ -37,7 +37,7 @@ class AResponse
 		AResponse(int kq);
 		virtual ~AResponse();
 		AResponse(Request* request);
-		std::string getDate() const;
+		static std::string getDate();
 		virtual void createResponse() =0;
 		void stamp() const;
 		const std::stringstream& getBuffer() const;

@@ -87,7 +87,7 @@ void Operation::start() {
 	struct kevent event, events[10];
 	struct kevent tevent;	 /* Event triggered */
 	
-	for(int i = 0; i < _servers.size(); ++i)
+	for(size_t i = 0; i < _servers.size(); ++i)
 	{
 		EV_SET(&event, _servers[i].getSocket(), EVFILT_READ, EV_ADD, 0, 0, nullptr);
 		kevent(kq, &event, 1, NULL, 0, NULL);
@@ -112,6 +112,7 @@ void Operation::start() {
 				//----------------------------------------------- testcode
 					std::cerr << "===========recv 데이터====================" << std::endl;
 					write(1, buffer, tevent.data);
+					std::cerr << std::endl;
 				//-----------------------------------------------	
 				// recvData()
 				if (bytesRead == false || req->getConnection() == "close")
@@ -151,7 +152,7 @@ void Operation::start() {
 							kevent(kq, &tevent, 1, NULL, 0, NULL);
 						}
 					} catch(const int errnum) {
-						std::cerr << "errnum : " << errnum << std::endl;
+						// std::cerr << "errnum : " << errnum << std::endl;
 						sendErrorPage(tevent.ident, errnum);
 						close(tevent.ident);
 					} catch(const std::exception& e) {
@@ -175,7 +176,7 @@ AResponse* Operation::selectMethod(Request* req, int kq) const
 	std::cerr << "============method==================" << std::endl;
 	std::cerr << method << std::endl;
 	if (method.empty())
-		throw 404;
+		throw 408;
 	if (method == "GET")
 		result = new Get(req, kq);
 	if (method == "POST")
@@ -190,7 +191,7 @@ void Operation::acceptClient(int kq, int index)
 	int				requestFd;
 	sockaddr_in		requestAddr;
 	socklen_t		requestLen;
-	struct kevent	revent;
+	// struct kevent	revent;
 	
 	requestFd = accept(_servers[index].getSocket(), reinterpret_cast<struct sockaddr*>(&requestAddr), &requestLen);
 	if (requestFd == -1)
@@ -221,7 +222,7 @@ void Operation::sendData(struct kevent& tevent)
 	// response주소도 저장해야 하나???
 	AResponse* res = static_cast<AResponse*>(tevent.udata);
 	res->stamp();
-	ssize_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
+	send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
 	std::cerr << "==============================response data==============================" << std::endl;
 	std::cerr << res->getBuffer().str().c_str() << std::endl;
 	//-------------------------------------------------------------  testcode
