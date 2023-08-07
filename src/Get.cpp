@@ -82,7 +82,8 @@ void Get::fileProcess(const std::string& filePath, std::stringstream& body)
 	else 
 	{
 		std::cerr << "not serverpath" << std::endl;
-		std::cerr << "path: " << filePath << std::endl;
+		// std::cerr << "path: " << filePath << std::endl;
+		throw 404;
 		//server errorcode
 	}
 }

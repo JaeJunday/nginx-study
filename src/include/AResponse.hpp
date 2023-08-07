@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Color.hpp"
 #include <iostream> 
 #include <string> 
 #include <ctime>

@@ -1,6 +1,5 @@
 #include "Post.hpp"
 #include "Request.hpp"
-
 // NOTE_EXIT -> 프로세스 종료될때 이벤트 발생
 // EV_SET(&event, pid, NOTE_EXIT, EV_ADD, 0, 0, nullptr);
 // kevent(kq, &event, 1, NULL, 0, NULL);
@@ -12,12 +11,12 @@ Post::Post(Request* request, int kq) : AResponse(kq)
 
 void Post::createResponse()
 {
-	checkLimitExcept();
-    _buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
-	_buffer << "Date: " << getDate() << "\r\n";
-	_buffer << "Server: " << _serverName << "\r\n";
+	// checkLimitExcept();
+    // _buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
+	// _buffer << "Date: " << getDate() << "\r\n";
+	// _buffer << "Server: " << _serverName << "\r\n";
 	// 이거 나중에 넣는걸로 바꿔줘야함
-	_buffer << "Content-Type: " << _contentType << "\r\n";
+	// _buffer << "Content-Type: " << _contentType << "\r\n";
 
 	int writeFd[2]; // parent(w) -> child(r)
 	int readFd[2]; // child(w) -> parent(r)
@@ -37,8 +36,9 @@ void Post::createResponse()
 	close(writeFd[1]);
 	std::string result = printResult(readFd[0], _kq);
     close(readFd[0]);
-	std::cerr << result << std::endl;
     waitpid(pid, NULL, 0);
+	// std::cerr << result << std::endl; // testcode
+	_buffer << result;
 }
 
 void Post::childProcess(int *writeFd, int *readFd)
@@ -92,8 +92,12 @@ void Post::uploadFile(int fd, int kq)
 		if (tevent.filter == EVFILT_WRITE)
 		{
 			writeSize = std::min((size_t)tevent.data, data.size() - size);
+			// std::cerr << "writeSize : " << writeSize << std::endl; // testcode
+			// std::cerr << "data.length() : " << data.length() << std::endl; // testcode
 			write(fd, data.c_str() + size, writeSize);
-			size += tevent.data;
+			size += writeSize;
+			// std::cerr << "size : " << size << std::endl; // testcode
+
 		}
 	}
 }
@@ -115,6 +119,7 @@ const std::string Post::printResult(int fd, int kq)
 			std::cerr << "kevent error: " << std::strerror(errno) << std::endl;
 		if (tevent.filter == EVFILT_READ)
 		{
+			// std::cerr << "tevent.data : " << tevent.data << std::endl; //testcode
 			while (1)
 			{
 				readSize = read(fd, tempBuffer, PIPESIZE);

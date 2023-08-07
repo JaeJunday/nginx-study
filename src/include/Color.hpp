@@ -43,8 +43,6 @@
 // color reset
 #define RESET          "\033[0m"
 
-// line remove
-#define DELETE         "\033[1A\033[K"
 
 // font
 #define BOLD         "\033[1m"

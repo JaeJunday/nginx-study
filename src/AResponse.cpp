@@ -48,7 +48,12 @@ std::string AResponse::getDate()
 // 15:53:14 : 0.0.0.0 GET HTTP/1.1 200 Ok ./public 2259
 void AResponse::stamp() const
 {
-    std::cerr << getDate() << " : "<< _request->getIp() << " " << _request->getMethod() << " " << _request->getVersion() << " "<< _stateCode << " " << _reasonPhrase << std::endl;
+	std::string color;
+	if (util::stoui(_stateCode) >= 400)
+		color = RED;
+	else 
+		color = GREEN;
+    std::cerr << color << getDate() << " : "<< _request->getIp() << " " << _request->getMethod() << " " << _request->getVersion() << " "<< _stateCode << " " << _reasonPhrase << RESET << std::endl;
 }
 
 const std::stringstream& AResponse::getBuffer() const

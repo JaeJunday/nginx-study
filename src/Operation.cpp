@@ -110,7 +110,7 @@ void Operation::start() {
 				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 				Request *req = static_cast<Request*>(tevent.udata);
 				//----------------------------------------------- testcode
-					std::cerr << " ----------------------------------------------- recv" << tevent.ident << std::endl;
+					std::cerr << " ----------------------------------------------- recv " << tevent.ident << std::endl;
 					write(1, buffer, tevent.data);
 					std::cerr << std::endl;
 				//-----------------------------------------------	
@@ -150,10 +150,9 @@ void Operation::start() {
 						{
 							// --------------------------------------------------- testcode
 							//std::cerr << "req->getBuffer().size():" << req->getBuffer().size() << std::endl;
-							//std::cerr << "req->getContentLe().size():" << req->getContentLength() << std::endl;
-							
+							//std::cerr << "req->getContentLe().size():" << req->getContentLength() << std::endl;	
 							if (req->getMethod() == "POST" && (req->getContentLength() == 0 || req->getBuffer().size() == 0))
-								throw 400;
+								throw 405;
 							AResponse* response = selectMethod(req, kq);
 							response->createResponse();
 							EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
@@ -184,6 +183,9 @@ AResponse* Operation::selectMethod(Request* req, int kq) const
 	// testcode
 	std::cerr << "============method==================" << std::endl;
 	std::cerr << method << std::endl;
+	
+	if (method == "PUT")
+	 	result = new Post(req, kq);
 	if (method == "GET")
 		result = new Get(req, kq);
 	if (method == "POST")
@@ -229,12 +231,18 @@ void Operation::sendData(struct kevent& tevent)
 	// response주소도 저장해야 하나???
 	AResponse* res = static_cast<AResponse*>(tevent.udata);
 	res->stamp();
-	send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
+	size_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
 	std::cerr << "==============================response data==============================" << std::endl;
 	std::cerr << res->getBuffer().str().c_str() << std::endl;
 	//-------------------------------------------------------------  testcode
 	// std::cout << res->getBuffer().str() << std::endl;
-	// std::cout << "write byte count " << byteWrite << std::endl;
+	/*
+		for (size_t i = 0; i < res->getBuffer().str().length(); ++i)
+		{
+			std::cerr << (int)res->getBuffer().str() << std::end;
+		}
+	*/
+	std::cout << "write byte count :" << byteWrite << std::endl;
 	//-------------------------------------------------------------
 	delete res;
 	close(tevent.ident);
@@ -244,7 +252,7 @@ void Operation::sendData(struct kevent& tevent)
 	// return;
 }
 
-// oid test_print_event(struct kevent event)
+// void test_print_event(struct kevent event)
 // {
 // 	std::cout << "\n===============================================\n";
 // 	std::cout << "event ident : " << event.ident << "\n";

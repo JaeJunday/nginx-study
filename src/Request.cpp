@@ -20,7 +20,7 @@ void Request::setRequestLine(std::string& requestLine)
     checkMultipleSpaces(requestLine);
     std::vector<std::string> token = util::getToken(requestLine, " ");
 
-    // testcode
+    // testcode 
     // std::cerr << "========================requestLine========================" << std::endl;
     // std::cerr << requestLine << std::endl;
 
@@ -29,7 +29,7 @@ void Request::setRequestLine(std::string& requestLine)
         std::cerr << "Error: Request Line size error" << std::endl;
         throw 400;
     }
-    if (!(token[0] == "GET" || token[0] == "DELETE" || token[0] == "POST"))
+    if (!(token[0] == "GET" || token[0] == "DELETE" || token[0] == "POST" || token[0] == "PUT"))
         throw 405;
     if (token[2] != "HTTP/1.1")
         throw 400;
@@ -261,11 +261,7 @@ void Request::endChunkedParsing(Request* req)
 		mergedBuffer += buf._saved;
 		chunked.pop_front();
 	}
-    // ---------------------------------------- testcode
-    std::cerr << "totalLen:" << totalLen << std::endl;
-    std::cerr << " length:" <<  _contentLength << std::endl;
-    //std::cerr << "mergedBuffer\n" << mergedBuffer << std::endl;
-    // ---------------------------------------- testcode
+
 	
 	// -totalLen 이 0일 때 오류 처리 해야함 - semikim
 	
@@ -273,6 +269,10 @@ void Request::endChunkedParsing(Request* req)
 	// req->setContentLength(totalLen);
     _buffer = mergedBuffer;
     _contentLength = totalLen;
+    // ---------------------------------------- testcode
+    std::cerr << "totalLen:" << totalLen << std::endl;
+    std::cerr << " length:" <<  _contentLength << std::endl;
+    //std::cerr << "mergedBuffer\n" << mergedBuffer << std::endl;
     // std::cerr << "=============chunked data====================" << std::endl;
     // std::cerr << _chunkedFilename << std::endl;
     // std::cerr << _contentType << std::endl;
@@ -358,10 +358,8 @@ bool Request::parseChunkedData(Request* req, const std::string& updatedBuffer)
                 		_chunkedBuffer.push_back(buf);
                     }
                     else // ------------------------------ testcode  debug
-                    {
                         std::cerr << "len false" << std::endl;
-                    }
-                    // ------------------------------------ testcode debug
+                    // ------------------------------------ 
                 }
                 head = false;
                 if (e != std::string::npos)

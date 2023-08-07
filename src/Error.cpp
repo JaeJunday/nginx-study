@@ -15,6 +15,16 @@ void pushErrorBuffer(ErrorData& data, std::string body)
     std::cerr << data._buffer << std::endl;
 }
 
+/*
+HTTP/1.1 200 OK
+Date: Mon, 07 Aug 2023 17:15:02 GMT
+Server: SpiderMen/1.5.2
+Connection: keep-alive
+Content-Length: 19
+Content-Type: text/plain
+No data received.
+*/
+
 void sendErrorPage(int fd, int errnum)
 {
     ErrorData           errorData;
@@ -23,22 +33,26 @@ void sendErrorPage(int fd, int errnum)
     std::stringstream   body;
 
     memset(&errorData, 0, sizeof(errorData));
+    // 400 403 404 405 413
     switch (errnum) {
         case 400:
             errorData._reasonPhrase = "Bad Request"; break;
         case 401:
             errorData._reasonPhrase = "Unauthorized"; break;
+        case 403:
+            errorData._reasonPhrase = "Forbidden"; break;
         case 404:
             errorData._reasonPhrase = "Not Found"; break;
         case 405:
             errorData._reasonPhrase = "Method Not Allowed"; break;
         case 408:
             errorData._reasonPhrase = "Request Timeout"; break;
-        case 412:
-            errorData._reasonPhrase = "Precondition Failed"; break;
+        case 411:
+            errorData._reasonPhrase = "Length Required"; break;
+        case 413:
+            errorData._reasonPhrase = "Content Too Large"; break;
         case 505:
             errorData._reasonPhrase = "HTTP Version Not Supported"; break;
-
     }
     errorData._stateCode = errnum;
     filePath = "./src/pages/error/404.html";
