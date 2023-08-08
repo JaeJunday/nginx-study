@@ -42,7 +42,7 @@ uint32_t util::convertIp(std::string& ipStr)
     return ip;
 }
 
-void util::setEvent(Request *req, int kq, int filter)
+void util::setReqEvent(Request *req, int kq, int filter)
 {
     struct kevent event;
 
@@ -53,7 +53,7 @@ void util::setEvent(Request *req, int kq, int filter)
         kevent(kq, &event, 1, NULL, 0, NULL);
     }
     else if (req->getEventState() == event::WRITE && filter == event::READ)
-    { 
+    {
         EV_SET(&event, req->getSocket(), EVFILT_WRITE, EV_DELETE, 0, 0, req);
         kevent(kq, &event, 1, NULL, 0, NULL);
     }

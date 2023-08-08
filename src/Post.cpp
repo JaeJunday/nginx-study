@@ -11,13 +11,6 @@ Post::Post(Request* request, int kq) : AResponse(kq)
 
 void Post::createResponse()
 {
-	// checkLimitExcept();
-    // _buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
-	// _buffer << "Date: " << getDate() << "\r\n";
-	// _buffer << "Server: " << _serverName << "\r\n";
-	// 이거 나중에 넣는걸로 바꿔줘야함
-	// _buffer << "Content-Type: " << _contentType << "\r\n";
-
 	int writeFd[2]; // parent(w) -> child(r)
 	int readFd[2]; // child(w) -> parent(r)
 	struct kevent event;
@@ -37,7 +30,6 @@ void Post::createResponse()
 	std::string result = printResult(readFd[0], _kq);
     close(readFd[0]);
     waitpid(pid, NULL, 0);
-	// std::cerr << result << std::endl; // testcode
 	_buffer << result;
 }
 
@@ -46,8 +38,7 @@ void Post::childProcess(int *writeFd, int *readFd)
 	dup2(writeFd[0], STDIN_FILENO);
 	close(writeFd[0]);
 	close(writeFd[1]);
-	dup2(readFd[1], STDOUT_FILENO);
-	close(readFd[0]);
+	dup2(readFd[1], STDOUT_FILENO); close(readFd[0]);
 	close(readFd[1]);
 	if (_request->getTransferEncoding() == "chunked")
 	{
@@ -82,22 +73,22 @@ void Post::uploadFile(int fd, int kq)
 	std::string		data = _request->getBuffer();
 	size_t			writeSize;
 
+	std::cerr << RED << "testcode " << "data"  << data << RESET << std::endl;
+
 	while (true)
 	{
 		ret = kevent(kq, nullptr, 0, &tevent, 1, nullptr);
 		if (ret == -1) 
 			std::cerr << "kevent error: " << std::strerror(errno) << std::endl;
+		if (tevent.ident != fd)
+			continue;
 		if (size >= data.length())
 			break;
 		if (tevent.filter == EVFILT_WRITE)
 		{
 			writeSize = std::min((size_t)tevent.data, data.size() - size);
-			// std::cerr << "writeSize : " << writeSize << std::endl; // testcode
-			// std::cerr << "data.length() : " << data.length() << std::endl; // testcode
 			write(fd, data.c_str() + size, writeSize);
 			size += writeSize;
-			// std::cerr << "size : " << size << std::endl; // testcode
-
 		}
 	}
 }
@@ -115,12 +106,14 @@ const std::string Post::printResult(int fd, int kq)
 	while (true)
 	{
 		ret = kevent(kq, nullptr, 0, &tevent, 1, nullptr);
+		//testcode
 		if (ret == -1) 
 			std::cerr << "kevent error: " << std::strerror(errno) << std::endl;
+		if (tevent.ident != fd)
+			continue;
 		if (tevent.filter == EVFILT_READ)
 		{
-			// std::cerr << "tevent.data : " << tevent.data << std::endl; //testcode
-			while (1)
+			while (true)
 			{
 				readSize = read(fd, tempBuffer, PIPESIZE);
 				if (readSize < 0)

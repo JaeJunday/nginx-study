@@ -88,6 +88,7 @@ void Request::parsing(char* buf, intptr_t size)
     int headerBoundary = _headerBuffer.find("\r\n\r\n");
     if (headerBoundary == std::string::npos)
         return ;
+    std::cout << RED << "testcode " << "====_headerBuffer\n" << _headerBuffer << RESET << std::endl;
     _state = request::DONE;
     // 첫번째 라인일때 - Refactoring 나중에 함수로 뺀다 - kyeonkim
     // 한줄 밖에 없을 때 find 조건이 -1이 나와버림. 한줄도 넣어서 검사해야함 - kyeonkim
@@ -122,6 +123,187 @@ std::string removeSpecificCharacter(std::string str, char ch)
 		pos = str.find(ch, pos);
 	}
 	return (str);
+}
+
+
+bool Request::checkDeque(Request* req, int& lenToSave, std::string& updatedBuffer)
+{
+	bool head = false;
+
+	if (_chunkedBuffer.empty() == false && _chunkedBuffer.back()._len != _chunkedBuffer.back()._saved.length())
+	{
+		Buffer prevBuffer = _chunkedBuffer.back();
+		_chunkedBuffer.pop_back();
+	    lenToSave = prevBuffer._len;
+		if (lenToSave != -1)
+			head = true;
+		updatedBuffer = prevBuffer._saved;
+	}
+	return head;
+}
+
+void Request::endChunkedParsing(Request* req)
+{
+	std::deque<struct Buffer> chunked = _chunkedBuffer;
+	int totalLen = -1;
+	std::string mergedBuffer;
+    std::vector<std::string> url = util::getToken(_requestUrl, "/");
+
+	// \r\n\r\n 만 남았는지 check하는 로직 추가하고, 
+	// 그 외의 데이터가 들어 왔으면 다시 버퍼에 붙여서 parsing에 들어 가게 한다.
+
+
+    if (url.size() >= 1)
+        _chunkedFilename = url[url.size() - 1];
+	while (chunked.size())
+	{
+		struct Buffer buf = chunked.front();
+		totalLen += buf._len;
+		mergedBuffer += buf._saved;
+		chunked.pop_front();
+	}
+    //if (chunked.size() == 0)
+    //    totalLen = 0;
+
+	
+	// -totalLen 이 0일 때 오류 처리 해야함 - semikim
+	
+	// req->changeBuffer(mergedBuffer);
+	// req->setContentLength(totalLen);
+    _buffer = mergedBuffer;
+    _contentLength = totalLen;
+    // ---------------------------------------- testcode
+    std::cout << RED << "testcode " << "totalLen:" << totalLen << RESET << std::endl;
+    std::cout << RED << "testcode " << "length:" <<  _contentLength << RESET << std::endl;
+    //std::cerr << "mergedBuffer\n" << mergedBuffer << std::endl;
+    // std::cerr << "=============chunked data====================" << std::endl;
+    // std::cerr << _chunkedFilename << std::endl;
+    // std::cerr << _contentType << std::endl;
+    // std::cerr << _buffer << std::endl;
+}
+
+bool Request::parseChunkedData(Request* req, const std::string& updatedBuffer)
+{
+    std::string str;
+    int start, i, e = 0;
+    bool head = false;
+    int lenToSave = -1;
+    // _contentLength = -1;
+
+    std::string tmp;
+    head = checkDeque(req, lenToSave, tmp);
+    std::string buffer = tmp + updatedBuffer;
+    std::cerr << RED << "testcode " << "buffer : "<< buffer << RESET << std::endl;
+    while (true)
+    {
+        if (head == false)
+        {
+			i = buffer.find("\r\n", start);
+            if (i != std::string::npos)
+            {
+                char *end = NULL;
+                str = buffer.substr(start, i - start);
+                if (str.empty() == false)
+                {
+                    lenToSave = std::strtol(str.c_str(), &end, 16);
+                    std::cerr << GREEN << "testcode" << " => lenToSAve:"  << lenToSave << RESET << std::endl;
+                	if (lenToSave == 0)
+                	{
+						endChunkedParsing(req);
+                        // updatedBuffer 에 데이터가 남아 있다면 다음에 들어오는 요청 헤더일수도 있기 때문에 보관해야 한다-semikim
+                        // \r\n\r\n 을 제거하고 어떻게 이어주지
+                    	return (true);
+                	}
+				}
+                head = true;
+                i += 2;
+            }
+            else
+            {
+                Buffer buf;
+                str = buffer.substr(start, std::string::npos);
+                if (str.empty() == false)
+				{
+					buf._saved = str;
+                	buf._len = 0;
+                	_chunkedBuffer.push_back(buf);
+				}
+                break;
+            }
+        }
+        if (head == true)
+        {
+			Buffer buf;
+			buf._len = lenToSave;
+            size_t st = i;
+
+            while (1)
+            {
+                e = buffer.find("\r\n", i);
+                if (e == std::string::npos)
+                    break;
+                if (e - st == lenToSave)
+                    break;
+                else
+                    i = e + 2;
+            }
+
+            if (e != std::string::npos)
+            {
+                str = buffer.substr(st, e - st); 
+                if (str.empty() == false)
+                {
+                    if (str.size() == lenToSave)
+                    {
+                        buf._saved = str;
+                		_chunkedBuffer.push_back(buf);
+                    }
+                    else //testcode
+                        std::cerr << "len false" << std::endl;
+                }
+                head = false;
+                if (e != std::string::npos)
+                    e += 2;
+                else
+                    break;
+            }
+            else
+            {
+                str = buffer.substr(st, std::string::npos); 
+                if (str.empty() == false)
+                {
+                    buf._saved = str;
+                    _chunkedBuffer.push_back(buf);
+                }
+                break;
+            }
+        }
+        start = e;
+    }
+    return (false);
+}
+
+std::deque<struct Buffer>& Request::getChunkedBuffer()
+{
+	return _chunkedBuffer;
+}
+
+void Request::clearRequest()
+{
+    _location = NULL;
+    _state = 0;
+    _headerBuffer = "";
+    _buffer = "";
+	_method = "";
+	_requestUrl = "";
+	_version = "";
+	_connection = "";
+	_contentType = "";
+	_contentLength = 0;
+	_transferEncoding = "";
+	_boundary = "";
+	_chunkedFilename = "";
+	_chunkedBuffer.clear();
 }
 
 void Request::setBuffer(char *buffer, int size)
@@ -220,171 +402,4 @@ const std::string& Request::getContentType()
 const std::string& Request::getChunkedFilename()
 {
     return _chunkedFilename;
-}
-
-bool Request::checkDeque(Request* req, size_t& lenToSave, std::string& updatedBuffer)
-{
-	bool head = false;
-
-	if (_chunkedBuffer.empty() == false && \
-		_chunkedBuffer.back()._len != _chunkedBuffer.back()._saved.length())
-	{
-		Buffer prevBuffer = _chunkedBuffer.back();
-		_chunkedBuffer.pop_back();
-	    lenToSave = prevBuffer._len;
-		if (lenToSave != 0)
-			head = true;
-		updatedBuffer = prevBuffer._saved;
-	}
-	return head;
-}
-
-void Request::endChunkedParsing(Request* req)
-{
-	std::deque<struct Buffer> chunked = _chunkedBuffer;
-	size_t totalLen = 0;
-	std::string mergedBuffer;
-    std::vector<std::string> url = util::getToken(_requestUrl, "/");
-
-	// \r\n\r\n 만 남았는지 check하는 로직 추가하고, 
-	// 그 외의 데이터가 들어 왔으면 다시 버퍼에 붙여서 parsing에 들어 가게 한다.
-
-	// chunked send함수를 따로 빼준다. 불필요한 stringcopy를 줄이기 위해 -semikim
-
-    if (url.size() >= 1)
-        _chunkedFilename = url[url.size() - 1];
-
-	while (chunked.size())
-	{
-		struct Buffer buf = chunked.front();
-		totalLen += buf._len;
-		mergedBuffer += buf._saved;
-		chunked.pop_front();
-	}
-
-	
-	// -totalLen 이 0일 때 오류 처리 해야함 - semikim
-	
-	// req->changeBuffer(mergedBuffer);
-	// req->setContentLength(totalLen);
-    _buffer = mergedBuffer;
-    _contentLength = totalLen;
-    // ---------------------------------------- testcode
-    std::cerr << "totalLen:" << totalLen << std::endl;
-    std::cerr << " length:" <<  _contentLength << std::endl;
-    //std::cerr << "mergedBuffer\n" << mergedBuffer << std::endl;
-    // std::cerr << "=============chunked data====================" << std::endl;
-    // std::cerr << _chunkedFilename << std::endl;
-    // std::cerr << _contentType << std::endl;
-    // std::cerr << _buffer << std::endl;
-}
-
-
-bool Request::parseChunkedData(Request* req, const std::string& updatedBuffer)
-{
-    size_t start = 0;
-    std::string str;
-    size_t i = 0;
-    size_t e = 0;
-    bool head = false;
-    size_t lenToSave = 0;
-
-    std::string tmp;
-
-    head = checkDeque(req, lenToSave, tmp);
-    std::string buffer = tmp + updatedBuffer;
-    while (1)
-    {
-        if (head == false)
-        {
-			i = buffer.find("\r\n", start);
-            if (i != std::string::npos)
-            {
-                char *end = NULL;
-                str = buffer.substr(start, i - start);
-                if (str.empty() == false)
-                {
-                    lenToSave = std::strtol(str.c_str(), &end, 16);
-                	if (lenToSave == 0)
-                	{
-						endChunkedParsing(req);
-                        // updatedBuffer 에 데이터가 남아 있다면 다음에 들어오는 요청 헤더일수도 있기 때문에 보관해야 한다.... ㅜㅜ -semikim
-                        // \r\n\r\n 을 제거하고...... 어떻게 이어주지...............
-                    	return (true);
-                	}
-				}
-                head = true;
-                i += 2;
-            }
-            else
-            {
-                Buffer buf;
-                str = buffer.substr(start, std::string::npos);
-                if (str.empty() == false)
-				{
-					buf._saved = str;
-                	buf._len = 0;
-                	_chunkedBuffer.push_back(buf);
-				}
-                break;
-            }
-        }
-        if (head == true)
-        {
-			
-			Buffer buf;
-			buf._len = lenToSave;
-            size_t st = i;
-
-            while (1)
-            {
-                e = buffer.find("\r\n", i);
-                if (e == std::string::npos)
-                    break;
-                if (e - st == lenToSave)
-                    break;
-                else
-                    i = e + 2;
-            }
-
-            if (e != std::string::npos)
-            {
-                str = buffer.substr(st, e - st); 
-                if (str.empty() == false)
-                {
-                    if (str.size() == lenToSave)
-                    {
-                        buf._saved = str;
-                		_chunkedBuffer.push_back(buf);
-                    }
-                    else // ------------------------------ testcode  debug
-                        std::cerr << "len false" << std::endl;
-                    // ------------------------------------ 
-                }
-                head = false;
-                if (e != std::string::npos)
-                    e += 2;
-                else
-                    break;
-            }
-            else
-            {
-                str = buffer.substr(st, std::string::npos); 
-                if (str.empty() == false)
-                {
-                    buf._saved = str;
-                    _chunkedBuffer.push_back(buf);
-                }
-                break;
-            }
-        }
-        start = e;
-    }
-    return (false);
-}
-
-
-std::deque<struct Buffer>& Request::getChunkedBuffer()
-{
-	return _chunkedBuffer;
 }

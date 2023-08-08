@@ -86,8 +86,8 @@ std::string AResponse::findLocationPath() const
  	}
 	if (length == false)
 	{
-		exit(1);
 		// no location errorcode
+		throw 405;
 	}
 	checkLimitExcept();
 	if (!location._root.empty())
@@ -102,7 +102,6 @@ std::string AResponse::findLocationPath() const
 	}
 	if (result.size() > 1 && result[result.size() - 1] == '/')
 		result.erase(result.size() - 1, 1);
-		std::cerr << "result: " << result << std::endl;
 	return result;
 }
 
@@ -147,4 +146,14 @@ std::string AResponse::findContentType(const std::string& filePath)
 			return inputType[i];
 	}
 	return "";
+}
+
+int AResponse::getKq() const
+{
+	return _kq;
+}
+
+Request* AResponse::getRequest() const
+{
+	return _request;
 }

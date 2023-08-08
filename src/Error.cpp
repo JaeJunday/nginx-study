@@ -12,7 +12,6 @@ void pushErrorBuffer(ErrorData& data, std::string body)
 	responseData << "Date: " << AResponse::getDate() << "\r\n\r\n";
 	responseData << body;
     data._buffer = responseData.str();
-    std::cerr << data._buffer << std::endl;
 }
 
 /*

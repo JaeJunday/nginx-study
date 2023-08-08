@@ -45,4 +45,6 @@ class AResponse
 		std::string findLocationPath() const;
 		void checkLimitExcept() const;
 		std::string findContentType(const std::string& filePath);
+		int getKq() const;
+		Request* getRequest() const;
 };

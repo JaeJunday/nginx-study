@@ -30,7 +30,6 @@ void Get::createResponse()
 void Get::openPath(const std::string& path)
 {
 	std::string relativePath = "." + path;
-	std::cerr << "relative: " << relativePath << std::endl;
 	DIR *dirStream = opendir(relativePath.c_str());
 	std::stringstream body;
 	
@@ -70,7 +69,6 @@ void Get::fileProcess(const std::string& filePath, std::stringstream& body)
 {
     std::ifstream		file;
 
-	std::cerr << "filePath: " << filePath << std::endl;
 	file.open(filePath.c_str());
 	if (file.is_open() == true)
 	{

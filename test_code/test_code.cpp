@@ -4,3 +4,17 @@
 //     for (size_t i = 0; i < token.size(); ++i)
 //         std::cout << checklist[i] << " === " << token[i] << std::endl;
 // }
+
+
+
+// void test_print_event(struct kevent event)
+// {
+// 	std::cout << "\n===============================================\n";
+// 	std::cout << "event ident : " << event.ident << "\n";
+// 	std::cout << "event filter : " << event.filter << "\n";
+// 	std::cout << "event flags : " << event.flags << "\n";
+// 	std::cout << "event fflags : " << event.fflags << "\n";
+// 	std::cout << "event data : " << event.data << "\n";
+// 	std::cout << "event udata : " << event.udata << "\n";
+// 	std::cout << "===============================================\n" << std::endl;
+// }

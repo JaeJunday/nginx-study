@@ -38,14 +38,13 @@ int Operation::createBoundSocket(std::string listen)
 		ip = util::convertIp(ipPort[0]); 
 		port = util::stoui(ipPort[1]);
 	}
-//------------------------------------------- default ip address
+	// default ip address
 		std::cerr << "http://";
 		if (ipPort.size() == 1)
 			std::cerr << "localhost" << ":" << ipPort[0];
 		else if (ipPort.size() == 2)
 			std::cerr << ipPort[0] << ":" << ipPort[1]; 
 		std::cerr << std::endl;
-//-------------------------------------------
 	// ip address
 	serverAddr.sin_family = AF_INET; 
 	serverAddr.sin_addr.s_addr = htonl(ip);
@@ -55,7 +54,10 @@ int Operation::createBoundSocket(std::string listen)
 		throw std::logic_error("Error: Socket bind failed");
 	return socketFd;
 }
-
+/*
+	@des 서버가 여러 개일 경우, 해당 서버가 몇 번째 인덱스에 있는지 찾아서 해당 인덱스 반환
+	@return serverIndex(int)
+*/
 int Operation::findServer(uintptr_t ident) const
 {
 	for (int i = 0; i < _servers.size(); ++i)
@@ -66,16 +68,17 @@ int Operation::findServer(uintptr_t ident) const
 
 void Operation::start() {
 	// 서버 시작 로직을 구현합니다.
-	// ...
+	/*
+		@des 서버마다 소켓을 하나 만들어서 Set, 그리고 서버는 Listen 상태로 만들어둠
+	*/
 	for(int i = 0; i < _servers.size(); ++i)
 	{
 		try {
 			std::string number = _servers[i].getValue(server::LISTEN);
-			int index = createBoundSocket(number);
-			_servers[i].setSocket(index);
-			// _servers[i].setSocket(createBoundSocket(_servers[i].getValue(server::LISTEN)));
+			int socketFd = createBoundSocket(number);
+			_servers[i].setSocket(socketFd);
 			fcntl(_servers[i].getSocket(), F_SETFL, O_NONBLOCK);
-			if (listen(_servers[i].getSocket(), SOMAXCONN) == -1)
+			if (listen(_servers[i].getSocket(), SOMAXCONN) == -1) // SOMAXCONN == 128
 				throw std::logic_error("Error: Listen failed");
 		} catch (std::exception &e) {
 			std::cerr << e.what() << std::endl;
@@ -86,35 +89,35 @@ void Operation::start() {
 	kq = kqueue();
 	struct kevent event, events[10];
 	struct kevent tevent;	 /* Event triggered */
-	
+	/*
+		@des 각 서버마다 READ 이벤트를 걸어둠
+	*/
 	for(size_t i = 0; i < _servers.size(); ++i)
 	{
 		EV_SET(&event, _servers[i].getSocket(), EVFILT_READ, EV_ADD, 0, 0, nullptr);
 		kevent(kq, &event, 1, NULL, 0, NULL);
 	}
-	// loop
+	/*
+		@des 무한 loop 를 돌며 서버로 들어오는 이벤트를 감지, 감지한 이벤트에 따라 처리
+	*/
 	while (true)
 	{
-		nev = kevent(kq, NULL, 0, &tevent, 1, NULL);
+		nev = kevent(kq, NULL, 0, &tevent, 1, NULL); // EVFILT_READ, EVFILT_WRITE 이벤트가 감지되면 이벤트 감지 개수를 반환
 		if (nev == -1)
 			throw std::runtime_error("Error: kevent error");
-		// 서버로 연결요청 왔을때
-		int index = findServer(tevent.ident);
-		if (index >= 0)
-			acceptClient(kq, index);
-		else // 클라이언트로 연결요청이 들어왔을 때 //recv data
+		int serverIndex = findServer(tevent.ident);
+		if (serverIndex >= 0) // 서버일 경우
+			acceptClient(kq, serverIndex);
+		else // 클라이언트일 경우
 		{
 			if (tevent.filter == EVFILT_READ)
 			{
 				char *buffer = new char[tevent.data];
 				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 				Request *req = static_cast<Request*>(tevent.udata);
-				//----------------------------------------------- testcode
-					std::cerr << " ----------------------------------------------- recv " << tevent.ident << std::endl;
-					write(1, buffer, tevent.data);
-					std::cerr << std::endl;
-				//-----------------------------------------------	
-				// recvData()
+				std::cout << RED << "testcode " << "recv, detect socket fd : " << tevent.ident << RESET << std::endl;
+				write(1, buffer, tevent.data);
+				std::cerr << std::endl;
 				if (bytesRead == false || req->getConnection() == "close")
 				{
 					// 맵에 있는 request 주소 삭제 testcode
@@ -125,7 +128,6 @@ void Operation::start() {
 				}
 				else
 				{
-		
 					try{
 						if (req->getState() == request::READY)
 							req->parsing(buffer, tevent.data);
@@ -136,30 +138,27 @@ void Operation::start() {
 						}
 						if (req->getTransferEncoding() == "chunked")
 						{
-							std::cerr << "==================chunked=====================" << std::endl;
+							std::cout << RED << "testcode " << "==================chunked=====================" << RESET << std::endl;
+							std::cerr << RED << "testcode" << req->getBuffer() << RESET << std::endl;
 							if (req->getBuffer().empty() == false && req->getChunkedBuffer().empty() == true)
 								req->parseChunkedData(req, req->getBuffer());
 							else
-							{
-								//updatedBuffer = std::string(buffer, tevent.data);
 								req->parseChunkedData(req, std::string(buffer, tevent.data));
-								//req->parseChunkedData(req, updatedBuffer);
-							}
 						}
+						std::cerr << RED << "testcode " << "req->getMethod().size() : " << req->getMethod().size()<< RESET << std::endl;
+						std::cout << RED << "testcode" << " req->getBuffer().size() : " << req->getBuffer().size() << RESET << std::endl;
+						std::cout << RED << "testcode" << " req->req->getContentLength() : " << req->getContentLength() << RESET << std::endl;
 						if (req->getMethod().size() && req->getBuffer().size() == req->getContentLength())
 						{
-							// --------------------------------------------------- testcode
-							//std::cerr << "req->getBuffer().size():" << req->getBuffer().size() << std::endl;
-							//std::cerr << "req->getContentLe().size():" << req->getContentLength() << std::endl;	
 							if (req->getMethod() == "POST" && (req->getContentLength() == 0 || req->getBuffer().size() == 0))
 								throw 405;
 							AResponse* response = selectMethod(req, kq);
 							response->createResponse();
 							EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
 							kevent(kq, &tevent, 1, NULL, 0, NULL);
+							req->setEventState(event::WRITE);
 						}
 					} catch(const int errnum) {
-						// std::cerr << "errnum : " << errnum << std::endl;
 						sendErrorPage(tevent.ident, errnum);
 						close(tevent.ident);
 					} catch(const std::exception& e) {
@@ -180,15 +179,10 @@ AResponse* Operation::selectMethod(Request* req, int kq) const
 {
 	AResponse *result;
 	const std::string method = req->getMethod();
-	// testcode
-	std::cerr << "============method==================" << std::endl;
-	std::cerr << method << std::endl;
-	
-	if (method == "PUT")
-	 	result = new Post(req, kq);
+
 	if (method == "GET")
 		result = new Get(req, kq);
-	if (method == "POST")
+	if (method == "POST" || method == "PUT")
 		result = new Post(req, kq);
 	if (method == "DELETE")
 		result = new Delete(req, kq);	
@@ -201,65 +195,32 @@ void Operation::acceptClient(int kq, int index)
 	sockaddr_in		requestAddr;
 	socklen_t		requestLen;
 	// struct kevent	revent;
-	
+	std::cout << GREEN << "testcode" << "=================== ACCEPT =========================" << RESET << std::endl;	
 	requestFd = accept(_servers[index].getSocket(), reinterpret_cast<struct sockaddr*>(&requestAddr), &requestLen);
 	if (requestFd == -1)
 		throw std::logic_error("Error: Accept failed");
-
+	fcntl(requestFd, F_SETFL, O_NONBLOCK);
 	Request *request = new Request(requestFd, _servers[index]);
 	_requests.insert(std::make_pair(requestFd, request));
-	util::setEvent(request, kq, EVFILT_READ);
+	util::setReqEvent(request, kq, EVFILT_READ);
 }
-
-
-// void Operation::makeResponse(struct kevent *tevent, int kq, Request* req)
-// {
-// 	//get, head, delete
-// 	AResponse* response = new Get(req);
-// 	// 응답 헤더
-// 	response->createResponse();
-// 	// 있을수도있고 없을 수도 있습니다.
-// 	response->createResponseMain();
-
-// 	EV_SET(tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
-// 	// EVFILT_TIMER
-// 	kevent(kq, tevent, 1, NULL, 0, NULL);
-// }
 
 void Operation::sendData(struct kevent& tevent)
 {
-	// response주소도 저장해야 하나???
-	AResponse* res = static_cast<AResponse*>(tevent.udata);
-	res->stamp();
-	size_t byteWrite = send(tevent.ident, res->getBuffer().str().c_str(), res->getBuffer().str().length(), 0);
-	std::cerr << "==============================response data==============================" << std::endl;
-	std::cerr << res->getBuffer().str().c_str() << std::endl;
+	AResponse* response = static_cast<AResponse*>(tevent.udata); 
+	size_t byteWrite = send(tevent.ident, response->getBuffer().str().c_str(), response->getBuffer().str().length(), 0);
 	//-------------------------------------------------------------  testcode
-	// std::cout << res->getBuffer().str() << std::endl;
-	/*
-		for (size_t i = 0; i < res->getBuffer().str().length(); ++i)
-		{
-			std::cerr << (int)res->getBuffer().str() << std::end;
-		}
-	*/
+	std::cerr << "==============================response data==============================" << std::endl;
+	// std::cerr << response->getBuffer().str().c_str() << std::endl;
+	std::cout << "buffer length :" << response->getBuffer().str().length() << std::endl;
 	std::cout << "write byte count :" << byteWrite << std::endl;
-	//-------------------------------------------------------------
-	delete res;
-	close(tevent.ident);
-	// send
-	// 리스폰스 객체의 데이터를 소켓으로 send하는 부분	
-	// send(client_fd, result.c_str(), result.length(), 0);
-	// return;
+	if (byteWrite == response->getBuffer().str().length())
+	{
+		response->getRequest()->clearRequest();
+		util::setReqEvent(response->getRequest(), response->getKq(), event::READ);
+		delete response;
+		std::cout << GREEN << "testcode " << "send clear" << RESET << std::endl;
+	}
+	else
+		std::cout << GREEN << "testcode" << "bytewrite fail" << RESET << std::endl;
 }
-
-// void test_print_event(struct kevent event)
-// {
-// 	std::cout << "\n===============================================\n";
-// 	std::cout << "event ident : " << event.ident << "\n";
-// 	std::cout << "event filter : " << event.filter << "\n";
-// 	std::cout << "event flags : " << event.flags << "\n";
-// 	std::cout << "event fflags : " << event.fflags << "\n";
-// 	std::cout << "event data : " << event.data << "\n";
-// 	std::cout << "event udata : " << event.udata << "\n";
-// 	std::cout << "===============================================\n" << std::endl;
-// }
