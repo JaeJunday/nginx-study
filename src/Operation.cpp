@@ -130,9 +130,11 @@ void Operation::start() {
 					try{
 						req->setBuffer(buffer, tevent.data);
 						int state = req->getState();
-						if (state == request::READY)
+						if (state == request::READY) // header 생성
 							req->headerParsing(buffer, tevent.data);
-						if (state == request::DONE)
+						if (state == request::CREATE) // response 생성
+							req->makeResponse(kq);
+						if (state == request::DONE) // response body 생성
 							this->handleResponse(req, kq, &tevent, buffer);
 					} catch(const int errnum) {
 						sendErrorPage(tevent.ident, errnum);
@@ -158,37 +160,42 @@ void Operation::handleResponse(Request* req, int kq, struct kevent *tevent, char
 // 0/r/n/r/n 만나고 나서  파이프 다 쓰면 close(writeFd)
 	if (req->getTransferEncoding() == "chunked")
 	{	
+		req->parseChunkedData();
 		
+		// buffer의 len을 읽어서 숫자를 보고 
+//                     lenToSave = std::strtol(str.c_str(), &end, 16);
+		// body index 부터 
+
 	}
 	else if (req->getBuffer().size() - req->getBodyIndex()  == req->getContentLength())
 	{
 		if (req->getMethod() == "POST" && (req->getContentLength() == 0 || req->getBuffer().size() == 0))
 			throw 405;
-		AResponse* response = selectMethod(req, kq);
-		response->createResponse();
-		EV_SET(tevent, tevent->ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
+		// AResponse* response = selectMethod(req, kq);
+		req->getResponse()->createResponse();
+		EV_SET(tevent, tevent->ident, EVFILT_WRITE, EV_ADD, 0, 0, req->getResponse());
 		kevent(kq, tevent, 1, NULL, 0, NULL);
 		req->setEventState(event::WRITE);
 	}
 }
 
+// AResponse* Operation::selectMethod(Request* req, int kq) const
+// {
+// 	AResponse *result;
+// 	const std::string method = req->getMethod();
 
-
-AResponse* Operation::selectMethod(Request* req, int kq) const
-{
-	AResponse *result;
-	const std::string method = req->getMethod();
-
-	if (method.empty())
-		throw 405;
-	if (method == "GET")
-		result = new Get(req, kq);
-	if (method == "POST" || method == "PUT")
-		result = new Post(req, kq);
-	if (method == "DELETE")
-		result = new Delete(req, kq);	
-	return result;
-}
+// 	if (method.empty())
+// 		throw 405;
+// 	if (method == "GET")
+// 		result = new Get(req, kq);
+// 	else if (req->getTransferEncoding() == "chunked")
+// 		result = new Chunked(req, kq);
+// 	else if (method == "POST" || method == "PUT")
+// 		result = new Post(req, kq);
+// 	else if (method == "DELETE")
+// 		result = new Delete(req, kq);
+// 	return result;
+// }
 
 void Operation::acceptClient(int kq, int index)
 {

@@ -1,5 +1,10 @@
 #pragma once
 
+#include "AResponse.hpp"
+#include "Get.hpp"
+#include "Post.hpp"
+#include "Delete.hpp"
+#include "Chunked.hpp"
 #include "Color.hpp"
 #include "enum.hpp"
 #include "Util.hpp"
@@ -18,11 +23,14 @@ struct Buffer{
 };
 */
 
+#define HEX 16
+
 class Request
 {
 	private:
 		const Server&		_server;
 		Location*			_location;
+		AResponse*			_response;
 		int					_state;
 		int					_socket;
 		std::string			_headerBuffer;
@@ -41,12 +49,16 @@ class Request
 		std::string			_chunkedFilename;
 		//std::deque<Buffer>	_chunkedBuffer;
 		int 				_bodyIndex;
+		int					_chunkedIndex;
+		
 	public:
 		Request(int socket, const Server& server);
 		void headerParsing(char* buf, intptr_t size);
 		void checkMultipleSpaces(const std::string& str);
 		void clearRequest();
+		void makeResponse(int kq);
 		// chunked
+		bool parseChunkedData();
 		//bool checkDeque(Request* req, int& lenToSave, std::string& updatedBuffer);
 		//void endChunkedParsing(Request* req);
 		//bool parseChunkedData(Request* req, const std::string& updatedBuffer);
@@ -66,10 +78,10 @@ class Request
 		const std::string& getContentType();
 		int getEventState() const;
 		const std::string& getBuffer() const;
-		
 		const std::string& getChunkedFilename();
 		//std::deque<struct Buffer>& getChunkedBuffer();
-		const int getBodyIndex() const;
+		int getBodyIndex() const;
+		AResponse* getResponse() const;
 		// set
 		void setRequestLine(std::string& requestLine);
 		void setFieldLine(std::string& fieldLine);

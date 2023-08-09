@@ -4,6 +4,7 @@
 #include "Get.hpp"
 #include "Post.hpp"
 #include "Delete.hpp"
+#include "Chunked.hpp"
 #include "Server.hpp"
 #include "Request.hpp"
 #include "enum.hpp"

@@ -76,10 +76,8 @@ namespace request
     enum REQUEST
     {
 		READY = 0,
-		DONE = 1,
-        POST = 2,
-        GET = 3,
-        DELETE = 4
+		CREATE = 1,
+        DONE = 2
     };
 }
 

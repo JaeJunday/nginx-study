@@ -21,6 +21,7 @@ void Request::setRequestLine(std::string& requestLine)
     std::vector<std::string> token = util::getToken(requestLine, " ");
 
     // testcode 
+    int         bodySize;
     // std::cerr << "========================requestLine========================" << std::endl;
     // std::cerr << requestLine << std::endl;
 
@@ -130,6 +131,54 @@ std::string removeSpecificCharacter(std::string str, char ch)
 		pos = str.find(ch, pos);
 	}
 	return (str);
+}
+
+/*
+1. 리퀘스트 메시지 처음부터 읽어오면서 첫 번째 rnrn 찾기 (여기까지가 헤더!)
+2. 헤더 파싱해서 어떤 메시지인지 확인(청크드인지 콘텐츠 렝스가 있는지 확인)
+
+3. (청크드면 1에 나온 rnrn이후에 바로 바디가 오는거니까) 들어온 문자열을 hex->int로 바꿔서 숫자를 보고, 그 뒤에 나오는 문자가 rn인지 확인
+    - 여기에서 rn으로 끝나지 않는 경우에 메시지를 덜 받아왔을 가능성이 있으니(숫자 받아오다가 잘렸거나 r까지만 들어왔다거나 등등) recv 더 해줄 필요가 있을 수 있어요
+
+
+
+    
+4. rn이 나오는 경우 int로 바꾼 숫자+2만큼의 버퍼기 채워졌을 때(recv로 받아왔을 때) 확인해서 진행
+    - 0보다 큰 경우: 해당 숫자만큼 (내용을 신경쓰지 않고) 모두 바디로 처리, 바디처리한 내용 직후에 rn이 나오는지 체크해서 없을경우 에러처리, rn이 있으면 rn이후에 다시 3번으로 돌아가 반복
+    - 0인 경우: 그 다음 2자를 더 받아와서 총 0rnrn으로 끝나는지 확인-> 리퀘스츠 수신 끝
+    - 이 경우에 각 청크드메시지가 rn혹은 rnrn으로 끝나는 걸 감안해서 int로 변환한 수 +2만큼의 바퍼를 받아와 먼저 rn까지 확인하고, 0인 경우에는 변환한 수(0) +4만큼의 버퍼를 받아와서 rnrn으로 끝나는지 검사
+
+청크드 바디가 들어오는 시점부터 4번의 옵션을 모두 고려해주시면 괜찮을거같아요
+숫자 먼저 체크하고, 숫자에 따라
+- 1이상: 바디채우고 rn으로 끝나는지 체크하고 다시 숫자 체크로 돌아감
+- 0: rnrn으로 끝나는지 체크하는 과정을 0블럭이 들어올때까지 반복하는 로직으로 진행
+*/
+
+// _buffer, _chunkedIndex, body, bodySize
+bool Request::parseChunkedData()
+{
+    size_t  bodySize;
+    size_t  index;
+    char*   endptr;
+
+    if (_chunkedIndex == false)
+        _chunkedIndex = _bodyIndex;
+    index = _buffer.find("\r\n", _chunkedIndex);
+    if (index != std::string::npos)
+    {
+        bodySize = std::strtol(_buffer.c_str() + _chunkedIndex, &endptr, HEX);
+        size_t bodyStart = index + 2; 
+        if (bodySize == 0 && _buffer.find("\r\n", bodyStart) != std::string::npos)
+            return true;
+        if (bodyStart + bodySize <= _buffer.length())
+        {
+            std::string perfectBody = _buffer.substr(bodyStart, bodySize);
+            // _response->cgi(perfectBody); //cgi
+            _chunkedIndex = bodyStart + bodySize;
+        }
+        else
+            return false;
+    }
 }
 
 // bool Request::checkDeque(Request* req, int& lenToSave, std::string& updatedBuffer)
@@ -291,6 +340,21 @@ std::string removeSpecificCharacter(std::string str, char ch)
 // 	return _chunkedBuffer;
 // }
 
+void Request::makeResponse(int kq)
+{
+	if (_method.empty())
+		throw 405;
+	if (_method == "GET")
+		_response = new Get(this, kq);
+	else if (_transferEncoding == "chunked")
+		_response = new Chunked(this, kq);
+	else if (_method == "POST" || _method == "PUT")
+		_response = new Post(this, kq);
+	else if (_method == "DELETE")
+		_response = new Delete(this, kq);
+    _state = request::DONE;
+}
+
 void Request::clearRequest()
 {
     _location = NULL;
@@ -407,7 +471,12 @@ const std::string& Request::getChunkedFilename()
     return _chunkedFilename;
 }
 
-const int Request::getBodyIndex() const
+int Request::getBodyIndex() const
 {
     return _bodyIndex;
+}
+
+AResponse* Request::getResponse() const
+{
+    return _response;
 }
