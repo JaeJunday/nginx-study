@@ -112,16 +112,15 @@ void Operation::start() {
 		{
 			if (tevent.filter == EVFILT_READ)
 			{
-				char *buffer = new char[tevent.data];
+				char* buffer = new char[tevent.data];
 				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 				Request *req = static_cast<Request*>(tevent.udata);
-				std::cout << RED << "testcode " << "recv, detect socket fd : " << tevent.ident << RESET << std::endl;
-				write(1, buffer, tevent.data);
-				std::cerr << std::endl;
+				// std::cout << RED << "testcode " << "recv, detect socket fd : " << tevent.ident << RESET << std::endl;
+				// write(1, buffer, tevent.data);
+				// std::cerr << std::endl;
 				if (bytesRead == false || req->getConnection() == "close")
 				{
-					// 맵에 있는 request 주소 삭제 testcode
-					std::cerr << "###################### client end ##############################" << std::endl;
+					// std::cerr << "###################### client end ##############################" << std::endl;
 					close(req->getSocket());
 					delete req;
 					_requests.erase(tevent.ident);
@@ -129,35 +128,12 @@ void Operation::start() {
 				else
 				{
 					try{
-						if (req->getState() == request::READY)
-							req->parsing(buffer, tevent.data);
-						else if (req->getState() == request::POST)
-						{
-							if (req->getTransferEncoding() != "chunked")
-								req->setBuffer(buffer, tevent.data);
-						}
-						if (req->getTransferEncoding() == "chunked")
-						{
-							std::cout << RED << "testcode " << "==================chunked=====================" << RESET << std::endl;
-							std::cerr << RED << "testcode" << req->getBuffer() << RESET << std::endl;
-							if (req->getBuffer().empty() == false && req->getChunkedBuffer().empty() == true)
-								req->parseChunkedData(req, req->getBuffer());
-							else
-								req->parseChunkedData(req, std::string(buffer, tevent.data));
-						}
-						std::cerr << RED << "testcode " << "req->getMethod().size() : " << req->getMethod().size()<< RESET << std::endl;
-						std::cout << RED << "testcode" << " req->getBuffer().size() : " << req->getBuffer().size() << RESET << std::endl;
-						std::cout << RED << "testcode" << " req->req->getContentLength() : " << req->getContentLength() << RESET << std::endl;
-						if (req->getMethod().size() && req->getBuffer().size() == req->getContentLength())
-						{
-							if (req->getMethod() == "POST" && (req->getContentLength() == 0 || req->getBuffer().size() == 0))
-								throw 405;
-							AResponse* response = selectMethod(req, kq);
-							response->createResponse();
-							EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
-							kevent(kq, &tevent, 1, NULL, 0, NULL);
-							req->setEventState(event::WRITE);
-						}
+						req->setBuffer(buffer, tevent.data);
+						int state = req->getState();
+						if (state == request::READY)
+							req->headerParsing(buffer, tevent.data);
+						if (state == request::DONE)
+							this->handleResponse(req, kq, &tevent, buffer);
 					} catch(const int errnum) {
 						sendErrorPage(tevent.ident, errnum);
 						close(tevent.ident);
@@ -175,11 +151,36 @@ void Operation::start() {
 	}
 }
 
+void Operation::handleResponse(Request* req, int kq, struct kevent *tevent, char* buffer)
+{
+// chunkedBuffer 를 파싱하여 body길이가 정확할 경우 substr을 통해 body 데이터를 잘라서 (createResponse) writeFd에 써줌
+// index로 파싱한 부분의 시작지점을 가지고 있음 (즉, body size 의 시작지점)
+// 0/r/n/r/n 만나고 나서  파이프 다 쓰면 close(writeFd)
+	if (req->getTransferEncoding() == "chunked")
+	{	
+		
+	}
+	else if (req->getBuffer().size() - req->getBodyIndex()  == req->getContentLength())
+	{
+		if (req->getMethod() == "POST" && (req->getContentLength() == 0 || req->getBuffer().size() == 0))
+			throw 405;
+		AResponse* response = selectMethod(req, kq);
+		response->createResponse();
+		EV_SET(tevent, tevent->ident, EVFILT_WRITE, EV_ADD, 0, 0, response);
+		kevent(kq, tevent, 1, NULL, 0, NULL);
+		req->setEventState(event::WRITE);
+	}
+}
+
+
+
 AResponse* Operation::selectMethod(Request* req, int kq) const
 {
 	AResponse *result;
 	const std::string method = req->getMethod();
 
+	if (method.empty())
+		throw 405;
 	if (method == "GET")
 		result = new Get(req, kq);
 	if (method == "POST" || method == "PUT")

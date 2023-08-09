@@ -1,7 +1,7 @@
 #include "Request.hpp"
 
 Request::Request(int socket, const Server& server)
-    : _server(server), _state(0), _socket(socket), _port(0), _contentLength(0), _eventState(0)
+    : _server(server), _state(0), _socket(socket), _port(0), _contentLength(0), _eventState(0), _bodyIndex(0)
 {
 }
 
@@ -78,7 +78,13 @@ void Request::setFieldLine(std::string& fieldLine)
         _connection = token[1];
 }
 
-void Request::parsing(char* buf, intptr_t size)
+
+// 헤더 + 본문 길이 = buffersize
+// 본문길이  = contentLength
+// 본문 스타트 길이 = bodyindex
+
+// buffersize - bodyindx == contesntLength : ok
+void Request::headerParsing(char* buf, intptr_t size)
 {
     // testcode
     // std::cerr << "========================parsing========================" << std::endl;
@@ -107,11 +113,12 @@ void Request::parsing(char* buf, intptr_t size)
         setFieldLine(fieldLine);
         endLine = newEndLine + 2;
     }
-    int start = headerBoundary + 4;
-    if (_headerBuffer.size() - start != 0)
-        _buffer = _headerBuffer.substr(start, _headerBuffer.size() - start);
-    if (_method == "POST")
-        _state = request::POST;
+    // int start = headerBoundary + 4;
+    _bodyIndex = headerBoundary + 4;
+    // if (_headerBuffer.size() - start != 0)
+    //     _buffer = _headerBuffer.substr(start, _headerBuffer.size() - start);
+    // if (_method == "POST")
+    //     _state = request::POST;
 }
 
 std::string removeSpecificCharacter(std::string str, char ch)
@@ -125,168 +132,164 @@ std::string removeSpecificCharacter(std::string str, char ch)
 	return (str);
 }
 
+// bool Request::checkDeque(Request* req, int& lenToSave, std::string& updatedBuffer)
+// {
+// 	bool head = false;
+// 	if (_chunkedBuffer.empty() == false && _chunkedBuffer.back()._len != _chunkedBuffer.back()._saved.length())
+// 	{
+// 		Buffer prevBuffer = _chunkedBuffer.back();
+// 		_chunkedBuffer.pop_back();
+// 	    lenToSave = prevBuffer._len;
+// 		if (lenToSave != -1)
+// 			head = true;
+// 		updatedBuffer = prevBuffer._saved;
+// 	}
+// 	return head;
+// }
 
-bool Request::checkDeque(Request* req, int& lenToSave, std::string& updatedBuffer)
-{
-	bool head = false;
+// void Request::endChunkedParsing(Request* req)
+// {
+// 	std::deque<struct Buffer> chunked = _chunkedBuffer;
+// 	int totalLen = -1;
+// 	std::string mergedBuffer;
+//     std::vector<std::string> url = util::getToken(_requestUrl, "/");
 
-	if (_chunkedBuffer.empty() == false && _chunkedBuffer.back()._len != _chunkedBuffer.back()._saved.length())
-	{
-		Buffer prevBuffer = _chunkedBuffer.back();
-		_chunkedBuffer.pop_back();
-	    lenToSave = prevBuffer._len;
-		if (lenToSave != -1)
-			head = true;
-		updatedBuffer = prevBuffer._saved;
-	}
-	return head;
-}
-
-void Request::endChunkedParsing(Request* req)
-{
-	std::deque<struct Buffer> chunked = _chunkedBuffer;
-	int totalLen = -1;
-	std::string mergedBuffer;
-    std::vector<std::string> url = util::getToken(_requestUrl, "/");
-
-	// \r\n\r\n 만 남았는지 check하는 로직 추가하고, 
-	// 그 외의 데이터가 들어 왔으면 다시 버퍼에 붙여서 parsing에 들어 가게 한다.
+// 	// \r\n\r\n 만 남았는지 check하는 로직 추가하고, 
+// 	// 그 외의 데이터가 들어 왔으면 다시 버퍼에 붙여서 parsing에 들어 가게 한다.
 
 
-    if (url.size() >= 1)
-        _chunkedFilename = url[url.size() - 1];
-	while (chunked.size())
-	{
-		struct Buffer buf = chunked.front();
-		totalLen += buf._len;
-		mergedBuffer += buf._saved;
-		chunked.pop_front();
-	}
-    //if (chunked.size() == 0)
-    //    totalLen = 0;
+//     if (url.size() >= 1)
+//         _chunkedFilename = url[url.size() - 1];
+// 	while (chunked.size())
+// 	{
+// 		struct Buffer buf = chunked.front();
+// 		totalLen += buf._len;
+// 		mergedBuffer += buf._saved;
+// 		chunked.pop_front();
+// 	}
+//     //if (chunked.size() == 0)
+//     //    totalLen = 0;
 
 	
-	// -totalLen 이 0일 때 오류 처리 해야함 - semikim
+// 	// -totalLen 이 0일 때 오류 처리 해야함 - semikim
 	
-	// req->changeBuffer(mergedBuffer);
-	// req->setContentLength(totalLen);
-    _buffer = mergedBuffer;
-    _contentLength = totalLen;
-    // ---------------------------------------- testcode
-    std::cout << RED << "testcode " << "totalLen:" << totalLen << RESET << std::endl;
-    std::cout << RED << "testcode " << "length:" <<  _contentLength << RESET << std::endl;
-    //std::cerr << "mergedBuffer\n" << mergedBuffer << std::endl;
-    // std::cerr << "=============chunked data====================" << std::endl;
-    // std::cerr << _chunkedFilename << std::endl;
-    // std::cerr << _contentType << std::endl;
-    // std::cerr << _buffer << std::endl;
-}
+// 	// req->changeBuffer(mergedBuffer);
+// 	// req->setContentLength(totalLen);
+//     _buffer = mergedBuffer;
+//     _contentLength = totalLen;
+//     // ---------------------------------------- testcode
+//     std::cout << RED << "testcode " << "totalLen:" << totalLen << RESET << std::endl;
+//     std::cout << RED << "testcode " << "length:" <<  _contentLength << RESET << std::endl;
+//     //std::cerr << "mergedBuffer\n" << mergedBuffer << std::endl;
+//     // std::cerr << "=============chunked data====================" << std::endl;
+//     // std::cerr << _chunkedFilename << std::endl;
+//     // std::cerr << _contentType << std::endl;
+//     // std::cerr << _buffer << std::endl;
+// }
 
-bool Request::parseChunkedData(Request* req, const std::string& updatedBuffer)
-{
-    std::string str;
-    int start, i, e = 0;
-    bool head = false;
-    int lenToSave = -1;
-    // _contentLength = -1;
+// bool Request::parseChunkedData(Request* req, const std::string& updatedBuffer)
+// {
+//     std::string str;
+//     int start = 0, i = 0, e = 0;
+//     bool head = false;
+//     int lenToSave = -1;
 
-    std::string tmp;
-    head = checkDeque(req, lenToSave, tmp);
-    std::string buffer = tmp + updatedBuffer;
-    std::cerr << RED << "testcode " << "buffer : "<< buffer << RESET << std::endl;
-    while (true)
-    {
-        if (head == false)
-        {
-			i = buffer.find("\r\n", start);
-            if (i != std::string::npos)
-            {
-                char *end = NULL;
-                str = buffer.substr(start, i - start);
-                if (str.empty() == false)
-                {
-                    lenToSave = std::strtol(str.c_str(), &end, 16);
-                    std::cerr << GREEN << "testcode" << " => lenToSAve:"  << lenToSave << RESET << std::endl;
-                	if (lenToSave == 0)
-                	{
-						endChunkedParsing(req);
-                        // updatedBuffer 에 데이터가 남아 있다면 다음에 들어오는 요청 헤더일수도 있기 때문에 보관해야 한다-semikim
-                        // \r\n\r\n 을 제거하고 어떻게 이어주지
-                    	return (true);
-                	}
-				}
-                head = true;
-                i += 2;
-            }
-            else
-            {
-                Buffer buf;
-                str = buffer.substr(start, std::string::npos);
-                if (str.empty() == false)
-				{
-					buf._saved = str;
-                	buf._len = 0;
-                	_chunkedBuffer.push_back(buf);
-				}
-                break;
-            }
-        }
-        if (head == true)
-        {
-			Buffer buf;
-			buf._len = lenToSave;
-            size_t st = i;
+//     std::string tmp;
+//     head = checkDeque(req, lenToSave, tmp);
+//     std::string buffer = tmp + updatedBuffer;
+//     std::cerr << RED << "testcode " << "buffer : "<< buffer << RESET << std::endl;
+//     while (true)
+//     {
+//         if (head == false)
+//         {
+// 			i = buffer.find("\r\n", start);
+//             if (i != std::string::npos)
+//             {
+//                 char *end = NULL;
+//                 str = buffer.substr(start, i - start);
+//                 if (str.empty() == false)
+//                 {
+//                     lenToSave = std::strtol(str.c_str(), &end, 16);
+//                     std::cerr << GREEN << "testcode" << " => lenToSAve:"  << lenToSave << RESET << std::endl;
+//                 	if (lenToSave == 0)
+//                 	{
+// 						endChunkedParsing(req);
+//                         // updatedBuffer 에 데이터가 남아 있다면 다음에 들어오는 요청 헤더일수도 있기 때문에 보관해야 한다-semikim
+//                         // \r\n\r\n 을 제거하고 어떻게 이어주지
+//                     	return (true);
+//                 	}
+// 				}
+//                 head = true;
+//                 i += 2;
+//             }
+//             else
+//             {
+//                 Buffer buf;
+//                 str = buffer.substr(start, std::string::npos);
+//                 if (str.empty() == false)
+// 				{
+// 					buf._saved = str;
+//                 	buf._len = 0;
+//                 	_chunkedBuffer.push_back(buf);
+// 				}
+//                 break;
+//             }
+//         }
+//         if (head == true)
+//         {
+// 			Buffer buf;
+// 			buf._len = lenToSave;
+//             size_t st = i;
+//             while (1)
+//             {
+//                 e = buffer.find("\r\n", i);
+//                 if (e == std::string::npos)
+//                     break;
+//                 if (e - st == lenToSave)
+//                     break;
+//                 else
+//                     i = e + 2;
+//             }
+// 
+//             if (e != std::string::npos)
+//             {
+//                 str = buffer.substr(st, e - st); 
+//                 if (str.empty() == false)
+//                 {
+//                     if (str.size() == lenToSave)
+//                     {
+//                         buf._saved = str;
+//                 		_chunkedBuffer.push_back(buf);
+//                     }
+//                     else //testcode
+//                         std::cerr << "len false" << std::endl;
+//                 }
+//                 head = false;
+//                 if (e != std::string::npos)
+//                     e += 2;
+//                 else
+//                     break;
+//             }
+//             else
+//             {
+//                 str = buffer.substr(st, std::string::npos); 
+//                 if (str.empty() == false)
+//                 {
+//                     buf._saved = str;
+//                     _chunkedBuffer.push_back(buf);
+//                 }
+//                 break;
+//             }
+//         }
+//         start = e;
+//     }
+//     return (false);
+// }
 
-            while (1)
-            {
-                e = buffer.find("\r\n", i);
-                if (e == std::string::npos)
-                    break;
-                if (e - st == lenToSave)
-                    break;
-                else
-                    i = e + 2;
-            }
-
-            if (e != std::string::npos)
-            {
-                str = buffer.substr(st, e - st); 
-                if (str.empty() == false)
-                {
-                    if (str.size() == lenToSave)
-                    {
-                        buf._saved = str;
-                		_chunkedBuffer.push_back(buf);
-                    }
-                    else //testcode
-                        std::cerr << "len false" << std::endl;
-                }
-                head = false;
-                if (e != std::string::npos)
-                    e += 2;
-                else
-                    break;
-            }
-            else
-            {
-                str = buffer.substr(st, std::string::npos); 
-                if (str.empty() == false)
-                {
-                    buf._saved = str;
-                    _chunkedBuffer.push_back(buf);
-                }
-                break;
-            }
-        }
-        start = e;
-    }
-    return (false);
-}
-
-std::deque<struct Buffer>& Request::getChunkedBuffer()
-{
-	return _chunkedBuffer;
-}
+// std::deque<struct Buffer>& Request::getChunkedBuffer()
+// {
+// 	return _chunkedBuffer;
+// }
 
 void Request::clearRequest()
 {
@@ -303,12 +306,12 @@ void Request::clearRequest()
 	_transferEncoding = "";
 	_boundary = "";
 	_chunkedFilename = "";
-	_chunkedBuffer.clear();
+    _bodyIndex = 0;
 }
 
 void Request::setBuffer(char *buffer, int size)
 {
-	_buffer += std::string(buffer, size);   
+	_buffer.append(buffer, size);
 }
 
 void Request::setEventState(int eventState)
@@ -402,4 +405,9 @@ const std::string& Request::getContentType()
 const std::string& Request::getChunkedFilename()
 {
     return _chunkedFilename;
+}
+
+const int Request::getBodyIndex() const
+{
+    return _bodyIndex;
 }

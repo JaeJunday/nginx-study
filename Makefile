@@ -9,7 +9,8 @@ SRCS = main.cpp \
 		Post.cpp \
 		Delete.cpp \
 		Util.cpp \
-		Error.cpp
+		Error.cpp \
+		Chunked.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 OBJ_DIR = build/

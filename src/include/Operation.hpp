@@ -40,6 +40,8 @@ public:
     void sendData(struct kevent& tevent);
     void testPipe(std::string buffer);
     
+    void handleResponse(Request* req, int kq, struct kevent *tevent, char* buffer);
+    
     AResponse* selectMethod(Request* req, int kq) const;
 };
 

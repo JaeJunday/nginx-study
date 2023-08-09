@@ -1,15 +1,15 @@
-#include "Post.hpp"
-#include "Request.hpp"
+#include "Chunked.hpp"
+
 // NOTE_EXIT -> 프로세스 종료될때 이벤트 발생
 // EV_SET(&event, pid, NOTE_EXIT, EV_ADD, 0, 0, nullptr);
 // kevent(kq, &event, 1, NULL, 0, NULL);
 
-Post::Post(Request* request, int kq) : AResponse(kq)
+Chunked::Chunked(Request* request, int kq) : AResponse(kq)
 {
     _request = request;
 }
 
-void Post::createResponse()
+void Chunked::createResponse()
 {
 	int writeFd[2]; // parent(w) -> child(r)
 	int readFd[2]; // child(w) -> parent(r)
@@ -20,9 +20,12 @@ void Post::createResponse()
 	pipe(readFd);
 	util::setEvent(writeFd[1], _kq, EVFILT_WRITE);
 	util::setEvent(readFd[0], _kq, EVFILT_READ);
+
+    // 몇번째 호출인지 확인해서 
     pid_t pid = fork();
     if (pid == 0)
 		childProcess(writeFd, readFd);
+
     close(writeFd[0]);
     close(readFd[1]);
 	uploadFile(writeFd[1], _kq);
@@ -33,32 +36,33 @@ void Post::createResponse()
 	_buffer << result;
 }
 
-void Post::childProcess(int *writeFd, int *readFd)
+void Chunked::childProcess(int *writeFd, int *readFd)
 {
 	dup2(writeFd[0], STDIN_FILENO);
 	close(writeFd[0]);
 	close(writeFd[1]);
 	dup2(readFd[1], STDOUT_FILENO); close(readFd[0]);
 	close(readFd[1]);
-	const char* scriptPath = "./src/cgi/upload_cgi.py";  // 실행할 파이썬 스크립트의 경로
+	const char* scriptPath = "./src/cgi/chunked_upload_cgi.py";  // 실행할 파이썬 스크립트의 경로
 	char* const args[] = {const_cast<char*>("python3"), const_cast<char*>(scriptPath), nullptr};
-	setenv("BOUNDARY", _request->getBoundary().c_str(), true);
+	setenv("FILENAME", _request->getChunkedFilename().c_str(), true);
+	setenv("CONTENT_TYPE", _request->getContentType().c_str(), true);
 	extern char** environ;
-	// execve 함수로 파이썬 스크립트 실행
 	if (execve("/usr/bin/python3", args, environ) == -1) {
 		perror("execve");  // 오류 처리
 	}
 }
 
-void Post::uploadFile(int fd, int kq)
+void Chunked::uploadFile(int fd, int kq)
 {
 	struct kevent	tevent;
 	int				ret;
 	int				size = 0;
-	std::string		data = std::string(_request->getBuffer(), _request->getBodyIndex(), std::string::npos);
+	std::string		data = _request->getBuffer();
 	size_t			writeSize;
 
 	std::cerr << RED << "testcode " << "data"  << data << RESET << std::endl;
+
 	while (true)
 	{
 		ret = kevent(kq, nullptr, 0, &tevent, 1, nullptr);
@@ -77,7 +81,7 @@ void Post::uploadFile(int fd, int kq)
 	}
 }
 
-const std::string Post::printResult(int fd, int kq)
+const std::string Chunked::printResult(int fd, int kq)
 {
 	struct	kevent tevent;
 	size_t	size = 0;

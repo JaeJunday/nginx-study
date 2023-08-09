@@ -8,14 +8,15 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <queue>
+//#include <queue>
 #include <fcntl.h> 
-#include <deque>
-
+//#include <deque>
+/*
 struct Buffer{
 	std::string	_saved;
 	int		_len;
 };
+*/
 
 class Request
 {
@@ -38,16 +39,17 @@ class Request
 		std::string			_boundary;
 		int					_eventState;
 		std::string			_chunkedFilename;
-		std::deque<Buffer>	_chunkedBuffer;
+		//std::deque<Buffer>	_chunkedBuffer;
+		int 				_bodyIndex;
 	public:
 		Request(int socket, const Server& server);
-		void parsing(char* buf, intptr_t size);
+		void headerParsing(char* buf, intptr_t size);
 		void checkMultipleSpaces(const std::string& str);
 		void clearRequest();
 		// chunked
-		bool checkDeque(Request* req, int& lenToSave, std::string& updatedBuffer);
-		void endChunkedParsing(Request* req);
-		bool parseChunkedData(Request* req, const std::string& updatedBuffer);
+		//bool checkDeque(Request* req, int& lenToSave, std::string& updatedBuffer);
+		//void endChunkedParsing(Request* req);
+		//bool parseChunkedData(Request* req, const std::string& updatedBuffer);
 		// get
 		int getSocket() const;
 		int getState() const;
@@ -64,8 +66,10 @@ class Request
 		const std::string& getContentType();
 		int getEventState() const;
 		const std::string& getBuffer() const;
+		
 		const std::string& getChunkedFilename();
-		std::deque<struct Buffer>& getChunkedBuffer();
+		//std::deque<struct Buffer>& getChunkedBuffer();
+		const int getBodyIndex() const;
 		// set
 		void setRequestLine(std::string& requestLine);
 		void setFieldLine(std::string& fieldLine);
