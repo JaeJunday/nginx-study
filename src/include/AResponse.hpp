@@ -47,4 +47,5 @@ class AResponse
 		std::string findContentType(const std::string& filePath);
 		int getKq() const;
 		Request* getRequest() const;
+		int getStateCode() const;
 };

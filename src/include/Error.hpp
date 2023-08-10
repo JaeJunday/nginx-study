@@ -7,16 +7,12 @@
 #include <sstream>
 #include <sys/socket.h> // socket
 
-struct ErrorData
+class Error : public AResponse
 {
-	int			_stateCode;
-	std::string	_reasonPhrase;
-	std::time_t	_date;
-	std::string _serverName;
-	std::string	_contentType;
-	size_t		_contentLength;
-	std::string	_buffer;
+public:
+    Error(Request* request, int kq);
+	void createResponse(); // override
+	void makeErrorPage(int errnum);
+	void pushErrorBuffer(std::string body, int errnum);
 };
-
-void sendErrorPage(int fd, int errnum);
-void pushErrorBuffer(ErrorData& data, std::string body);
+ 

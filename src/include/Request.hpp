@@ -13,15 +13,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-//#include <queue>
 #include <fcntl.h> 
-//#include <deque>
-/*
-struct Buffer{
-	std::string	_saved;
-	int		_len;
-};
-*/
 
 #define HEX 16
 
@@ -46,10 +38,9 @@ class Request
 		std::string			_transferEncoding;
 		std::string			_boundary;
 		int					_eventState;
-		std::string			_chunkedFilename;
-		//std::deque<Buffer>	_chunkedBuffer;
 		int 				_bodyIndex;
 		int					_chunkedIndex;
+		int					_chunkedState;
 		
 	public:
 		Request(int socket, const Server& server);
@@ -58,10 +49,7 @@ class Request
 		void clearRequest();
 		void makeResponse(int kq);
 		// chunked
-		bool parseChunkedData();
-		//bool checkDeque(Request* req, int& lenToSave, std::string& updatedBuffer);
-		//void endChunkedParsing(Request* req);
-		//bool parseChunkedData(Request* req, const std::string& updatedBuffer);
+		void parseChunkedData();
 		// get
 		int getSocket() const;
 		int getState() const;
@@ -79,9 +67,9 @@ class Request
 		int getEventState() const;
 		const std::string& getBuffer() const;
 		const std::string& getChunkedFilename();
-		//std::deque<struct Buffer>& getChunkedBuffer();
 		int getBodyIndex() const;
 		AResponse* getResponse() const;
+		int getChunkedState() const;
 		// set
 		void setRequestLine(std::string& requestLine);
 		void setFieldLine(std::string& fieldLine);

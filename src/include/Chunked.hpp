@@ -10,14 +10,22 @@
 #include <cstdlib>
 #include <sys/event.h>  // kqueue
 #include <algorithm> // min
+#include "enum.hpp"
 
 class Chunked : public AResponse
 {
-    public:
-        Chunked(Request* request, int kq);
-		void createResponse(); // override
-        void childProcess(int *writeFd, int *readFd);
-		void uploadFile(int fd, int kq);
-        const std::string printResult(int fd, int kq);
+	private:
+		int _writeFd[2]; // parent(w) -> child(r)
+		int _readFd[2]; // child(w) -> parent(r)
+		pid_t _pid;	
+		std::string _chunkedFilename;
+	public:
+		Chunked(Request* request, int kq);
+		void createResponse();
+		void uploadFile(const std::string& body);
+		const std::string printResult(int fd, int kq);
+		void endResponse();
+		void childProcess();
+		//get
+		pid_t getPid() const;
 };
-

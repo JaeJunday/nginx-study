@@ -29,7 +29,9 @@ if len(http_body) == 0:
     print("HTTP/1.1 200 OK\r\nDate: Mon, 07 Aug 2023 17:15:02 GMT\r\nServer: SpiderMen/1.5.2\r\nConnection: keep-alive\r\nContent-Length: 19\r\nContent-Type: text/plain\r\n\r\nNo data received.")
 else:
     create_files(chunked_data, output_directory)
-    # print(f"My name is {name} and I am {age} years old.")
-    # print(f"HTTP/1.1 200 OK\r\nDate: Mon, 07 Aug 2023 17:15:02 GMT\r\nServer: SpiderMen/1.5.2\r\nConnection: keep-alive\r\nContent-Length: 174\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<title>Success Page</title>\r\n</head>\r\n<body>\r\n<h1>Success!</h1>\r\n<p>Your Post request was successful.</p>\r\n</body>\r\n</html>")
-    print(f"HTTP/1.1 200 OK\r\nDate: Mon, 07 Aug 2023 17:15:02 GMT\r\nServer: SpiderMen/1.5.2\r\nConnection: close\r\nContent-Length: {len(chunked_data.data.decode('utf-8'))}\r\nContent-Type: text/plain\r\n\r\n{chunked_data.data.decode('utf-8')}")
+    header = "HTTP/1.1 200 OK\r\nDate: Mon, 07 Aug 2023 17:15:02 GMT\r\nServer: SpiderMen/1.5.2\r\nConnection: keep-alive\r\n"
+    body = "<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<title>Success Page</title>\r\n</head>\r\n<body>\r\n<h1>Success!</h1>\r\n<p>Your Post request was successful.</p>\r\n</body>\r\n</html>"
+    content_length = len(body)
+    response = header + "Content-Length: " + str(content_length) + "\r\n" + "Content-Type: text/html\r\n\r\n" + body
+    print(response)
 

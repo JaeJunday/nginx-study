@@ -24,6 +24,7 @@ Get& Get::operator=(Get const& rhs)
 void Get::createResponse()
 {
     std::string path = findLocationPath();
+	checkLimitExcept();
 	openPath(path);
 }
 

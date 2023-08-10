@@ -7,10 +7,9 @@
 
 class Delete : public AResponse
 {
-    private:
-    public:
-        Delete(Request* request, int kq);
+	private:
+	public:
+		Delete(Request* request, int kq);
 		void createResponse(); // override
-        void removeFile(std::string file) const;
-        // void checkLimitExcept() const;
+		void removeFile(std::string file) const;
 };

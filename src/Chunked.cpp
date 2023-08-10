@@ -4,48 +4,51 @@
 // EV_SET(&event, pid, NOTE_EXIT, EV_ADD, 0, 0, nullptr);
 // kevent(kq, &event, 1, NULL, 0, NULL);
 
-Chunked::Chunked(Request* request, int kq) : AResponse(kq)
+Chunked::Chunked(Request* request, int kq) : AResponse(kq), _pid(-2)
 {
-    _request = request;
+	_request = request;
 }
 
 void Chunked::createResponse()
 {
-	int writeFd[2]; // parent(w) -> child(r)
-	int readFd[2]; // child(w) -> parent(r)
-	struct kevent event;
-	int ret;
+    std::vector<std::string> url = util::getToken(_request->getRequestUrl(), "/");
+    if (url.size() >= 1)
+        _chunkedFilename = url[url.size() - 1];
+	pipe(_writeFd);
+	pipe(_readFd);
 
-    pipe(writeFd);
-	pipe(readFd);
-	util::setEvent(writeFd[1], _kq, EVFILT_WRITE);
-	util::setEvent(readFd[0], _kq, EVFILT_READ);
+	util::setEvent(_writeFd[1], _kq, EVFILT_WRITE);
+	util::setEvent(_readFd[0], _kq, EVFILT_READ);
 
-    // 몇번째 호출인지 확인해서 
-    pid_t pid = fork();
-    if (pid == 0)
-		childProcess(writeFd, readFd);
-
-    close(writeFd[0]);
-    close(readFd[1]);
-	uploadFile(writeFd[1], _kq);
-	close(writeFd[1]);
-	std::string result = printResult(readFd[0], _kq);
-    close(readFd[0]);
-    waitpid(pid, NULL, 0);
-	_buffer << result;
+	_pid = fork();
+	if (_pid == 0)
+		childProcess();
+	close(_writeFd[0]);
+	close(_readFd[1]);
 }
 
-void Chunked::childProcess(int *writeFd, int *readFd)
+void Chunked::endResponse()
 {
-	dup2(writeFd[0], STDIN_FILENO);
-	close(writeFd[0]);
-	close(writeFd[1]);
-	dup2(readFd[1], STDOUT_FILENO); close(readFd[0]);
-	close(readFd[1]);
+	close(_writeFd[1]);
+	waitpid(_pid, NULL, 0);
+	std::string result = printResult(_readFd[0], _kq);
+	close(_readFd[0]);	
+	_buffer << result;
+	findLocationPath();
+	checkLimitExcept();
+}
+
+void Chunked::childProcess()
+{
+	dup2(_writeFd[0], STDIN_FILENO);
+	close(_writeFd[0]);
+	close(_writeFd[1]);
+	dup2(_readFd[1], STDOUT_FILENO);
+	close(_readFd[0]);
+	close(_readFd[1]);
 	const char* scriptPath = "./src/cgi/chunked_upload_cgi.py";  // 실행할 파이썬 스크립트의 경로
 	char* const args[] = {const_cast<char*>("python3"), const_cast<char*>(scriptPath), nullptr};
-	setenv("FILENAME", _request->getChunkedFilename().c_str(), true);
+	setenv("FILENAME", _chunkedFilename.c_str(), true);
 	setenv("CONTENT_TYPE", _request->getContentType().c_str(), true);
 	extern char** environ;
 	if (execve("/usr/bin/python3", args, environ) == -1) {
@@ -53,35 +56,33 @@ void Chunked::childProcess(int *writeFd, int *readFd)
 	}
 }
 
-void Chunked::uploadFile(int fd, int kq)
+void Chunked::uploadFile(const std::string& body)
 {
 	struct kevent	tevent;
 	int				ret;
 	int				size = 0;
-	std::string		data = _request->getBuffer();
+	std::string		data = body;
 	size_t			writeSize;
-
-	std::cerr << RED << "testcode " << "data"  << data << RESET << std::endl;
 
 	while (true)
 	{
-		ret = kevent(kq, nullptr, 0, &tevent, 1, nullptr);
+		ret = kevent(_kq, nullptr, 0, &tevent, 1, nullptr);
 		if (ret == -1) 
 			std::cerr << "kevent error: " << std::strerror(errno) << std::endl;
-		if (tevent.ident != fd)
+		if (tevent.ident != _writeFd[1])
 			continue;
 		if (size >= data.length())
-			break;
+			return;
 		if (tevent.filter == EVFILT_WRITE)
 		{
 			writeSize = std::min((size_t)tevent.data, data.size() - size);
-			write(fd, data.c_str() + size, writeSize);
+			write(_writeFd[1], data.c_str() + size, writeSize);
 			size += writeSize;
 		}
 	}
 }
 
-const std::string Chunked::printResult(int fd, int kq)
+const std::string Chunked::printResult(int fd, int _kq)
 {
 	struct	kevent tevent;
 	size_t	size = 0;
@@ -93,7 +94,7 @@ const std::string Chunked::printResult(int fd, int kq)
 
 	while (true)
 	{
-		ret = kevent(kq, nullptr, 0, &tevent, 1, nullptr);
+		ret = kevent(_kq, nullptr, 0, &tevent, 1, nullptr);
 		//testcode
 		if (ret == -1) 
 			std::cerr << "kevent error: " << std::strerror(errno) << std::endl;
@@ -115,3 +116,7 @@ const std::string Chunked::printResult(int fd, int kq)
 	return readBuffer;
 }
 
+pid_t Chunked::getPid() const
+{
+	return _pid;
+}

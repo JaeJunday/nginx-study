@@ -101,3 +101,18 @@ namespace event
         WRITE = -2
     };
 }
+
+namespace chunk
+{
+    enum VAR
+    {
+        FIRST = -2,
+    };
+    enum STATE
+    {
+        READY = 0,
+        END = 1,
+        INCOMPLETE_DATA = 2,
+        CONTINUE = 3
+    };
+}

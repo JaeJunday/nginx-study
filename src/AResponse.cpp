@@ -89,7 +89,6 @@ std::string AResponse::findLocationPath() const
 		// no location errorcode
 		throw 405;
 	}
-	checkLimitExcept();
 	if (!location._root.empty())
 	{
 		result.erase(0, length);
@@ -156,4 +155,9 @@ int AResponse::getKq() const
 Request* AResponse::getRequest() const
 {
 	return _request;
+}
+
+int AResponse::getStateCode() const
+{
+	return util::stoui(_stateCode);
 }

@@ -129,16 +129,18 @@ void Operation::start() {
 				{
 					try{
 						req->setBuffer(buffer, tevent.data);
-						int state = req->getState();
-						if (state == request::READY) // header 생성
+						if (req->getState() == request::READY) // header 생성
 							req->headerParsing(buffer, tevent.data);
-						if (state == request::CREATE) // response 생성
+						if (req->getState() == request::CREATE) // response 생성
 							req->makeResponse(kq);
-						if (state == request::DONE) // response body 생성
+						if (req->getState() == request::DONE) // response body 생성
 							this->handleResponse(req, kq, &tevent, buffer);
 					} catch(const int errnum) {
-						sendErrorPage(tevent.ident, errnum);
-						close(tevent.ident);
+						AResponse* resError = new Error(req, kq);
+						dynamic_cast<Error *>(resError)->makeErrorPage(errnum);
+						req->setEventState(event::WRITE);
+						EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, resError);
+						kevent(kq, &tevent, 1, NULL, 0, NULL);
 					} catch(const std::exception& e) {
 						std::cerr << "exception error : " << e.what() << std::endl;
 					}
@@ -146,8 +148,13 @@ void Operation::start() {
 				delete[] buffer;
 			}
 			else if (tevent.filter == EVFILT_WRITE)
-			{	
-				sendData(tevent);
+			{
+				if (tevent.udata)
+				{
+					AResponse *res = static_cast<AResponse*>(tevent.udata);
+					if (tevent.ident == res->getRequest()->getSocket())
+						sendData(tevent);
+				}
 			}
 		}
 	}
@@ -158,13 +165,29 @@ void Operation::handleResponse(Request* req, int kq, struct kevent *tevent, char
 // chunkedBuffer 를 파싱하여 body길이가 정확할 경우 substr을 통해 body 데이터를 잘라서 (createResponse) writeFd에 써줌
 // index로 파싱한 부분의 시작지점을 가지고 있음 (즉, body size 의 시작지점)
 // 0/r/n/r/n 만나고 나서  파이프 다 쓰면 close(writeFd)
+	// buffer의 len을 읽어서 숫자를 보고 
+	// body index 부터 
 	if (req->getTransferEncoding() == "chunked")
-	{	
-		req->parseChunkedData();
-		
-		// buffer의 len을 읽어서 숫자를 보고 
-//                     lenToSave = std::strtol(str.c_str(), &end, 16);
-		// body index 부터 
+	{
+		while(true)
+		{
+			req->parseChunkedData();
+			int chunkedState = req->getChunkedState();
+			// std::cerr << B_RED << "testcode " << "chunkedState : " << chunkedState<< RESET << std::endl;
+			if (chunkedState == chunk::END)
+			{
+				std::cerr << RED << "testcode" << "chunked::end" << RESET << std::endl;
+				EV_SET(tevent, tevent->ident, EVFILT_WRITE, EV_ADD, 0, 0, req->getResponse());
+				kevent(kq, tevent, 1, NULL, 0, NULL);
+				req->setEventState(event::WRITE);
+				break;
+			}
+			else if (chunkedState == chunk::INCOMPLETE_DATA)
+			{
+				// std::cerr << RED << "testcode" << "chunked::IN DATA" << RESET << std::endl;
+				return;
+			}
+		}
 
 	}
 	else if (req->getBuffer().size() - req->getBodyIndex()  == req->getContentLength())
@@ -178,24 +201,6 @@ void Operation::handleResponse(Request* req, int kq, struct kevent *tevent, char
 		req->setEventState(event::WRITE);
 	}
 }
-
-// AResponse* Operation::selectMethod(Request* req, int kq) const
-// {
-// 	AResponse *result;
-// 	const std::string method = req->getMethod();
-
-// 	if (method.empty())
-// 		throw 405;
-// 	if (method == "GET")
-// 		result = new Get(req, kq);
-// 	else if (req->getTransferEncoding() == "chunked")
-// 		result = new Chunked(req, kq);
-// 	else if (method == "POST" || method == "PUT")
-// 		result = new Post(req, kq);
-// 	else if (method == "DELETE")
-// 		result = new Delete(req, kq);
-// 	return result;
-// }
 
 void Operation::acceptClient(int kq, int index)
 {
@@ -215,19 +220,19 @@ void Operation::acceptClient(int kq, int index)
 
 void Operation::sendData(struct kevent& tevent)
 {
-	AResponse* response = static_cast<AResponse*>(tevent.udata); 
+	AResponse* response = static_cast<AResponse*>(tevent.udata);
 	size_t byteWrite = send(tevent.ident, response->getBuffer().str().c_str(), response->getBuffer().str().length(), 0);
-	//-------------------------------------------------------------  testcode
 	std::cerr << "==============================response data==============================" << std::endl;
-	// std::cerr << response->getBuffer().str().c_str() << std::endl;
-	std::cout << "buffer length :" << response->getBuffer().str().length() << std::endl;
-	std::cout << "write byte count :" << byteWrite << std::endl;
+	std::cerr << response->getBuffer().str().c_str() << std::endl;
+	// std::cout << "buffer length :" << response->getBuffer().str().length() << std::endl;
+	//std::cout << "write byte count :" << byteWrite << std::endl;
+	std::cerr << GREEN << "testcode : " << "send code: " << response->getStateCode() << RESET << std::endl;
 	if (byteWrite == response->getBuffer().str().length())
 	{
 		response->getRequest()->clearRequest();
 		util::setReqEvent(response->getRequest(), response->getKq(), event::READ);
 		delete response;
-		std::cout << GREEN << "testcode " << "send clear" << RESET << std::endl;
+		std::cout << GREEN << "testcode " << "send clear" << RESET << std::endl;	
 	}
 	else
 		std::cout << GREEN << "testcode" << "bytewrite fail" << RESET << std::endl;
