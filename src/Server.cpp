@@ -113,3 +113,8 @@ const std::string& Server::getIndex() const
 {
     return _index;
 }
+
+// const std::string& Server::getCgiParam() const
+// {
+//     return _cgiParam;
+// }

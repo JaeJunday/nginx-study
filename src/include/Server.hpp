@@ -17,6 +17,8 @@ struct Location
 	std::string	_autoindex;
 	std::string	_upload;
 	std::string	_py;
+	std::string _cgiParam;
+	std::string _bla;
 	std::string	_php;
 	std::string	_clientMaxBodySize; // 본문 사이즈 제한
 	std::string	_limitExcept; // 메서드 제한
@@ -47,4 +49,5 @@ class Server {
 		const std::string& getRoot() const;
 		const std::string& getIndex() const;
 		const std::vector<Location>& getLocations() const;
+		// const std::string& getCgiParam() const;
 };

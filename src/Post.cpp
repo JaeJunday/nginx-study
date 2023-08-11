@@ -38,7 +38,8 @@ void Post::childProcess(int *writeFd, int *readFd)
 	dup2(writeFd[0], STDIN_FILENO);
 	close(writeFd[0]);
 	close(writeFd[1]);
-	dup2(readFd[1], STDOUT_FILENO); close(readFd[0]);
+	dup2(readFd[1], STDOUT_FILENO); 
+	close(readFd[0]);
 	close(readFd[1]);
 	const char* scriptPath = "./src/cgi/upload_cgi.py";  // 실행할 파이썬 스크립트의 경로
 	char* const args[] = {const_cast<char*>("python3"), const_cast<char*>(scriptPath), nullptr};

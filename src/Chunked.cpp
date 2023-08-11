@@ -11,6 +11,7 @@ Chunked::Chunked(Request* request, int kq) : AResponse(kq), _pid(-2)
 
 void Chunked::createResponse()
 {
+	findLocationPath();
     std::vector<std::string> url = util::getToken(_request->getRequestUrl(), "/");
     if (url.size() >= 1)
         _chunkedFilename = url[url.size() - 1];
@@ -19,7 +20,6 @@ void Chunked::createResponse()
 
 	util::setEvent(_writeFd[1], _kq, EVFILT_WRITE);
 	util::setEvent(_readFd[0], _kq, EVFILT_READ);
-
 	_pid = fork();
 	if (_pid == 0)
 		childProcess();
@@ -34,7 +34,8 @@ void Chunked::endResponse()
 	std::string result = printResult(_readFd[0], _kq);
 	close(_readFd[0]);	
 	_buffer << result;
-	findLocationPath();
+	if (findLocationPath().empty())
+		throw 405;
 	checkLimitExcept();
 }
 
@@ -46,12 +47,34 @@ void Chunked::childProcess()
 	dup2(_readFd[1], STDOUT_FILENO);
 	close(_readFd[0]);
 	close(_readFd[1]);
-	const char* scriptPath = "./src/cgi/chunked_upload_cgi.py";  // 실행할 파이썬 스크립트의 경로
-	char* const args[] = {const_cast<char*>("python3"), const_cast<char*>(scriptPath), nullptr};
+	// 실행시킬 모듈을 골라서 스크립트 실행 파일 이름으로 실행시킴 
+	execveCgi();
+}
+
+void Chunked::execveCgi() const
+{
+	std::string scriptPath;
+	std::string engine;
+
+	if (_chunkedFilename.find(".bla"))
+	{
+		scriptPath = "." + _request->getLocation()->_bla;
+		engine = scriptPath;
+	}
+	else if (_chunkedFilename.find(".py"))
+	{
+		scriptPath = "." + _request->getLocation()->_cgiParam;
+		engine = _request->getLocation()->_py;
+	}
+	std::cerr << RED << "testcode : " << "scriptPath :" << scriptPath << RESET << std::endl;
+	std::cerr << RED << "testcode : " << "egine :" << engine << RESET << std::endl;
+
+	// "./src/cgi/chunked_upload_cgi.py";  // 실행할 파이썬 스크립트의 경로
+	char* const args[] = {const_cast<char*>("python3"), const_cast<char*>(scriptPath.c_str()), nullptr};
 	setenv("FILENAME", _chunkedFilename.c_str(), true);
 	setenv("CONTENT_TYPE", _request->getContentType().c_str(), true);
 	extern char** environ;
-	if (execve("/usr/bin/python3", args, environ) == -1) {
+	if (execve(engine.c_str(), args, environ) == -1) {
 		perror("execve");  // 오류 처리
 	}
 }

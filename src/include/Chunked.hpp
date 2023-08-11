@@ -26,6 +26,7 @@ class Chunked : public AResponse
 		const std::string printResult(int fd, int kq);
 		void endResponse();
 		void childProcess();
+		void execveCgi() const;
 		//get
 		pid_t getPid() const;
 };

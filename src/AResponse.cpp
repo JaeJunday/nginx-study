@@ -68,6 +68,7 @@ std::string AResponse::findLocationPath() const
 	std::string result = _request->getRequestUrl();
 	Location location;
 	int length = 0;
+
 	if (result.empty())
 	{
 		// 경로가 없는 경우 errorcode
@@ -87,21 +88,24 @@ std::string AResponse::findLocationPath() const
 	if (length == false)
 	{
 		// no location errorcode
-		throw 405;
+		return "";
 	}
-	if (!location._root.empty())
+	else
 	{
-		result.erase(0, length);
-		result = location._root + result;
+		if (!location._root.empty())
+		{
+			result.erase(0, length);
+			result = location._root + result;
+		}
+		else if (!server.getRoot().empty())	
+		{
+			result.erase(0, length);
+			result = server.getRoot() + result;
+		}
+		if (result.size() > 1 && result[result.size() - 1] == '/')
+			result.erase(result.size() - 1, 1);
+		return result;
 	}
-	else if (!server.getRoot().empty())	
-	{
-		result.erase(0, length);
-		result = server.getRoot() + result;
-	}
-	if (result.size() > 1 && result[result.size() - 1] == '/')
-		result.erase(result.size() - 1, 1);
-	return result;
 }
 
 void AResponse::checkLimitExcept() const

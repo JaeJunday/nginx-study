@@ -156,7 +156,6 @@ void Request::parseChunkedData()
 		} 
 		else if (bodyStart + bodySize + 2 <= _buffer.length())//body뒤의 \r\n고려
 		{
-			std::cerr << B_RED << "testcode " << "CGI 춰리" << RESET << std::endl;
 			if (_buffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
 				throw 400;
 			std::string perfectBody = _buffer.substr(bodyStart, bodySize);

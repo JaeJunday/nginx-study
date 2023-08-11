@@ -29,7 +29,6 @@ class AResponse
 		std::stringstream	_buffer;
 		int					_kq;
 
-		// 삭제한 request 를 가리킬 가능성이 있는가??
 		Request*		_request;
 		
 		AResponse(const AResponse& src); 

@@ -130,12 +130,19 @@ void Operation::start() {
 					try{
 						req->setBuffer(buffer, tevent.data);
 						if (req->getState() == request::READY) // header 생성
+						{
+
 							req->headerParsing(buffer, tevent.data);
+						}
 						if (req->getState() == request::CREATE) // response 생성
+						{
 							req->makeResponse(kq);
+						}
 						if (req->getState() == request::DONE) // response body 생성
+						{
 							this->handleResponse(req, kq, &tevent, buffer);
-					} catch(const int errnum) {
+						}
+					} catch (const int errnum) {
 						AResponse* resError = new Error(req, kq);
 						dynamic_cast<Error *>(resError)->makeErrorPage(errnum);
 						req->setEventState(event::WRITE);
@@ -169,7 +176,7 @@ void Operation::handleResponse(Request* req, int kq, struct kevent *tevent, char
 	// body index 부터 
 	if (req->getTransferEncoding() == "chunked")
 	{
-		while(true)
+		while (true)
 		{
 			req->parseChunkedData();
 			int chunkedState = req->getChunkedState();
@@ -194,7 +201,6 @@ void Operation::handleResponse(Request* req, int kq, struct kevent *tevent, char
 	{
 		if (req->getMethod() == "POST" && (req->getContentLength() == 0 || req->getBuffer().size() == 0))
 			throw 405;
-		// AResponse* response = selectMethod(req, kq);
 		req->getResponse()->createResponse();
 		EV_SET(tevent, tevent->ident, EVFILT_WRITE, EV_ADD, 0, 0, req->getResponse());
 		kevent(kq, tevent, 1, NULL, 0, NULL);
