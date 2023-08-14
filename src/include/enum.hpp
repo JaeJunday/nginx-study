@@ -114,7 +114,8 @@ namespace chunk
     {
         READY = 0,
         END = 1,
-        INCOMPLETE_DATA = 2,
-        CONTINUE = 3
+        WAIT = 2,
+        INCOMPLETE_DATA = 3,
+        CONTINUE = 4
     };
 }

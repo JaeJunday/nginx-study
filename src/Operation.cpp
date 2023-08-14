@@ -1,15 +1,13 @@
 #include "Operation.hpp"
-#include "include/Client.hpp"
-#include "include/Server.hpp"
 #include "include/Util.hpp"
 
 Operation::~Operation()
 {
-	std::map<int, Request*>::iterator it;
-	if (!_requests.empty())
+	std::map<int, Client*>::iterator it;
+	if (!_clients.empty())
 	{
-		for (it = _requests.begin(); it != _requests.end(); ++it)
-			delete it->second;
+		for (it = _clients.begin(); it != _clients.end(); ++it)
+			delete it->second; // 소멸자 호출됨
 	}
 }
 
@@ -118,47 +116,51 @@ void Operation::start() {
 				Client* client = static_cast<Client*>(tevent.udata);
 				char* buffer = new char[tevent.data];
 				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
-				if (tevent.ident == client->getReq()->getSocket())
+				if (tevent.ident == client->getSocket())
 				{	
-					if (bytesRead == false || client->getReq()->getConnection() == "close")
+					if (bytesRead == false || client->getReq().getConnection() == "close")
 					{
 						// std::cerr << "###################### client end ##############################" << std::endl;
-						close(client->getReq()->getSocket());
-						client->_requests.erase(tevent.ident);
+						close(client->getSocket());
+						_clients.erase(tevent.ident);
 						delete client; // 소멸자 부를 때 request 제거
 					}
 					else
 					{
+						Request req = client->getReq();
 						try{
-							client->setBuffer(buffer, tevent.data);
-							if (client->getState() == request::READY) // header 생성
+							req.setBuffer(buffer, tevent.data);
+							if (req.getState() == request::READY) // header 생성
 							{
-								client->headerParsing(buffer, tevent.data);
+								req.headerParsing(buffer, tevent.data);
 							}
-							if (client->getState() == request::CREATE)
+							if (req.getState() == request::CREATE)
 							{	
-								if (client->getReq()->getMetohd() == "POST")
-									client->getReq()->initCgi();
-								client->getReq()->setState(request::DONE);
+								client->findLocationPath();
+								client->checkLimitExcept();
+								if (req.getMethod() == "POST")
+									client->initCgi();
+								req.setState(request::DONE);
 							}	
-							if (client->getReq()->getState() == request::DONE) // response body 생성
+							if (req.getState() == request::DONE) // response body 생성
 							{
-								this->handleResponse(req, kq, &tevent, buffer);
+								this->handleResponse(client, &tevent);
 							}
 						} catch (const int errnum) {
-							Client* resError = new Error(req, kq);
-							dynamic_cast<Error *>(resError)->makeErrorPage(errnum);
-							client->getReq()->setEventState(event::WRITE);
-							EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, resError);
-							kevent(kq, &tevent, 1, NULL, 0, NULL);
+							// Client* resError = new Error(req, kq);
+							// dynamic_cast<Error *>(resError)->makeErrorPage(errnum);
+							// req.setEventState(event::WRITE);
+							// EV_SET(&tevent, tevent.ident, EVFILT_WRITE, EV_ADD, 0, 0, resError);
+							// kevent(kq, &tevent, 1, NULL, 0, NULL);
+							std::cerr << B_RED << "testcode errnum : " << errnum << RESET << std::endl;
+							exit(1);
 						} catch(const std::exception& e) {
 							std::cerr << "exception error : " << e.what() << std::endl;
 						}
 					}
 				}
-				else  (teifvent.ident == client->getReq()->getReadFd())
+				else if(tevent.ident == client->getReadFd())
 				{
-					//code ...
 					client->printResult();
 				}	
 				// Request *req = static_cast<Request*>(tevent.udata);
@@ -170,11 +172,11 @@ void Operation::start() {
 			else if (tevent.filter == EVFILT_WRITE)
 			{
 				Client* client = static_cast<Client*>(tevent.udata);
-				if (tevent.ident == client->_request.getSocket())
+				if (tevent.ident == client->getSocket())
 				{
 					sendData(tevent);
 				}
-				else if (tevent.ident == client->getReq()->getWriteFd())
+				else if (tevent.ident == client->getWriteFd())
 				{
 					client->uploadFile(tevent.data);
 				}
@@ -183,27 +185,26 @@ void Operation::start() {
 	}
 }
 
-void Operation::handleResponse(Client* client, int kq, struct kevent *tevent, char* buffer)
+void Operation::handleResponse(Client* client, struct kevent *tevent)
 {
 // chunkedBuffer 를 파싱하여 body길이가 정확할 경우 substr을 통해 body 데이터를 잘라서 (createResponse) writeFd에 써줌
 // index로 파싱한 부분의 시작지점을 가지고 있음 (즉, body size 의 시작지점)
 // 0/r/n/r/n 만나고 나서  파이프 다 쓰면 close(writeFd)
 	// buffer의 len을 읽어서 숫자를 보고 
 	// body index 부터 
-	Request* req = client->getReq();
-	if (req->getTransferEncoding() == "chunked")
+	Request req = client->getReq();
+	if (req.getTransferEncoding() == "chunked")
 	{
-		while (true)
+		while (true) // 한번 돌때 완성된 문자열 하나씩 처리
 		{
-			req->parseChunkedData();
-			int chunkedState = req->getChunkedState();
+			req.parseChunkedData(client);
+			int chunkedState = req.getChunkedState();
 			// std::cerr << B_RED << "testcode " << "chunkedState : " << chunkedState<< RESET << std::endl;
-			if (chunkedState == chunk::END)
+			if (chunkedState == chunk::CONTINUE)
+				continue;
+			else if (chunkedState == chunk::END)
 			{
 				std::cerr << RED << "testcode" << "chunked::end" << RESET << std::endl;
-				EV_SET(tevent, tevent->ident, EVFILT_WRITE, EV_ADD, 0, 0, client);
-				kevent(kq, tevent, 1, NULL, 0, NULL);
-				req->setEventState(event::WRITE);
 				break;
 			}
 			else if (chunkedState == chunk::INCOMPLETE_DATA)
@@ -212,41 +213,54 @@ void Operation::handleResponse(Client* client, int kq, struct kevent *tevent, ch
 				return;
 			}
 		}
-
 	}
-	else if (req->getBuffer().size() - req->getBodyIndex()  == req->getContentLength())
+	else if (req.getBuffer().size() - req.getBodyIndex()  == req.getContentLength())
 	{
-		if (req->getMethod() == "POST" && (req->getContentLength() == 0 || req->getBuffer().size() == 0))
+		if (req.getMethod() == "POST" && (req.getContentLength() == 0 || req.getBuffer().size() == 0))
 			throw 405;
-		
-		req->getResponse()->createResponse();
-		EV_SET(tevent, tevent->ident, EVFILT_WRITE, EV_ADD, 0, 0, client);
-		kevent(kq, tevent, 1, NULL, 0, NULL);
-		req->setEventState(event::WRITE);
+		if (req.getMethod() == "GET")
+		{
+			client->getProcess();
+		}
+		if (req.getMethod() == "POST")
+		{
+			client->postProcess();
+		}
+		if (req.getMethod() == "DELETE")
+		{
+			client->deleteProcess();
+		}
+		if (req.getMethod() == "ERROR")
+		{
+			client->errorProcess();
+		}
+		// req.getResponse()->createRe();
+		// EV_SET(tevent, tevent->ident, EVFILT_WRITE, EV_ADD, 0, 0, client);
+		// kevent(kq, tevent, 1, NULL, 0, NULL);
+		// GET, POST, DLETE, ERROR 분기 필요 - kyeonkim
+		client->addEvent(tevent->ident, EVFILT_WRITE);
+		req.setEventState(EVFILT_WRITE);
 	}
 }
 
 void Operation::acceptClient(int kq, int index)
 {
-	int				requestFd;
-	sockaddr_in		requestAddr;
-	socklen_t		requestLen;
-	// struct kevent	revent;
-	std::cout << GREEN << "testcode" << "=================== ACCEPT =========================" << RESET << std::endl;	
-	requestFd = accept(_servers[index].getSocket(), reinterpret_cast<struct sockaddr*>(&requestAddr), &requestLen);
-	if (requestFd == -1)
+	int				socketFd;
+	sockaddr_in		socketAddr;
+	socklen_t		socketLen;
+	// struct kevent	revent 
+	std::cout << GREEN << "testcode" << "= = = = = = ======= ACCEPT =========================" << RESET << std::endl;	
+	socketFd = accept(_servers[index].getSocket(), reinterpret_cast<struct sockaddr*>(&socketAddr), &socketLen);
+	if (socketFd == -1)
 		throw std::logic_error("Error: Accept failed");
-	fcntl(requestFd, F_SETFL, O_NONBLOCK);
-	Request *request = new Request(requestFd, _servers[index]);
-	_requests.insert(std::make_pair(requestFd, request));
-	Client* client = new Client(request);
-	// util::setEvent(client, kq, EVFILT_READ);
-	client->setEvent(kq, EVFILT_READ);
-}
-
-void Operation::clearClient()
-{
-	
+	fcntl(socketFd, F_SETFL, O_NONBLOCK);
+	// Request *request = new Request(socketFd, _servers[index]);
+	Request *request = new Request(_servers[index]);
+	Client* client = new Client(request, kq, socketFd);
+	_clients.insert(std::make_pair(socketFd, client));
+	// util::addEvent(client, kq, EVFILT_READ);
+	client->addEvent(kq, EVFILT_READ);
+	client->getReq().setEventState(EVFILT_READ);
 }
 
 void Operation::sendData(struct kevent& tevent)
@@ -262,7 +276,10 @@ void Operation::sendData(struct kevent& tevent)
 	{
 		client->clearClient();
 		// client->getRequest()->clearRequest();
-		util::setReqEvent(client->getRequest(), client->getKq(), event::READ);
+		client->deleteEvent();
+		client->addEvent(tevent.ident, EVFILT_READ);
+		client->getReq().setEventState(EVFILT_READ);
+
 		// delete client;
 		std::cout << GREEN << "testcode " << "send clear" << RESET << std::endl;	
 	}

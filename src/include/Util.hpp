@@ -21,6 +21,6 @@ namespace util
     std::vector<std::string> getToken(const std::string& str, const std::string& delimiters);
     uint32_t convertIp(std::string& ipStr);
 	uint32_t stoui(const std::string& str);
-    // void setEvent(Client* client, int kq, int filter);
-    // void setEvent(int fd, int kq, int filter);
+    // void addEvent(Client* client, int kq, int filter);
+    // void addEvent(int fd, int kq, int filter);
 }

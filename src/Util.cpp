@@ -1,5 +1,5 @@
 #include "Util.hpp"
-#include "Request.hpp"
+// #include "Request.hpp"
 
 std::vector<std::string> util::getToken(const std::string& str, const std::string& delimiters)
 {
@@ -43,7 +43,7 @@ uint32_t util::convertIp(std::string& ipStr)
 }
 
 //소켓 전용 event setter
-// void util::setEvent(Client* client, int kq, int filter)
+// void util::addEvent(Client* client, int kq, int filter)
 // {
 //     struct kevent event;
 
@@ -76,7 +76,7 @@ uint32_t util::convertIp(std::string& ipStr)
 // }
 
 //pipe 전용 event setter
-// void util::setEvent(int fd, int kq, int filter)
+// void util::addEvent(int fd, int kq, int filter)
 // {
 //     struct kevent event;
 

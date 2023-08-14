@@ -1,41 +1,68 @@
 #include "Client.hpp"
+ 
+// Client::Client(int kq)
+// : _version("HTTP/1.1"), 
+//   _stateCode("200"), 
+//   _reasonPhrase("OK"),
+//   _serverName("My Server"),
+//   _contentType("text/html"),
+//   _contentLength(0),
+//   _kq(kq),
+//   _request(NULL)
+// {
+//     /* Constructor Implementation */
+// }
 
-Client::Client(int kq)
-: _version("HTTP/1.1"), 
-  _stateCode("200"), 
-  _reasonPhrase("OK"),
-  _serverName("My Server"),
-  _contentType("text/html"),
-  _contentLength(0),
-  _kq(kq),
-  _request(NULL)
+Client::Client(Request* request, int kq, int socketFd) 
+: _request(request),
+_socketFd(socketFd),
+_pid(-2),
+_version("HTTP/1.1"),
+_stateCode("200"),
+_reasonPhrase("OK"),
+_serverName("My Server"),
+_contentType("text/html"),
+_contentLength(0),
+_kq(kq),
+_writeIndex(0)
 {
-    /* Constructor Implementation */
+	_readFd[0] = 0;
+	_readFd[1] = 0;
+	_writeFd[0] = 0;
+	_writeFd[1] = 0;
 }
 
-Client::Client(Request* request) : _request(request)
-{
-    /* Constructor Implementation */
-}
 Client::Client(const Client& src)
 {
     /* Copy Constructor Implementation */
 }
 
+Client& Client::operator=(Client const& rhs)
+{
+	if (this != &rhs)
+	{
+		delete _request;
+		_request = new Request(rhs.getReq());
+	}
+}
+
 // Request 제거해야함
 Client::~Client()
 {
+	delete _request;
     /* Destructor Implementation */
 }
 
+/*
 Client& Client::operator=(Client const& rhs)
 {
     if (this != &rhs)
     {
-        /* Assignment Operator Implementation */
+         Assignment Operator Implementation
     }
     return *this;
 }
+*/
 
 std::string Client::getDate()
 {
@@ -85,27 +112,19 @@ std::string Client::findLocationPath() const
 			}
 		}
  	}
-	if (length == false)
+	if (!location._root.empty())
 	{
-		// no location errorcode
-		return "";
+		result.erase(0, length);
+		result = location._root + result;
 	}
-	else
+	else if (!server.getRoot().empty())	
 	{
-		if (!location._root.empty())
-		{
-			result.erase(0, length);
-			result = location._root + result;
-		}
-		else if (!server.getRoot().empty())	
-		{
-			result.erase(0, length);
-			result = server.getRoot() + result;
-		}
-		if (result.size() > 1 && result[result.size() - 1] == '/')
-			result.erase(result.size() - 1, 1);
-		return result;
+		result.erase(0, length);
+		result = server.getRoot() + result;
 	}
+	if (result.size() > 1 && result[result.size() - 1] == '/')
+		result.erase(result.size() - 1, 1);
+	return result;
 }
 
 void Client::checkLimitExcept() const
@@ -156,9 +175,9 @@ int Client::getKq() const
 	return _kq;
 }
 
-Request* Client::getReq() const
+Request& Client::getReq() const
 {
-	return _request;
+	return *_request;
 }
 
 int Client::getStateCode() const
@@ -166,55 +185,86 @@ int Client::getStateCode() const
 	return util::stoui(_stateCode);
 }
 
-// 소켓 전용 event setter
-void Client::setEvent(int kq, int filter)
+// int Client::getSocket() const
+// {
+// 	return _socketFd;
+// }
+
+void Client::deleteEvent()
 {
     struct kevent event;
 
-    // DELETE
-    if (req->getEventState() == event::READ && filter == event::WRITE)
+    if (_request->getEventState() == EVFILT_READ)
     {
-        EV_SET(&event, req->getSocket(), EVFILT_READ, EV_DELETE, 0, 0, this);
-        kevent(kq, &event, 1, NULL, 0, NULL);
+        EV_SET(&event, _socketFd, EVFILT_READ, EV_DELETE, 0, 0, this);
+        kevent(_kq, &event, 1, NULL, 0, NULL);
     }
-    else if (req->getEventState() == event::WRITE && filter == event::READ)
+    else if (_request->getEventState() == EVFILT_WRITE)
     {
-        EV_SET(&event, req->getSocket(), EVFILT_WRITE, EV_DELETE, 0, 0, this);
-        kevent(kq, &event, 1, NULL, 0, NULL);
+        EV_SET(&event, _socketFd, EVFILT_WRITE, EV_DELETE, 0, 0, this);
+        kevent(_kq, &event, 1, NULL, 0, NULL);
     }
-    // ADD
-    if (filter == event::READ)
+}
+
+
+// 소켓 전용 event setter
+void Client::addEvent(int fd, int filter)
+{
+    struct kevent event;
+
+    if (filter == EVFILT_READ)
     {
-        EV_SET(&event, req->getSocket(), EVFILT_READ, EV_ADD, 0, 0, this);
-        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
+        EV_SET(&event, fd, EVFILT_READ, EV_ADD, 0, 0, this);
+        if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
             std::cerr << "invalid Read event set 1" << std::endl;
-        req->setEventState(event::READ);
     }
-    else if (filter == event::WRITE)
+    else if (filter == EVFILT_WRITE)
     {
-        EV_SET(&event, req->getSocket(), EVFILT_WRITE, EV_ADD, 0, 0, this);
-        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
+        EV_SET(&event, fd, EVFILT_WRITE, EV_ADD, 0, 0, this);
+        if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
             std::cerr << "invalid Write event set 1" << std::endl;
-        req->setEventState(event::READ);
     }
 }
 
 //pipe 전용 event setter
-void Client::setEvent(int fd, int kq, int filter)
-{
-    struct kevent event;
+// void Client::addEvent(int filter)
+// {
+//     struct kevent event;
 
-    // ADD
-    if (filter == event::READ)
-    {
-        EV_SET(&event, fd, EVFILT_READ, EV_ADD, 0, 0, this);
-        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
-            std::cerr << "invalid Read event set 2" << std::endl;
-    }
-    else if (filter == event::WRITE)
-    {
-        EV_SET(&event, fd, EVFILT_WRITE, EV_ADD, 0, 0, this);
-        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
-            std::cerr << "invalid Write event set 2" << std::endl;
-    }
+//     // ADD
+//     if (filter == event::READ)
+//     {
+//         EV_SET(&event, _socketFd, EVFILT_READ, EV_ADD, 0, 0, this);
+//         if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
+//             std::cerr << "invalid Read event set 2" << std::endl;
+//     }
+//     else if (filter == event::WRITE && _writeEventFlag == false)
+//     {
+//         EV_SET(&event, _socketFd, EVFILT_WRITE, EV_ADD, 0, 0, this);
+//         if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
+//             std::cerr << "invalid Write event set 2" << std::endl;
+// 		// state set
+// 		_writeEventFlag = true;
+//     }
+// }
+
+void Client::clearClient()
+{
+	_request->clearRequest();
+	_writeFd[0] = 0;
+	_writeFd[1] = 0;
+	_readFd[0] = 0;
+	_readFd[1] = 0;
+	_pid = -1;
+	_kq = 0;
+}
+
+int Client::getWriteFd() const
+{
+	return _writeFd[1];
+}
+
+int Client::getReadFd() const
+{
+	return _readFd[0]; 
 }

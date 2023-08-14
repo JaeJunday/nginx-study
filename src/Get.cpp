@@ -18,7 +18,7 @@
 //     return *this;
 // }
 
-void Client::getCreateResponse()
+void Client::getProcess()
 {
     std::string path = findLocationPath();
 	checkLimitExcept();

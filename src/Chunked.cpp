@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "include/enum.hpp"
 
 // NOTE_EXIT -> 프로세스 종료될때 이벤트 발생
 // EV_SET(&event, pid, NOTE_EXIT, EV_ADD, 0, 0, nullptr);
@@ -9,31 +10,35 @@
 // 	_request = request;
 // }
 
-void Client::chunkedCreateResponse()
-{
-	findLocationPath();
-    std::vector<std::string> url = util::getToken(_request->getRequestUrl(), "/");
-    if (url.size() >= 1)
-        _chunkedFilename = url[url.size() - 1];
-	pipe(_writeFd);
-	pipe(_readFd);
+// void Client::chunkedCreateResponse()
+// {
+// 	findLocationPath();
 
-	util::setEvent(_writeFd[1], _kq, EVFILT_WRITE);
-	util::setEvent(_readFd[0], _kq, EVFILT_READ);
-	_pid = fork();
-	if (_pid == 0)
-		childProcess();
-	close(_writeFd[0]);
-	close(_readFd[1]);
-}
+// 	pipe(_writeFd);
+// 	pipe(_readFd);
+
+// 	util::addEvent(_writeFd[1], _kq, EVFILT_WRITE);
+// 	util::addEvent(_readFd[0], _kq, EVFILT_READ);
+// 	_pid = fork();
+// 	if (_pid == 0)
+// 		childProcess();
+// 	close(_writeFd[0]);
+// 	close(_readFd[1]);
+// }
 
 void Client::endResponse()
 {
 	close(_writeFd[1]);
 	waitpid(_pid, NULL, 0);
-	printResult(_readFd[0], _kq);
+	printResult();
 	close(_readFd[0]);
-	// if (findLocationPath().empty())
+	addEvent(_socketFd, EVFILT_WRITE);
+	_request->setEventState(EVFILT_WRITE);
+	// _request->setChunkedState(chunk::END); // 업로드 데이터로 옮길부분
+	// _request->setEventState(event::WRITE);
+	// EV_SET(tevent, tevent->ident, EVFILT_WRITE, EV_ADD, 0, 0, client);
+	// kevent(kq, tevent, 1, NULL, 0, NULL);
+// if (findLocationPath().empty())
 	// 	throw 405;
 	// checkLimitExcept();
 }
@@ -83,8 +88,9 @@ void Client::uploadFile(size_t pipeSize)
 	// 써야되는 사이즈 
 	// _perfectBody.size(); // or pipeSize
 	// endresponse
-	size_t writeSize = std::min(_perfectBody.size(), pipeSize);
-	writeSize = write(_request->getWriteFd(), _perfectBody.c_str() + _writeIndex, writeSize);
+	std::string perfectBody = _request->getPerfectBody();
+	size_t writeSize = std::min(perfectBody.size() - _writeIndex, pipeSize);
+	writeSize = write(_writeFd[1], perfectBody.c_str() + _writeIndex, writeSize);
 	if (writeSize > 0)
 		_writeIndex += writeSize;
 	if (_request->getBodyTotalSize() == _writeIndex)
@@ -97,9 +103,9 @@ void Client::printResult()
 	std::string readBuffer;
 	memset(tempBuffer, 0, PIPESIZE);
 
-	readSize = read(fd, tempBuffer, PIPESIZE);
+	size_t readSize = read(_readFd[0], tempBuffer, PIPESIZE);
 	if (readSize < 0)
-		break;
+		return;
 	readBuffer.append(tempBuffer, readSize);
 	_buffer << readBuffer;
 }
@@ -107,4 +113,25 @@ void Client::printResult()
 pid_t Client::getPid() const
 {
 	return _pid;
+}
+
+void Client::initCgi()
+{
+	std::vector<std::string> url = util::getToken(_request->getRequestUrl(), "/");
+	if (url.size() >= 1)
+		_request->setChunkedFilename(url[url.size() - 1]);
+	pipe(_writeFd);
+	pipe(_readFd);
+	addEvent(_readFd[0], EVFILT_READ);
+	_pid = fork();
+	if (_pid == 0)
+		childProcess();
+	close(_writeFd[0]);
+	close(_readFd[1]);
+}
+
+void Client::postProcess()
+{
+	_request->setPerfectBody(_buffer.str().c_str() + _request->getBodyStartIndex());
+	_request->setBodyTotalSize(_buffer.str().size() - _request->getBodyStartIndex());
 }

@@ -23,15 +23,15 @@
 #define TIME_SIZE 40
 #define PIPESIZE 42000
 
-class Request;
 class Server;
 
 class Client
 {
 	private:
 		Request*			_request;
-
-
+		int					_socketFd;
+		int					_writeFd[2]; // parent(w) -> child(r)
+		int					_readFd[2]; // child(w) -> parent(r)
 		pid_t				_pid;	
 		std::string 		_chunkedFilename;
 		std::string			_version;
@@ -43,59 +43,70 @@ class Client
 		size_t				_contentLength;
 		std::stringstream	_buffer;
 		int					_kq;
-
-		// 
+		int					_writeIndex;
+		// bool				_writeEventFlag;
 	
 		Client(const Client& src); 
-		Client& operator=(Client const& rhs);
+		Client& operator=(const Client& rhs);
 	public:
-		Client(int kq);
+		// Client(int kq);
 		virtual ~Client();
-		Client(Request* request);
+		Client(Request* request, int kq, int socketFd);
 		static std::string getDate();
-		virtual void createResponse() =0;
+		// virtual void createResponse() =0;
 		void stamp() const;
-		const std::stringstream& getBuffer() const;
 		std::string findLocationPath() const;
 		void checkLimitExcept() const;
 		std::string findContentType(const std::string& filePath);
-		int getKq() const;
-		Request* getReq() const;
-		int getStateCode() const;
+
+
 		void getProcess();
 		void postProcess();
 		void deleteProcess();
-		void errorProcess();		
+		void errorProcess();
 
 	// get.cpp
-        void getCreateResponse(); //override
+        // void getCreateResponse(); //override
         void openPath(const std::string& path);
         void fileProcess(const std::string& filePath, std::stringstream& body);
         void pushBuffer(std::stringstream& body);
 		void autoIndexProcess(DIR* dirStream, std::stringstream& body);
 	// post.cpp
-		void postCreateResponse(); // override
+		// void postCreateResponse(); // override
         void childProcess(int *writeFd, int *readFd);
 		void uploadFile();
         const std::string printResult(int fd, int kq);
 	// delete.cpp
-		void deleteCreateResponse(); // override
+		// void deleteCreateResponse(); // override
 		void removeFile(std::string file) const;
 
 	// chunked.cpp
-		void chunkedCreateResponse();
-		void uploadFile(const std::string& body);
-		const std::string printResult(int fd, int kq);
+		// void chunkedCreateResponse();
+		void uploadFile(size_t pipeSize);
+		void printResult();
 		void endResponse();
 		void childProcess();
 		void execveCgi() const;
+		void initCgi();
 		//get.cpp
 		pid_t getPid() const;
 	// error.cpp
-		void errorCreateResponse(); // override
+		// void errorCreateResponse(); // override
 		void makeErrorPage(int errnum);
 		void pushErrorBuffer(std::string body, int errnum);
 	// setevent
-		void setEvent(int kq, int filter);
-		void setEvent(int fd, int kq, int filter);
+		void addEvent(int fd, int filter);
+		void deleteEvent();
+
+	// get
+		int getWriteFd() const;
+		int getReadFd() const;
+		int getKq() const;
+		Request& getReq() const;
+		int getSocket() const;
+		int getStateCode() const;
+		const std::stringstream& getBuffer() const;
+	// clear
+		void clearClient();
+
 };

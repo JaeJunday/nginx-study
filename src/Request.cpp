@@ -1,29 +1,56 @@
 #include "Request.hpp"
-//#include "include/enum.hpp"
-#include "enum.hpp"
-#include "include/Util.hpp"
-#include <sys/event.h>
+#include "Client.hpp"
 
-Request::Request(int socket, const Server& server)
+Request::Request(Server& server)
 	: _server(server), 
-	// _response(NULL),
-	_writeFd[0](-1),
-	_writeFd[1](-1),
-	_readFd[0](-1),
-	_readFd[1](-1),
 	_location(NULL),
 	_state(request::READY),
-	_socket(socket), 
 	_port(0), 
 	_contentLength(0), 
 	_eventState(0), 
 	_bodyStartIndex(0), 
-	_readIndex(0), 
-	_chunkedState(chunk::READY)
+	_bodyTotalSize(-1),
+	_chunkedState(chunk::READY),
+	_readIndex(0),
+	_writeEventFlag(false)
 {
 }
 
+Request::Request(const Request& request)
+{
+	*this = request;
+}
 
+Request& Request::operator=(const Request& rhs)
+{
+	if (this != &rhs)
+	{
+		_server = rhs._server;
+		_location = rhs._location;
+		_state = rhs._state;
+		_headerBuffer = rhs._headerBuffer;
+		_buffer = rhs._buffer;
+		_method = rhs._method;
+		_requestUrl = rhs._requestUrl;
+		_version = rhs._version;
+		_ip = rhs._ip;
+		_port = rhs._port;
+		_connection = rhs._connection;
+		_contentType = rhs._contentType;
+		_contentLength = rhs._contentLength;
+		_transferEncoding = rhs._transferEncoding;
+		_boundary = rhs._boundary;
+		_eventState = rhs._eventState;
+		_bodyStartIndex = rhs._bodyStartIndex;	
+		_bodyTotalSize = rhs._bodyTotalSize;
+		_chunkedFilename = rhs._chunkedFilename;
+		_chunkedState = rhs._chunkedState;
+		_perfectBody = rhs._perfectBody;
+		_readIndex = rhs._readIndex;
+		_writeEventFlag = rhs._writeEventFlag;
+	}
+	return *this;	
+}
 
 void Request::checkMultipleSpaces(const std::string& str)
 {
@@ -159,7 +186,8 @@ void Request::parseChunkedData(Client* client)
 		{
 			if (_buffer.find("\r\n", bodyStart) != std::string::npos)
 			{
-				_response->endResponse();
+				_bodyTotalSize = _buffer.size() - _bodyStartIndex;
+				// _response->endResponse();
 				_chunkedState = chunk::END;
 				return;
 			}
@@ -172,7 +200,13 @@ void Request::parseChunkedData(Client* client)
 			_perfectBody.append(_buffer.substr(bodyStart, bodySize), bodySize);
 			// dynamic_cast<Chunked *>(_response)->uploadFile(perfectBody); //cgi
 			// _writeFd[1] event set required
-			client->setEvent(writeFd[1], client->getKq(), EVFILT_WRITE)
+			// client->addEvent(writeFd[1], client->getKq(), EVFILT_WRITE);
+			//client->setWriteEvent();
+			if (_writeEventFlag == false)
+			{
+				client->addEvent(client->getWriteFd(), EVFILT_WRITE);
+				_writeEventFlag = true;
+			}
 			_readIndex = bodyStart + bodySize + 2;//body뒤의 \r\n고려
 			_chunkedState =  chunk::CONTINUE;
 			return;
@@ -181,32 +215,28 @@ void Request::parseChunkedData(Client* client)
 	_chunkedState = chunk::INCOMPLETE_DATA;
 }
 
-void Request::makeResponse(int kq)
-{
-	if (_method.empty())
-		throw 405;
-	if (_method == "GET")
-		_response = new Get(this, kq);
-	else if (_transferEncoding == "chunked")
-	{
-		_response = new Chunked(this, kq);
-		_response->createResponse();
-	}
-	else if (_method == "POST" || _method == "PUT")
-		_response = new Post(this, kq);
-	else if (_method == "DELETE")
-		_response = new Delete(this, kq);
-	_state = request::DONE;
-}
+// void Request::makeResponse(int kq)
+// {
+// 	if (_method.empty())
+// 		throw 405;
+// 	if (_method == "GET")
+// 		_response = new Get(this, kq);
+// 	else if (_transferEncoding == "chunked")
+// 	{
+// 		_response = new Chunked(this, kq);
+// 		_response->createResponse();
+// 	}
+// 	else if (_method == "POST" || _method == "PUT")
+// 		_response = new Post(this, kq);
+// 	else if (_method == "DELETE")
+// 		_response = new Delete(this, kq);
+// 	_state = request::DONE;
+// }
 
 void Request::clearRequest()
 {
-	_writeFd[0] = -1,
-	_writeFd[1] = -1,
-	_readFd[0] = -1,
-	_readFd[1] = -1,
 	_location = NULL;
-	_response = NULL;
+	// _response = NULL;
 	_state = 0;
 	_headerBuffer = "";
 	_buffer = "";
@@ -220,8 +250,9 @@ void Request::clearRequest()
 	_boundary = "";
 	_bodyStartIndex = 0;
 	_readIndex = 0;
-	_writeIndex = 0;
+	// _writeIndex = 0;
 	_chunkedState = 0;
+	_writeEventFlag = false;
 }
 
 void Request::setBuffer(char *buffer, int size)
@@ -232,6 +263,21 @@ void Request::setBuffer(char *buffer, int size)
 void Request::setEventState(int eventState)
 {
 	_eventState = eventState;
+}
+
+void Request::setState(int state)
+{
+	_state = state;
+}
+
+void Request::setPerfectBody(std::string perfectBody)
+{
+	_perfectBody = perfectBody;
+}
+
+void Request::setBodyTotalSize(int bodyTotalSize)
+{
+	_bodyTotalSize = bodyTotalSize;
 }
 
 const std::string& Request::getConnection() const
@@ -272,12 +318,6 @@ const std::string& Request::getRequestUrl() const
 int Request::getState() const
 {
 	return _state;
-}
-
-
-int Request::getSocket() const
-{
-	return _socket;
 }
 
 const std::string& Request::getBuffer() const
@@ -321,19 +361,14 @@ int Request::getBodyIndex() const
 	return _bodyStartIndex;
 }
 
-Client* Request::getResponse() const
-{
-	return _response;
-}
+// Client* Request::getResponse() const
+// {
+// 	return _response;
+// }
 
 int Request::getChunkedState() const
 {
 	return _chunkedState;
-}
-
-int Requst::getWriteFd() const
-{
-	return _writeFd[1];
 }
 
 int Request::getBodyTotalSize() const
@@ -341,14 +376,19 @@ int Request::getBodyTotalSize() const
 	return _bodyTotalSize;
 }
 
-void Request::initCgi(Client* client)
+
+std::string& Request::getPerfectBody()
 {
-	pipe(_writeFd);
-	pipe(_readFd);
-	client->setEvent(_readFd[0], client->getKq(), EVFILT_READ);
-	_pid = fork();
-	if (_pid == 0)
-		childProcess();
-	close(_writeFd[0]);
-	close(_readFd[1]);
+	return _perfectBody;
 }
+
+void Request::setChunkedFilename(std::string& chunkedFilename)
+{
+	_chunkedFilename = chunkedFilename;
+}
+
+int Request::getBodyStartIndex() const
+{
+	return _bodyStartIndex;
+}
+

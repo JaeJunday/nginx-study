@@ -22,7 +22,7 @@
 class Operation {
 private:
     std::vector<Server> _servers;
-    std::map<int, Request *> _requests;
+    std::map<int, Client *> _clients;
 public:
     ~Operation();
     void setServer(const Server& server);
@@ -36,7 +36,7 @@ public:
     void sendData(struct kevent& tevent);
     void testPipe(std::string buffer);
     
-    void handleResponse(Request* req, int kq, struct kevent *tevent, char* buffer);
+    void handleResponse(Client* client, struct kevent *tevent);
     
     Client* selectMethod(Request* req, int kq) const;
 };
