@@ -1,15 +1,15 @@
-#include "Chunked.hpp"
+#include "Client.hpp"
 
 // NOTE_EXIT -> 프로세스 종료될때 이벤트 발생
 // EV_SET(&event, pid, NOTE_EXIT, EV_ADD, 0, 0, nullptr);
 // kevent(kq, &event, 1, NULL, 0, NULL);
 
-Chunked::Chunked(Request* request, int kq) : AResponse(kq), _pid(-2)
-{
-	_request = request;
-}
+// Chunked::Chunked(Request* request, int kq) : Client(kq), _pid(-2)
+// {
+// 	_request = request;
+// }
 
-void Chunked::createResponse()
+void Client::chunkedCreateResponse()
 {
 	findLocationPath();
     std::vector<std::string> url = util::getToken(_request->getRequestUrl(), "/");
@@ -27,7 +27,7 @@ void Chunked::createResponse()
 	close(_readFd[1]);
 }
 
-void Chunked::endResponse()
+void Client::endResponse()
 {
 	close(_writeFd[1]);
 	waitpid(_pid, NULL, 0);
@@ -39,7 +39,7 @@ void Chunked::endResponse()
 	checkLimitExcept();
 }
 
-void Chunked::childProcess()
+void Client::childProcess()
 {
 	dup2(_writeFd[0], STDIN_FILENO);
 	close(_writeFd[0]);
@@ -51,7 +51,7 @@ void Chunked::childProcess()
 	execveCgi();
 }
 
-void Chunked::execveCgi() const
+void Client::execveCgi() const
 {
 	std::string scriptPath;
 	std::string engine;
@@ -79,33 +79,20 @@ void Chunked::execveCgi() const
 	}
 }
 
-void Chunked::uploadFile(const std::string& body)
+void Client::uploadFile(const std::string& body)
 {
-	struct kevent	tevent;
-	int				ret;
-	int				size = 0;
-	std::string		data = body;
-	size_t			writeSize;
+	// struct kevent	tevent;
+	// int				ret;
+	// int				size = 0;
+	// std::string		data = body;
+	// size_t			writeSize;
 
-	while (true)
-	{
-		ret = kevent(_kq, nullptr, 0, &tevent, 1, nullptr);
-		if (ret == -1) 
-			std::cerr << "kevent error: " << std::strerror(errno) << std::endl;
-		if (tevent.ident != _writeFd[1])
-			continue;
-		if (size >= data.length())
-			return;
-		if (tevent.filter == EVFILT_WRITE)
-		{
-			writeSize = std::min((size_t)tevent.data, data.size() - size);
-			write(_writeFd[1], data.c_str() + size, writeSize);
-			size += writeSize;
-		}
-	}
+	// writeSize = std::min((size_t)tevent.data, data.size() - size);
+	// write(_writeFd[1], data.c_str() + size, writeSize);
+	// size += writeSize;
 }
 
-const std::string Chunked::printResult(int fd, int _kq)
+const std::string Client::printResult(int fd, int _kq)
 {
 	struct	kevent tevent;
 	size_t	size = 0;
@@ -139,7 +126,7 @@ const std::string Chunked::printResult(int fd, int _kq)
 	return readBuffer;
 }
 
-pid_t Chunked::getPid() const
+pid_t Client::getPid() const
 {
 	return _pid;
 }

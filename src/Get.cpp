@@ -1,34 +1,31 @@
-#include "Request.hpp"
-#include "Server.hpp"
-#include "Get.hpp"
+#include "Client.hpp"
+// Get::Get(Request* request, int kq) : AResponse(kq)
+// {
+//     _request = request;
+// }
 
-Get::Get(Request* request, int kq) : AResponse(kq)
-{
-    _request = request;
-}
+// Get::~Get()
+// {
+//     /* Destructor Implementation */
+// }
 
-Get::~Get()
-{
-    /* Destructor Implementation */
-}
+// Get& Get::operator=(Get const& rhs)
+// {
+//     if (this != &rhs)
+//     {
+//         /* Assignment Operator Implementation */
+//     }
+//     return *this;
+// }
 
-Get& Get::operator=(Get const& rhs)
-{
-    if (this != &rhs)
-    {
-        /* Assignment Operator Implementation */
-    }
-    return *this;
-}	
-
-void Get::createResponse()
+void Client::getCreateResponse()
 {
     std::string path = findLocationPath();
 	checkLimitExcept();
 	openPath(path);
 }
 
-void Get::openPath(const std::string& path)
+void Client::openPath(const std::string& path)
 {
 	std::string relativePath = "." + path;
 	DIR *dirStream = opendir(relativePath.c_str());
@@ -66,7 +63,7 @@ void Get::openPath(const std::string& path)
 	pushBuffer(body);
 }
 
-void Get::fileProcess(const std::string& filePath, std::stringstream& body)
+void Client::fileProcess(const std::string& filePath, std::stringstream& body)
 {
     std::ifstream		file;
 
@@ -87,7 +84,7 @@ void Get::fileProcess(const std::string& filePath, std::stringstream& body)
 	}
 }
 
-void Get::autoIndexProcess(DIR* dirStream, std::stringstream& body)
+void Client::autoIndexProcess(DIR* dirStream, std::stringstream& body)
 {
 	struct dirent *entry;
 	while (true)
@@ -101,7 +98,7 @@ void Get::autoIndexProcess(DIR* dirStream, std::stringstream& body)
 	_contentType = "text/plain";
 }
 
-void Get::pushBuffer(std::stringstream& body)
+void Client::pushBuffer(std::stringstream& body)
 {
 	_buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
 	_buffer << "Date: " << getDate() << "\r\n";

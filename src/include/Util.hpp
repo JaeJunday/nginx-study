@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Request.hpp"
+#include "Client.hpp"
 
 #include <netinet/in.h> // sockaddr_in
 #include <cstdint>
@@ -20,6 +21,6 @@ namespace util
     std::vector<std::string> getToken(const std::string& str, const std::string& delimiters);
     uint32_t convertIp(std::string& ipStr);
 	uint32_t stoui(const std::string& str);
-    void setReqEvent(Request *req, int kque, int filter);
-    void setEvent(int fd, int kq, int filter);
+    void setEvent(Client* client, int kq, int filter);
+    // void setEvent(int fd, int kq, int filter);
 }

@@ -1,7 +1,6 @@
-#include "AResponse.hpp"
-#include "Request.hpp"
+#include "Client.hpp"
 
-AResponse::AResponse(int kq)
+Client::Client(int kq)
 : _version("HTTP/1.1"), 
   _stateCode("200"), 
   _reasonPhrase("OK"),
@@ -14,21 +13,21 @@ AResponse::AResponse(int kq)
     /* Constructor Implementation */
 }
 
-AResponse::AResponse(Request* request) : _request(request)
+Client::Client(Request* request) : _request(request)
 {
     /* Constructor Implementation */
 }
-AResponse::AResponse(const AResponse& src)
+Client::Client(const Client& src)
 {
     /* Copy Constructor Implementation */
 }
 
-AResponse::~AResponse()
+Client::~Client()
 {
     /* Destructor Implementation */
 }
 
-AResponse& AResponse::operator=(AResponse const& rhs)
+Client& Client::operator=(Client const& rhs)
 {
     if (this != &rhs)
     {
@@ -37,7 +36,7 @@ AResponse& AResponse::operator=(AResponse const& rhs)
     return *this;
 }
 
-std::string AResponse::getDate()
+std::string Client::getDate()
 {
     std::time_t now = std::time(NULL);
     char timeStamp[TIME_SIZE];
@@ -46,7 +45,7 @@ std::string AResponse::getDate()
 }
 
 // 15:53:14 : 0.0.0.0 GET HTTP/1.1 200 Ok ./public 2259
-void AResponse::stamp() const
+void Client::stamp() const
 {
 	std::string color;
 	if (util::stoui(_stateCode) >= 400)
@@ -56,12 +55,12 @@ void AResponse::stamp() const
     std::cerr << color << getDate() << " : "<< _request->getIp() << " " << _request->getMethod() << " " << _request->getVersion() << " "<< _stateCode << " " << _reasonPhrase << RESET << std::endl;
 }
 
-const std::stringstream& AResponse::getBuffer() const
+const std::stringstream& Client::getBuffer() const
 {
     return _buffer;
 }
 
-std::string AResponse::findLocationPath() const
+std::string Client::findLocationPath() const
 {
 	const Server server = _request->getServer();
 	const std::vector<Location>& locations = server.getLocations();
@@ -108,7 +107,7 @@ std::string AResponse::findLocationPath() const
 	}
 }
 
-void AResponse::checkLimitExcept() const
+void Client::checkLimitExcept() const
 {	
 	std::string limit = _request->getLocation()->_limitExcept;
 	if (!limit.empty())
@@ -130,7 +129,7 @@ void AResponse::checkLimitExcept() const
 	}
 }
 
-std::string AResponse::findContentType(const std::string& filePath)
+std::string Client::findContentType(const std::string& filePath)
 {
 	std::vector<std::string> filename = util::getToken(filePath, ".");
 	std::string fileExtension;
@@ -151,17 +150,54 @@ std::string AResponse::findContentType(const std::string& filePath)
 	return "";
 }
 
-int AResponse::getKq() const
+int Client::getKq() const
 {
 	return _kq;
 }
 
-Request* AResponse::getRequest() const
+Request* Client::getRequest() const
 {
 	return _request;
 }
 
-int AResponse::getStateCode() const
+int Client::getStateCode() const
 {
 	return util::stoui(_stateCode);
+}
+
+void Client::parseChunkedData()
+{
+	if (_chunkedIndex == false)
+		_chunkedIndex = _bodyIndex;
+	size_t index = _buffer.find("\r\n", _chunkedIndex);
+	if (index != std::string::npos)
+	{
+		char*   endptr;
+		size_t bodyStart = index + 2;
+		size_t bodySize = std::strtol(_buffer.c_str() + _chunkedIndex, &endptr, HEX);
+		if (endptr - _buffer.c_str() != index)
+			throw 400;
+		if (bodySize == 0)
+		{
+			if (_buffer.find("\r\n", bodyStart) != std::string::npos)
+			{
+				_response->endResponse();
+				_chunkedState = chunk::END;
+				return;
+			}
+		} 
+		else if (bodyStart + bodySize + 2 <= _buffer.length())//body뒤의 \r\n고려
+		{	
+			// _perpectBody add && pipe write event add
+			if (_buffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
+				throw 400;
+			std::string perfectBody = _buffer.substr(bodyStart, bodySize);
+			// dynamic_cast<Chunked *>(_response)->uploadFile(perfectBody); //cgi
+			
+			_chunkedIndex = bodyStart + bodySize + 2;//body뒤의 \r\n고려
+			_chunkedState =  chunk::CONTINUE;
+			return;
+		}
+	}
+	_chunkedState = chunk::INCOMPLETE_DATA;
 }

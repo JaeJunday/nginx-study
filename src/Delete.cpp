@@ -1,12 +1,6 @@
-#include "Delete.hpp"
-#include "Request.hpp"
+#include "Client.hpp"
 
-Delete::Delete(Request* request, int kq) : AResponse(kq)
-{
-    _request = request;
-}
-
-void Delete::createResponse() //override
+void Client::deleteCreateResponse() //override
 {
     _buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
 	_buffer << "Date: " << getDate() << "\r\n";
@@ -18,7 +12,7 @@ void Delete::createResponse() //override
     // checkLimitExcept();
 }
 
-void Delete::removeFile(std::string file) const
+void Client::removeFile(std::string file) const
 {
     file = "." + file;
     std::cerr << "file: " << file << std::endl;

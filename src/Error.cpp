@@ -1,11 +1,10 @@
-#include "Error.hpp"
+#include "Client.hpp"
 
-Error::Error(Request* request, int kq) : AResponse(kq)
-{
-	_request = request;
-}
-
-void Error::pushErrorBuffer(std::string body, int errnum)
+// Error::Error(Request* request, int kq) : AResponse(kq)
+// {
+// 	_request = request;
+// }
+void Client::pushErrorBuffer(std::string body, int errnum)
 {
 	std::stringstream responseData;
 
@@ -14,12 +13,12 @@ void Error::pushErrorBuffer(std::string body, int errnum)
 	responseData << "Server: My Server" << "\r\n";
 	responseData << "Referrer-Policy: no-referrer" << "\r\n";
 	responseData << "Content-Length: " << _contentLength << "\r\n";
-	responseData << "Date: " << AResponse::getDate() << "\r\n\r\n";
+	responseData << "Date: " << Client::getDate() << "\r\n\r\n";
 	responseData << body;
 	_buffer << responseData.str();
 }
 
-void Error::makeErrorPage(int errnum)
+void Client::makeErrorPage(int errnum)
 {
 	std::ifstream       file;
 	std::string         filePath;
@@ -55,8 +54,4 @@ void Error::makeErrorPage(int errnum)
 		file.close();
 		pushErrorBuffer(body.str(), errnum);
 	}
-}
-
-void Error::createResponse()
-{
 }

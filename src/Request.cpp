@@ -1,4 +1,5 @@
 #include "Request.hpp"
+#include "include/enum.hpp"
 
 Request::Request(int socket, const Server& server)
 	: _server(server), 
@@ -133,40 +134,42 @@ std::string removeSpecificCharacter(std::string str, char ch)
 	return (str);
 }
 
-void Request::parseChunkedData()
-{
-	if (_chunkedIndex == false)
-		_chunkedIndex = _bodyIndex;
-	size_t index = _buffer.find("\r\n", _chunkedIndex);
-	if (index != std::string::npos)
-	{
-		char*   endptr;
-		size_t bodyStart = index + 2;
-		size_t bodySize = std::strtol(_buffer.c_str() + _chunkedIndex, &endptr, HEX);
-		if (endptr - _buffer.c_str() != index)
-			throw 400;
-		if (bodySize == 0)
-		{
-			if (_buffer.find("\r\n", bodyStart) != std::string::npos)
-			{
-				dynamic_cast<Chunked *>(_response)->endResponse();
-				_chunkedState = chunk::END;
-				return;
-			}
-		} 
-		else if (bodyStart + bodySize + 2 <= _buffer.length())//body뒤의 \r\n고려
-		{
-			if (_buffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
-				throw 400;
-			std::string perfectBody = _buffer.substr(bodyStart, bodySize);
-			dynamic_cast<Chunked *>(_response)->uploadFile(perfectBody); //cgi
-			_chunkedIndex = bodyStart + bodySize + 2;//body뒤의 \r\n고려
-			_chunkedState =  chunk::CONTINUE;
-			return;
-		}
-	}
-	_chunkedState = chunk::INCOMPLETE_DATA;
-}
+// void Request::parseChunkedData()
+// {
+// 	if (_chunkedIndex == false)
+// 		_chunkedIndex = _bodyIndex;
+// 	size_t index = _buffer.find("\r\n", _chunkedIndex);
+// 	if (index != std::string::npos)
+// 	{
+// 		char*   endptr;
+// 		size_t bodyStart = index + 2;
+// 		size_t bodySize = std::strtol(_buffer.c_str() + _chunkedIndex, &endptr, HEX);
+// 		if (endptr - _buffer.c_str() != index)
+// 			throw 400;
+// 		if (bodySize == 0)
+// 		{
+// 			if (_buffer.find("\r\n", bodyStart) != std::string::npos)
+// 			{
+// 				_response->endResponse();
+// 				_chunkedState = chunk::END;
+// 				return;
+// 			}
+// 		} 
+// 		else if (bodyStart + bodySize + 2 <= _buffer.length())//body뒤의 \r\n고려
+// 		{	
+// 			// _perpectBody add && pipe write event add
+// 			if (_buffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
+// 				throw 400;
+// 			std::string perfectBody = _buffer.substr(bodyStart, bodySize);
+// 			// dynamic_cast<Chunked *>(_response)->uploadFile(perfectBody); //cgi
+			
+// 			_chunkedIndex = bodyStart + bodySize + 2;//body뒤의 \r\n고려
+// 			_chunkedState =  chunk::CONTINUE;
+// 			return;
+// 		}
+// 	}
+// 	_chunkedState = chunk::INCOMPLETE_DATA;
+// }
 
 void Request::makeResponse(int kq)
 {
@@ -303,7 +306,7 @@ int Request::getBodyIndex() const
 	return _bodyIndex;
 }
 
-AResponse* Request::getResponse() const
+Client* Request::getResponse() const
 {
 	return _response;
 }

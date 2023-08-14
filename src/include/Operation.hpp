@@ -1,15 +1,10 @@
 #pragma once
 
-#include "AResponse.hpp"
-#include "Get.hpp"
-#include "Post.hpp"
-#include "Delete.hpp"
-#include "Chunked.hpp"
+#include "Client.hpp"
 #include "Server.hpp"
 #include "Request.hpp"
 #include "enum.hpp"
 #include "Util.hpp"
-#include "Error.hpp"
 
 #include <iostream>
 #include <string>
@@ -43,7 +38,7 @@ public:
     
     void handleResponse(Request* req, int kq, struct kevent *tevent, char* buffer);
     
-    AResponse* selectMethod(Request* req, int kq) const;
+    Client* selectMethod(Request* req, int kq) const;
 };
 
 // remove testcase function

@@ -4,7 +4,7 @@ SRCS = main.cpp \
 		Server.cpp \
 		Operation.cpp \
 		Request.cpp \
-		AResponse.cpp \
+		Client.cpp \
 		Get.cpp \
 		Post.cpp \
 		Delete.cpp \

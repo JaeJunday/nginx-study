@@ -43,32 +43,32 @@ uint32_t util::convertIp(std::string& ipStr)
 }
 
 //소켓 전용 event setter
-void util::setReqEvent(Request *req, int kq, int filter)
+void util::setEvent(Client* client, int kq, int filter)
 {
     struct kevent event;
 
     // DELETE
     if (req->getEventState() == event::READ && filter == event::WRITE)
     {
-        EV_SET(&event, req->getSocket(), EVFILT_READ, EV_DELETE, 0, 0, req);
+        EV_SET(&event, req->getSocket(), EVFILT_READ, EV_DELETE, 0, 0, client);
         kevent(kq, &event, 1, NULL, 0, NULL);
     }
     else if (req->getEventState() == event::WRITE && filter == event::READ)
     {
-        EV_SET(&event, req->getSocket(), EVFILT_WRITE, EV_DELETE, 0, 0, req);
+        EV_SET(&event, req->getSocket(), EVFILT_WRITE, EV_DELETE, 0, 0, client);
         kevent(kq, &event, 1, NULL, 0, NULL);
     }
     // ADD
     if (filter == event::READ)
     {
-        EV_SET(&event, req->getSocket(), EVFILT_READ, EV_ADD, 0, 0, req);
+        EV_SET(&event, req->getSocket(), EVFILT_READ, EV_ADD, 0, 0, client);
         if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
             std::cerr << "invalid Read event set 1" << std::endl;
         req->setEventState(event::READ);
     }
     else if (filter == event::WRITE)
     {
-        EV_SET(&event, req->getSocket(), EVFILT_WRITE, EV_ADD, 0, 0, req);
+        EV_SET(&event, req->getSocket(), EVFILT_WRITE, EV_ADD, 0, 0, client);
         if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
             std::cerr << "invalid Write event set 1" << std::endl;
         req->setEventState(event::READ);
@@ -76,21 +76,21 @@ void util::setReqEvent(Request *req, int kq, int filter)
 }
 
 //pipe 전용 event setter
-void util::setEvent(int fd, int kq, int filter)
-{
-    struct kevent event;
+// void util::setEvent(int fd, int kq, int filter)
+// {
+//     struct kevent event;
 
-    // ADD
-    if (filter == event::READ)
-    {
-        EV_SET(&event, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
-            std::cerr << "invalid Read event set 2" << std::endl;
-    }
-    else if (filter == event::WRITE)
-    {
-        EV_SET(&event, fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
-        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
-            std::cerr << "invalid Write event set 2" << std::endl;
-    }
-}
+//     // ADD
+//     if (filter == event::READ)
+//     {
+//         EV_SET(&event, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+//         if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
+//             std::cerr << "invalid Read event set 2" << std::endl;
+//     }
+//     else if (filter == event::WRITE)
+//     {
+//         EV_SET(&event, fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
+//         if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
+//             std::cerr << "invalid Write event set 2" << std::endl;
+//     }
+// }

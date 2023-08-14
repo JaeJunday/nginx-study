@@ -1,10 +1,10 @@
 #pragma once
 
-#include "AResponse.hpp"
-#include "Get.hpp"
-#include "Post.hpp"
-#include "Delete.hpp"
-#include "Chunked.hpp"
+#include "Client.hpp"
+
+
+
+
 #include "Color.hpp"
 #include "enum.hpp"
 #include "Util.hpp"
@@ -22,7 +22,7 @@ class Request
 	private:
 		const Server&		_server;
 		Location*			_location;
-		AResponse*			_response;
+		Client*				_response;
 		int					_state;
 		int					_socket;
 		std::string			_headerBuffer;
@@ -41,6 +41,9 @@ class Request
 		int 				_bodyIndex;
 		int					_chunkedIndex;
 		int					_chunkedState;
+	// chunked를 위한 바디 저장
+		std::string 		_perfectBody;
+		int					_sendIndex;
 		
 	public:
 		Request(int socket, const Server& server);
@@ -68,7 +71,7 @@ class Request
 		const std::string& getBuffer() const;
 		const std::string& getChunkedFilename();
 		int getBodyIndex() const;
-		AResponse* getResponse() const;
+		Client* getResponse() const;
 		int getChunkedState() const;
 		// set
 		void setRequestLine(std::string& requestLine);

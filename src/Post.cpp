@@ -1,15 +1,10 @@
-#include "Post.hpp"
-#include "Request.hpp"
-// NOTE_EXIT -> 프로세스 종료될때 이벤트 발생
-// EV_SET(&event, pid, NOTE_EXIT, EV_ADD, 0, 0, nullptr);
-// kevent(kq, &event, 1, NULL, 0, NULL);
+#include "Client.hpp"
+// Post::Post(Request* request, int kq) : AResponse(kq)
+// {
+//     _request = request;
+// }
 
-Post::Post(Request* request, int kq) : AResponse(kq)
-{
-    _request = request;
-}
-
-void Post::createResponse()
+void Client::postCreateResponse()
 {
 	int writeFd[2]; // parent(w) -> child(r)
 	int readFd[2]; // child(w) -> parent(r)
@@ -33,7 +28,7 @@ void Post::createResponse()
 	_buffer << result;
 }
 
-void Post::childProcess(int *writeFd, int *readFd)
+void Client::childProcess(int *writeFd, int *readFd)
 {
 	dup2(writeFd[0], STDIN_FILENO);
 	close(writeFd[0]);
@@ -51,7 +46,7 @@ void Post::childProcess(int *writeFd, int *readFd)
 	}
 }
 
-void Post::uploadFile(int fd, int kq)
+void Client::uploadFile(int fd, int kq)
 {
 	struct kevent	tevent;
 	int				ret;
@@ -78,7 +73,7 @@ void Post::uploadFile(int fd, int kq)
 	}
 }
 
-const std::string Post::printResult(int fd, int kq)
+const std::string Client::printResult(int fd, int kq)
 {
 	struct	kevent tevent;
 	size_t	size = 0;
