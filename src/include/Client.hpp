@@ -31,8 +31,7 @@ class Client
 	private:
 		Request*			_request;
 
-		int					_writeFd[2]; // parent(w) -> child(r)
-		int					_readFd[2]; // child(w) -> parent(r)
+
 		pid_t				_pid;	
 		std::string 		_chunkedFilename;
 		std::string			_version;
@@ -44,9 +43,8 @@ class Client
 		size_t				_contentLength;
 		std::stringstream	_buffer;
 		int					_kq;
-	// chunked를 위한
-		std::string 		_perfectBody;
-		int					_sendIndex;
+
+		// 
 	
 		Client(const Client& src); 
 		Client& operator=(Client const& rhs);
@@ -62,7 +60,7 @@ class Client
 		void checkLimitExcept() const;
 		std::string findContentType(const std::string& filePath);
 		int getKq() const;
-		Request* getRequest() const;
+		Request* getReq() const;
 		int getStateCode() const;
 		void getProcess();
 		void postProcess();
@@ -78,7 +76,7 @@ class Client
 	// post.cpp
 		void postCreateResponse(); // override
         void childProcess(int *writeFd, int *readFd);
-		void uploadFile(int fd, int kq);
+		void uploadFile();
         const std::string printResult(int fd, int kq);
 	// delete.cpp
 		void deleteCreateResponse(); // override
@@ -97,4 +95,7 @@ class Client
 		void errorCreateResponse(); // override
 		void makeErrorPage(int errnum);
 		void pushErrorBuffer(std::string body, int errnum);
+	// setevent
+		void setEvent(int kq, int filter);
+		void setEvent(int fd, int kq, int filter);
 };

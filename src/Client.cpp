@@ -22,6 +22,7 @@ Client::Client(const Client& src)
     /* Copy Constructor Implementation */
 }
 
+// Request 제거해야함
 Client::~Client()
 {
     /* Destructor Implementation */
@@ -155,7 +156,7 @@ int Client::getKq() const
 	return _kq;
 }
 
-Request* Client::getRequest() const
+Request* Client::getReq() const
 {
 	return _request;
 }
@@ -165,39 +166,55 @@ int Client::getStateCode() const
 	return util::stoui(_stateCode);
 }
 
-void Client::parseChunkedData()
+// 소켓 전용 event setter
+void Client::setEvent(int kq, int filter)
 {
-	if (_chunkedIndex == false)
-		_chunkedIndex = _bodyIndex;
-	size_t index = _buffer.find("\r\n", _chunkedIndex);
-	if (index != std::string::npos)
-	{
-		char*   endptr;
-		size_t bodyStart = index + 2;
-		size_t bodySize = std::strtol(_buffer.c_str() + _chunkedIndex, &endptr, HEX);
-		if (endptr - _buffer.c_str() != index)
-			throw 400;
-		if (bodySize == 0)
-		{
-			if (_buffer.find("\r\n", bodyStart) != std::string::npos)
-			{
-				_response->endResponse();
-				_chunkedState = chunk::END;
-				return;
-			}
-		} 
-		else if (bodyStart + bodySize + 2 <= _buffer.length())//body뒤의 \r\n고려
-		{	
-			// _perpectBody add && pipe write event add
-			if (_buffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
-				throw 400;
-			std::string perfectBody = _buffer.substr(bodyStart, bodySize);
-			// dynamic_cast<Chunked *>(_response)->uploadFile(perfectBody); //cgi
-			
-			_chunkedIndex = bodyStart + bodySize + 2;//body뒤의 \r\n고려
-			_chunkedState =  chunk::CONTINUE;
-			return;
-		}
-	}
-	_chunkedState = chunk::INCOMPLETE_DATA;
+    struct kevent event;
+
+    // DELETE
+    if (req->getEventState() == event::READ && filter == event::WRITE)
+    {
+        EV_SET(&event, req->getSocket(), EVFILT_READ, EV_DELETE, 0, 0, this);
+        kevent(kq, &event, 1, NULL, 0, NULL);
+    }
+    else if (req->getEventState() == event::WRITE && filter == event::READ)
+    {
+        EV_SET(&event, req->getSocket(), EVFILT_WRITE, EV_DELETE, 0, 0, this);
+        kevent(kq, &event, 1, NULL, 0, NULL);
+    }
+    // ADD
+    if (filter == event::READ)
+    {
+        EV_SET(&event, req->getSocket(), EVFILT_READ, EV_ADD, 0, 0, this);
+        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
+            std::cerr << "invalid Read event set 1" << std::endl;
+        req->setEventState(event::READ);
+    }
+    else if (filter == event::WRITE)
+    {
+        EV_SET(&event, req->getSocket(), EVFILT_WRITE, EV_ADD, 0, 0, this);
+        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
+            std::cerr << "invalid Write event set 1" << std::endl;
+        req->setEventState(event::READ);
+    }
+}
+
+//pipe 전용 event setter
+void Client::setEvent(int fd, int kq, int filter)
+{
+    struct kevent event;
+
+    // ADD
+    if (filter == event::READ)
+    {
+        EV_SET(&event, fd, EVFILT_READ, EV_ADD, 0, 0, this);
+        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
+            std::cerr << "invalid Read event set 2" << std::endl;
+    }
+    else if (filter == event::WRITE)
+    {
+        EV_SET(&event, fd, EVFILT_WRITE, EV_ADD, 0, 0, this);
+        if (kevent(kq, &event, 1, NULL, 0, NULL) == -1)
+            std::cerr << "invalid Write event set 2" << std::endl;
+    }
 }

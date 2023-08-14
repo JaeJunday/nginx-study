@@ -31,12 +31,11 @@ void Client::endResponse()
 {
 	close(_writeFd[1]);
 	waitpid(_pid, NULL, 0);
-	std::string result = printResult(_readFd[0], _kq);
-	close(_readFd[0]);	
-	_buffer << result;
-	if (findLocationPath().empty())
-		throw 405;
-	checkLimitExcept();
+	printResult(_readFd[0], _kq);
+	close(_readFd[0]);
+	// if (findLocationPath().empty())
+	// 	throw 405;
+	// checkLimitExcept();
 }
 
 void Client::childProcess()
@@ -79,51 +78,30 @@ void Client::execveCgi() const
 	}
 }
 
-void Client::uploadFile(const std::string& body)
+void Client::uploadFile(size_t pipeSize)
 {
-	// struct kevent	tevent;
-	// int				ret;
-	// int				size = 0;
-	// std::string		data = body;
-	// size_t			writeSize;
-
-	// writeSize = std::min((size_t)tevent.data, data.size() - size);
-	// write(_writeFd[1], data.c_str() + size, writeSize);
-	// size += writeSize;
+	// 써야되는 사이즈 
+	// _perfectBody.size(); // or pipeSize
+	// endresponse
+	size_t writeSize = std::min(_perfectBody.size(), pipeSize);
+	writeSize = write(_request->getWriteFd(), _perfectBody.c_str() + _writeIndex, writeSize);
+	if (writeSize > 0)
+		_writeIndex += writeSize;
+	if (_request->getBodyTotalSize() == _writeIndex)
+		endResponse();
 }
 
-const std::string Client::printResult(int fd, int _kq)
+void Client::printResult()
 {
-	struct	kevent tevent;
-	size_t	size = 0;
-	size_t	readSize;
-	int		ret;
 	char tempBuffer[PIPESIZE];
 	std::string readBuffer;
 	memset(tempBuffer, 0, PIPESIZE);
 
-	while (true)
-	{
-		ret = kevent(_kq, nullptr, 0, &tevent, 1, nullptr);
-		//testcode
-		if (ret == -1) 
-			std::cerr << "kevent error: " << std::strerror(errno) << std::endl;
-		if (tevent.ident != fd)
-			continue;
-		if (tevent.filter == EVFILT_READ)
-		{
-			while (true)
-			{
-				readSize = read(fd, tempBuffer, PIPESIZE);
-				if (readSize < 0)
-					break;
-				readBuffer.append(tempBuffer, readSize);
-				if (readSize == 0)
-					return readBuffer;
-			}
-		}
-	}
-	return readBuffer;
+	readSize = read(fd, tempBuffer, PIPESIZE);
+	if (readSize < 0)
+		break;
+	readBuffer.append(tempBuffer, readSize);
+	_buffer << readBuffer;
 }
 
 pid_t Client::getPid() const

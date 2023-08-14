@@ -1,20 +1,29 @@
 #include "Request.hpp"
-#include "include/enum.hpp"
+//#include "include/enum.hpp"
+#include "enum.hpp"
+#include "include/Util.hpp"
+#include <sys/event.h>
 
 Request::Request(int socket, const Server& server)
 	: _server(server), 
-	_response(NULL), 
+	// _response(NULL),
+	_writeFd[0](-1),
+	_writeFd[1](-1),
+	_readFd[0](-1),
+	_readFd[1](-1),
 	_location(NULL),
 	_state(request::READY),
 	_socket(socket), 
 	_port(0), 
 	_contentLength(0), 
 	_eventState(0), 
-	_bodyIndex(0), 
-	_chunkedIndex(0), 
+	_bodyStartIndex(0), 
+	_readIndex(0), 
 	_chunkedState(chunk::READY)
 {
 }
+
+
 
 void Request::checkMultipleSpaces(const std::string& str)
 {
@@ -120,7 +129,7 @@ void Request::headerParsing(char* buf, intptr_t size)
 		setFieldLine(fieldLine);
 		endLine = newEndLine + 2;
 	}
-	_bodyIndex = headerBoundary + 4;
+	_bodyStartIndex = headerBoundary + 4;
 }
 
 std::string removeSpecificCharacter(std::string str, char ch)
@@ -134,42 +143,43 @@ std::string removeSpecificCharacter(std::string str, char ch)
 	return (str);
 }
 
-// void Request::parseChunkedData()
-// {
-// 	if (_chunkedIndex == false)
-// 		_chunkedIndex = _bodyIndex;
-// 	size_t index = _buffer.find("\r\n", _chunkedIndex);
-// 	if (index != std::string::npos)
-// 	{
-// 		char*   endptr;
-// 		size_t bodyStart = index + 2;
-// 		size_t bodySize = std::strtol(_buffer.c_str() + _chunkedIndex, &endptr, HEX);
-// 		if (endptr - _buffer.c_str() != index)
-// 			throw 400;
-// 		if (bodySize == 0)
-// 		{
-// 			if (_buffer.find("\r\n", bodyStart) != std::string::npos)
-// 			{
-// 				_response->endResponse();
-// 				_chunkedState = chunk::END;
-// 				return;
-// 			}
-// 		} 
-// 		else if (bodyStart + bodySize + 2 <= _buffer.length())//body뒤의 \r\n고려
-// 		{	
-// 			// _perpectBody add && pipe write event add
-// 			if (_buffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
-// 				throw 400;
-// 			std::string perfectBody = _buffer.substr(bodyStart, bodySize);
-// 			// dynamic_cast<Chunked *>(_response)->uploadFile(perfectBody); //cgi
-			
-// 			_chunkedIndex = bodyStart + bodySize + 2;//body뒤의 \r\n고려
-// 			_chunkedState =  chunk::CONTINUE;
-// 			return;
-// 		}
-// 	}
-// 	_chunkedState = chunk::INCOMPLETE_DATA;
-// }
+void Request::parseChunkedData(Client* client)
+{
+	if (_readIndex == false)
+		_readIndex = _bodyStartIndex;
+	size_t index = _buffer.find("\r\n", _readIndex);
+	if (index != std::string::npos)
+	{
+		char*   endptr;
+		size_t bodyStart = index + 2;
+		size_t bodySize = std::strtol(_buffer.c_str() + _readIndex, &endptr, HEX);
+		if (endptr - _buffer.c_str() != index)
+			throw 400;
+		if (bodySize == 0)
+		{
+			if (_buffer.find("\r\n", bodyStart) != std::string::npos)
+			{
+				_response->endResponse();
+				_chunkedState = chunk::END;
+				return;
+			}
+		} 
+		else if (bodyStart + bodySize + 2 <= _buffer.length())//body뒤의 \r\n고려
+		{	
+			// _perpectBody add && pipe write event add
+			if (_buffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
+				throw 400;
+			_perfectBody.append(_buffer.substr(bodyStart, bodySize), bodySize);
+			// dynamic_cast<Chunked *>(_response)->uploadFile(perfectBody); //cgi
+			// _writeFd[1] event set required
+			client->setEvent(writeFd[1], client->getKq(), EVFILT_WRITE)
+			_readIndex = bodyStart + bodySize + 2;//body뒤의 \r\n고려
+			_chunkedState =  chunk::CONTINUE;
+			return;
+		}
+	}
+	_chunkedState = chunk::INCOMPLETE_DATA;
+}
 
 void Request::makeResponse(int kq)
 {
@@ -191,6 +201,10 @@ void Request::makeResponse(int kq)
 
 void Request::clearRequest()
 {
+	_writeFd[0] = -1,
+	_writeFd[1] = -1,
+	_readFd[0] = -1,
+	_readFd[1] = -1,
 	_location = NULL;
 	_response = NULL;
 	_state = 0;
@@ -204,8 +218,9 @@ void Request::clearRequest()
 	_contentLength = 0;
 	_transferEncoding = "";
 	_boundary = "";
-	_bodyIndex = 0;
-	_chunkedIndex = 0;
+	_bodyStartIndex = 0;
+	_readIndex = 0;
+	_writeIndex = 0;
 	_chunkedState = 0;
 }
 
@@ -303,7 +318,7 @@ const std::string& Request::getContentType()
 
 int Request::getBodyIndex() const
 {
-	return _bodyIndex;
+	return _bodyStartIndex;
 }
 
 Client* Request::getResponse() const
@@ -314,4 +329,26 @@ Client* Request::getResponse() const
 int Request::getChunkedState() const
 {
 	return _chunkedState;
+}
+
+int Requst::getWriteFd() const
+{
+	return _writeFd[1];
+}
+
+int Request::getBodyTotalSize() const
+{
+	return _bodyTotalSize;
+}
+
+void Request::initCgi(Client* client)
+{
+	pipe(_writeFd);
+	pipe(_readFd);
+	client->setEvent(_readFd[0], client->getKq(), EVFILT_READ);
+	_pid = fork();
+	if (_pid == 0)
+		childProcess();
+	close(_writeFd[0]);
+	close(_readFd[1]);
 }

@@ -2,16 +2,15 @@
 
 #include "Client.hpp"
 
-
-
-
 #include "Color.hpp"
 #include "enum.hpp"
 #include "Util.hpp"
 #include "Server.hpp"
+#include <cstdint>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <vector>
 #include <fcntl.h> 
 
@@ -20,6 +19,8 @@
 class Request
 {
 	private:
+		int					_writeFd[2]; // parent(w) -> child(r)
+		int					_readFd[2]; // child(w) -> parent(r)
 		const Server&		_server;
 		Location*			_location;
 		Client*				_response;
@@ -38,41 +39,49 @@ class Request
 		std::string			_transferEncoding;
 		std::string			_boundary;
 		int					_eventState;
-		int 				_bodyIndex;
-		int					_chunkedIndex;
+		int 				_bodyStartIndex;
+
+		int 				_bodyTotalSize;
+		// chunked
 		int					_chunkedState;
-	// chunked를 위한 바디 저장
 		std::string 		_perfectBody;
-		int					_sendIndex;
+		int					_readIndex;
+		int					_writeIndex;
 		
 	public:
 		Request(int socket, const Server& server);
-		void headerParsing(char* buf, intptr_t size);
-		void checkMultipleSpaces(const std::string& str);
-		void clearRequest();
-		void makeResponse(int kq);
-		// chunked
-		void parseChunkedData();
+		void				headerParsing(char* buf, intptr_t size);
+		void				checkMultipleSpaces(const std::string& str);
+		void				clearRequest();
+		void				makeResponse(int kq);
+		// post, chunked
+		void				parseChunkedData();
+		void				initCgi();
+		void				childProcess();
+
 		// get
-		int getSocket() const;
-		int getState() const;
-		const Server& getServer() const;
-		const std::string& getIp() const;
-		const std::string& getMethod() const;
-		const std::string& getVersion() const;
-		const std::string& getRequestUrl() const;
-		const std::string& getTransferEncoding() const;
-		const std::string& getConnection() const;
-		unsigned int getContentLength() const;
-		const std::string& getBoundary() const;
-		Location* getLocation() const;
-		const std::string& getContentType();
-		int getEventState() const;
-		const std::string& getBuffer() const;
-		const std::string& getChunkedFilename();
-		int getBodyIndex() const;
-		Client* getResponse() const;
-		int getChunkedState() const;
+		int					getSocket() const;
+		int					getState() const;
+		const Server& 		getServer() const;
+		const std::string&	getIp() const;
+		const std::string&	getMethod() const;
+		const std::string&	getVersion() const;
+		const std::string&	getRequestUrl() const;
+		const std::string&	getTransferEncoding() const;
+		const std::string&	getConnection() const;
+		unsigned int 		getContentLength() const;
+		const std::string&	getBoundary() const;
+		Location*			getLocation() const;
+		const std::string&	getContentType();
+		int					getEventState() const;
+		const std::string& 	getBuffer() const;
+		const std::string& 	getChunkedFilename();
+		int 				getBodyIndex() const;
+		Client* 			getResponse() const;
+		int 				getChunkedState() const;
+		int 				getWriteFd() const;
+		int 				getBodyTotalSize() const;
+
 		// set
 		void setRequestLine(std::string& requestLine);
 		void setFieldLine(std::string& fieldLine);
