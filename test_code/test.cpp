@@ -1,4 +1,4 @@
-#include <iostream>     // cout
+#include <iostream>     // cerr
 #include <sys/types.h>  // socket, bind
 #include <sys/event.h>  // kqueue
 #include <sys/socket.h> // socket
@@ -16,7 +16,7 @@ int kq, nev;
 
 void handler(int sig)
 {
-	std::cout << sig << std::endl;
+	std::cerr << sig << std::endl;
 	close(client_fd);
     close(server_fd);
     close(kq);
@@ -72,7 +72,7 @@ int main() {
         close(kq);
         exit(EXIT_FAILURE);
     }
-    std::cout << "Server listening on port 12345" << std::endl;
+    std::cerr << "Server listening on port 12345" << std::endl;
     while (true) {
         // 이벤트 감지
         nev = kevent(kq, nullptr, 0, events, MAX_EVENTS, nullptr);
@@ -93,7 +93,7 @@ int main() {
                     close(kq);
                     exit(EXIT_FAILURE);
                 }
-                std::cout << "New client connected: " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << std::endl;
+                std::cerr << "New client connected: " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << std::endl;
                 // 새로운 클라이언트 소켓을 kqueue에 등록
                 EV_SET(&event, client_fd, EVFILT_READ, EV_ADD, 0, 0, nullptr);
                 if (kevent(kq, &event, 1, nullptr, 0, nullptr) == -1) {
@@ -108,8 +108,8 @@ int main() {
                 char buffer[1024];
                 // ssize_t bytes_read = read(events[i].ident, buffer, sizeof(buffer));
                 ssize_t bytes_read = recv(client_fd, buffer, sizeof(buffer), 0);
-				std::cout << buffer << std::endl;
-				std::cout << bytes_read << std::endl;
+				std::cerr << buffer << std::endl;
+				std::cerr << bytes_read << std::endl;
                 if (bytes_read == -1) {
                     perror("Read failed");
                     close(server_fd);
@@ -118,7 +118,7 @@ int main() {
                 }
                 if (bytes_read == 0) {
                     // 클라이언트 연결 종료
-                    std::cout << "Client disconnected" << std::endl;
+                    std::cerr << "Client disconnected" << std::endl;
                     close(events[i].ident);
                 } else {
                     // 받은 데이터 출력
@@ -142,11 +142,11 @@ int main() {
                         result += buf;
                     }
                     file.close();
-					// std::cout << result << std::endl;
+					// std::cerr << result << std::endl;
                     // bytes_read = ;
         			// send(client_fd, result.c_str(), result.length(), 0);
         			send(client_fd, result.c_str(), result.length(), 0);
-                    // std::cout << "Received data from client: " << std::string(buffer, bytes_read) << std::endl;
+                    // std::cerr << "Received data from client: " << std::string(buffer, bytes_read) << std::endl;
                 }
             }
         }

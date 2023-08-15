@@ -8,10 +8,10 @@ int main(int argc, char **argv)
     (void)argv;
     // if (argc != 2)
     // {
-    //     std::cout << "Error: Invalid number of arguments" << std::endl;
+    //     std::cerr << "Error: Invalid number of arguments" << std::endl;
     //     return 1;
     // }
-    // cout << int << std::endl;
+    // cerr << int << std::endl;
 
     Operation operation;
     Configuration config(operation);
@@ -28,8 +28,8 @@ int main(int argc, char **argv)
     }
     
 //---------------------------------------------- testcode
-    // std::cout << operation._servers[0].getServerName(0) << std::endl;
-    // std::cout << operation._servers[0].getErrorPage(0) << std::endl;
-    // std::cout << operation._servers[0].getListen() << std::endl;
+    // std::cerr << operation._servers[0].getServerName(0) << std::endl;
+    // std::cerr << operation._servers[0].getErrorPage(0) << std::endl;
+    // std::cerr << operation._servers[0].getListen() << std::endl;
     return 0;
 }

@@ -34,7 +34,7 @@ class Client
 		pid_t				_pid;	
 		std::string 		_chunkedFilename;
 		std::string			_version;
-		std::string			_stateCode;
+		int					_stateCode;
 		std::string			_reasonPhrase;
 		std::time_t			_date;
 		std::string 		_serverName;
@@ -106,5 +106,7 @@ class Client
 		const std::stringstream& getBuffer() const;
 	// clear
 		void clearClient();
+		void handleRequest(struct kevent* tevent, char* buffer);
+		void handleResponse(struct kevent *tevent);
 
 };

@@ -19,7 +19,7 @@ Client::Client(Request* request, int kq, int socketFd)
 _socketFd(socketFd),
 _pid(-2),
 _version("HTTP/1.1"),
-_stateCode("200"),
+_stateCode(200),
 _reasonPhrase("OK"),
 _serverName("My Server"),
 _contentType("text/html"),
@@ -77,7 +77,7 @@ std::string Client::getDate()
 void Client::stamp() const
 {
 	std::string color;
-	if (util::stoui(_stateCode) >= 400)
+	if (_stateCode >= 400)
 		color = RED;
 	else 
 		color = GREEN;
@@ -183,7 +183,7 @@ Request& Client::getReq() const
 
 int Client::getStateCode() const
 {
-	return util::stoui(_stateCode);
+	return _stateCode;
 }
 
 int Client::getSocket() const
@@ -256,10 +256,9 @@ void Client::clearClient()
 	_writeFd[1] = 0;
 	_readFd[0] = 0;
 	_readFd[1] = 0;
-	_pid = -1;
-	_kq = 0;
+	_pid = -2;
 	_chunkedFilename.clear();
-	_stateCode.clear();
+	_stateCode = 200;
 	_reasonPhrase.clear();
 	_contentType.clear();
 	_contentLength = 0;
@@ -275,4 +274,84 @@ int Client::getWriteFd() const
 int Client::getReadFd() const
 {
 	return _readFd[0]; 
+}
+
+void Client::handleRequest(struct kevent* tevent, char* buffer)
+{
+	_request->setBuffer(buffer, tevent->data);
+	if (_request->getState() == request::READY) // header 생성
+	{
+		_request->headerParsing(buffer, tevent->data);
+	}
+	if (_request->getState() == request::CREATE)
+	{	
+		findLocationPath();
+		checkLimitExcept();
+		if (_request->getMethod() == "POST")
+			initCgi();
+		_request->setState(request::DONE);
+	}	
+	if (_request->getState() == request::DONE) // response body 생성
+	{
+		handleResponse(tevent);
+	}
+}
+
+void Client::handleResponse(struct kevent *tevent)
+{
+// chunkedBuffer 를 파싱하여 body길이가 정확할 경우 substr을 통해 body 데이터를 잘라서 (createResponse) writeFd에 써줌
+// index로 파싱한 부분의 시작지점을 가지고 있음 (즉, body size 의 시작지점)
+// 0/r/n/r/n 만나고 나서  파이프 다 쓰면 close(writeFd)
+	// buffer의 len을 읽어서 숫자를 보고 
+	// body index 부터 
+	// Request req = client->getReq();
+	std::cerr << RED << "_request->getTransferEncoding() : " << _request->getTransferEncoding() << RESET << std::endl;
+	if (_request->getTransferEncoding() == "chunked")
+	{
+		while (true) // 한번 돌때 완성된 문자열 하나씩 처리
+		{
+			_request->parseChunkedData(this);
+			int chunkedState = _request->getChunkedState();
+			// std::cerr << B_RED << "testcode " << "chunkedState : " << chunkedState<< RESET << std::endl;
+			if (chunkedState == chunk::CONTINUE)
+				continue;
+			else if (chunkedState == chunk::END)
+			{
+				std::cerr << RED << "testcode" << "chunked::end" << RESET << std::endl;
+				break;
+			}
+			else if (chunkedState == chunk::INCOMPLETE_DATA)
+			{
+				// std::cerr << RED << "testcode" << "chunked::IN DATA" << RESET << std::endl;
+				return;
+			}
+		}
+	}
+	else if (_request->getBuffer().size() - _request->getBodyIndex()  == _request->getContentLength())
+	{
+		if (_request->getMethod() == "POST" && (_request->getContentLength() == 0 || _request->getBuffer().size() == 0))
+			throw 405;
+		if (_request->getMethod() == "GET")
+		{
+			getProcess();
+		}
+		if (_request->getMethod() == "POST")
+		{
+			postProcess();
+		}
+		if (_request->getMethod() == "DELETE")
+		{
+			deleteProcess();
+		}
+		// if (_request->getMethod() == "ERROR")
+		// {
+		// 	errorProcess();
+		// }
+		// _request->getResponse()->createRe();
+		// EV_SET(tevent, tevent->ident, EVFILT_WRITE, EV_ADD, 0, 0, client);
+		// kevent(kq, tevent, 1, NULL, 0, NULL);
+		// GET, POST, DLETE, ERROR 분기 필요 - kyeonkim
+		addEvent(tevent->ident, EVFILT_WRITE);
+		_request->setEventState(EVFILT_WRITE);
+	}
 }

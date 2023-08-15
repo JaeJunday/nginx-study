@@ -4,17 +4,22 @@
 // {
 // 	_request = request;
 // }
-void Client::pushErrorBuffer(std::string body, int errnum)
+void Client::pushErrorBuffer(std::string body, int _stateCode)
 {
 	std::stringstream responseData;
 
-	responseData << "HTTP/1.1" << " " << errnum << " " << _reasonPhrase << "\r\n";
+	std::cerr << RED << "_request->getMethod() : " << _request->getMethod() << RESET << std::endl;
+
+	responseData << "HTTP/1.1" << " " << _stateCode << " " << _reasonPhrase << "\r\n";
 	responseData << "Content-Type: text/html; charset=UTF-8" << "\r\n";
 	responseData << "Server: My Server" << "\r\n";
 	responseData << "Referrer-Policy: no-referrer" << "\r\n";
+	if (!(_stateCode == 400 || _stateCode == 404 || _stateCode == 500))
+		_contentLength = 0;	
 	responseData << "Content-Length: " << _contentLength << "\r\n";
 	responseData << "Date: " << Client::getDate() << "\r\n\r\n";
-	responseData << body;
+	if (_stateCode == 400 || _stateCode == 404 || _stateCode == 500)
+		responseData << body;
 	_responseBuffer << responseData.str();
 }
 
@@ -25,6 +30,7 @@ void Client::errorProcess(int errnum)
 	std::stringstream   body;
 
 	// 400 403 404 405 413
+	_stateCode = errnum;
 	switch (errnum) {
 		case 400:
 			_reasonPhrase = "Bad Request"; break;
@@ -52,6 +58,6 @@ void Client::errorProcess(int errnum)
 		body << file.rdbuf();
 		_contentLength += body.str().length();
 		file.close();
-		pushErrorBuffer(body.str(), errnum);
+		pushErrorBuffer(body.str(), _stateCode);
 	}
 }

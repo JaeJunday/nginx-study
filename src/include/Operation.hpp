@@ -36,7 +36,7 @@ public:
     void sendData(struct kevent& tevent);
     void testPipe(std::string buffer);
     
-    void handleResponse(Client* client, struct kevent *tevent);
+    // void handleResponse(Client* client, struct kevent *tevent);
     
     Client* selectMethod(Request* req, int kq) const;
 };

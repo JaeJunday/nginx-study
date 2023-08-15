@@ -1,5 +1,6 @@
 #include "Request.hpp"
 #include "Client.hpp"
+#include <iostream>
 
 Request::Request(Server& server)
 	: _server(server), 
@@ -76,6 +77,8 @@ void Request::setRequestLine(std::string& requestLine)
 		std::cerr << "Error: Request Line size error" << std::endl;
 		throw 400;
 	}
+	if (token[0] == "HEAD")
+		_method = token[0];
 	if (!(token[0] == "GET" || token[0] == "DELETE" || token[0] == "POST" || token[0] == "PUT"))
 		throw 405;
 	if (token[2] != "HTTP/1.1")
@@ -136,12 +139,13 @@ void Request::headerParsing(char* buf, intptr_t size)
 	// testcode
 	// std::cerr << "========================parsing========================" << std::endl;
 	// 헤더 끝줄 찾기
-	std::string buffer(buf, size);
-	_headerBuffer += buffer;
+	_headerBuffer.append(buf, size);
+	// std::string buffer(buf, size);
+	// _headerBuffer += buffer;
 	int headerBoundary = _headerBuffer.find("\r\n\r\n");
 	if (headerBoundary == std::string::npos)
 		return ;
-	std::cout << RED << "testcode " << "====_headerBuffer\n" << _headerBuffer << RESET << std::endl;
+std::cerr << RED << "testcode " << "====_headerBuffer\n" << _headerBuffer << RESET << std::endl;
 	_state = request::CREATE;
 	int endLine = _headerBuffer.find("\r\n");
 	std::string requestLine(_headerBuffer, 0, endLine);
@@ -198,10 +202,6 @@ void Request::parseChunkedData(Client* client)
 			if (_requestBuffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
 				throw 400;
 			_perfectBody.append(_requestBuffer.substr(bodyStart, bodySize), bodySize);
-			// dynamic_cast<Chunked *>(_response)->uploadFile(perfectBody); //cgi
-			// _writeFd[1] event set required
-			// client->addEvent(writeFd[1], client->getKq(), EVFILT_WRITE);
-			//client->setWriteEvent();
 			if (_writeEventFlag == false)
 			{
 				client->addEvent(client->getWriteFd(), EVFILT_WRITE);
