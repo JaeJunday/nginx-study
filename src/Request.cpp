@@ -1,5 +1,6 @@
 #include "Request.hpp"
 #include "Client.hpp"
+#include "include/Color.hpp"
 #include <iostream>
 
 Request::Request(Server& server)
@@ -145,7 +146,7 @@ void Request::headerParsing(char* buf, intptr_t size)
 	int headerBoundary = _headerBuffer.find("\r\n\r\n");
 	if (headerBoundary == std::string::npos)
 		return ;
-std::cerr << RED << "testcode " << "====_headerBuffer\n" << _headerBuffer << RESET << std::endl;
+std::cerr << BLUE << "testcode " << "====_headerBuffer\n" << _headerBuffer << RESET << std::endl;
 	_state = request::CREATE;
 	int endLine = _headerBuffer.find("\r\n");
 	std::string requestLine(_headerBuffer, 0, endLine);
@@ -184,14 +185,16 @@ void Request::parseChunkedData(Client* client)
 		char*   endptr;
 		size_t bodyStart = index + 2;
 		size_t bodySize = std::strtol(_requestBuffer.c_str() + _readIndex, &endptr, HEX);
+		//std::cerr << "======> bodySize:" << bodySize << std::endl;
 		if (endptr - _requestBuffer.c_str() != index)
 			throw 400;
 		if (bodySize == 0)
 		{
 			if (_requestBuffer.find("\r\n", bodyStart) != std::string::npos)
 			{
-				_bodyTotalSize = _requestBuffer.size() - _bodyStartIndex;
+				_bodyTotalSize = _perfectBody.size();
 				// _response->endResponse();
+				// std::cerr << GREEN << _bodyTotalSize << RESET << std::endl;
 				_chunkedState = chunk::END;
 				return;
 			}
@@ -202,7 +205,6 @@ void Request::parseChunkedData(Client* client)
 		if (_requestBuffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
 				throw 400;
 			_perfectBody.append(_requestBuffer.substr(bodyStart, bodySize).c_str(), bodySize);
-	std::cerr << "😭 _perfectBody" << _perfectBody << "💕" << std::endl;
 			if (_writeEventFlag == false)
 			{
 				client->addEvent(client->getWriteFd(), EVFILT_WRITE);
@@ -254,6 +256,8 @@ void Request::clearRequest()
 	// _writeIndex = 0;
 	_chunkedState = 0;
 	_writeEventFlag = false;
+	_bodyTotalSize = -1;
+	_perfectBody = "";
 }
 
 void Request::setBuffer(char *buffer, int size)
@@ -362,6 +366,11 @@ int Request::getBodyIndex() const
 	return _bodyStartIndex;
 }
 
+const std::string& Request::getChunkedFilename()
+{
+	return _chunkedFilename;
+}
+
 // Client* Request::getResponse() const
 // {
 // 	return _response;
@@ -385,6 +394,7 @@ std::string& Request::getPerfectBody()
 
 void Request::setChunkedFilename(std::string& chunkedFilename)
 {
+// std::cerr << RED << "chunkedFilename : " << chunkedFilename << RESET << std::endl;
 	_chunkedFilename = chunkedFilename;
 }
 

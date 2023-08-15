@@ -1,5 +1,6 @@
 #include "Client.hpp"
 #include "Request.hpp"
+#include "include/Color.hpp"
  
 // Client::Client(int kq)
 // : _version("HTTP/1.1"), 
@@ -251,19 +252,20 @@ void Client::addEvent(int fd, int filter)
 
 void Client::clearClient()
 {
+std::cerr << YELLOW << "clear!" << RESET << std::endl;
 	_request->clearRequest();
-	if (_writeFd[0])
+	if (_writeFd[0] != -1)
 		close(_writeFd[0]);
-	if (_writeFd[1])
+	if (_writeFd[1] != -1)
 		close(_writeFd[1]);
-	if (_readFd[0])
+	if (_readFd[0] != -1)
 		close(_readFd[0]);
-	if (_readFd[1])
+	if (_readFd[1] != -1)
 		close(_readFd[1]);
-	_writeFd[0] = 0;
-	_writeFd[1] = 0;
-	_readFd[0] = 0;
-	_readFd[1] = 0;
+	_writeFd[0] = -1;
+	_writeFd[1] = -1;
+	_readFd[0] = -1;
+	_readFd[1] = -1;
 	_pid = -2;
 	_chunkedFilename.clear();
 	_stateCode = 200;
@@ -295,7 +297,7 @@ void Client::handleRequest(struct kevent* tevent, char* buffer)
 	{	
 		findLocationPath();
 		checkLimitExcept();
-		if (_request->getMethod() == "POST")
+		if (_request->getMethod() == "POST" || _request->getMethod() == "PUT")
 			initCgi();
 		_request->setState(request::DONE);
 	}	
@@ -343,7 +345,7 @@ void Client::handleResponse(struct kevent *tevent)
 		{
 			getProcess();
 		}
-		if (_request->getMethod() == "POST")
+		if (_request->getMethod() == "POST" || _request->getMethod() == "PUT")
 		{
 			postProcess();
 		}

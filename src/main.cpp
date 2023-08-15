@@ -1,6 +1,7 @@
 #include "Server.hpp"
 #include "Configuration.hpp"
 #include "Operation.hpp"
+#include <cstdlib>
 
 int main(int argc, char **argv)
 {
@@ -23,8 +24,9 @@ int main(int argc, char **argv)
     } 
     catch(std::exception &e) 
     {
-        std::cerr << e.what() << std::endl;
-        return 0; 
+        std::cerr << "Main catch >> " << e.what() << std::endl;
+        // exit(0);
+        return EXIT_FAILURE;
     }
     
 //---------------------------------------------- testcode

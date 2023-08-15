@@ -113,19 +113,17 @@ void Operation::start() {
 			acceptClient(kq, serverIndex);
 		}
 		else // 클라이언트일 경우
-		{
-
+		{	
 			if (tevent.filter == EVFILT_READ)
 			{
 				Client* client = static_cast<Client*>(tevent.udata);
 				char* buffer = new char[tevent.data];
 				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
-				std::cerr << RED << "recv : " << tevent.ident << ":"<< RESET << std::endl;
-				write(1, buffer, bytesRead);
-				std::cerr << std::endl;
+				// std::cerr << RED << "recv : " << tevent.ident << ":"<< RESET << std::endl;
+				// write(1, buffer, bytesRead);
 
-std::cerr << RED << "client->getReadFd() : " << client->getReadFd() << RESET << std::endl;
-std::cerr << RED << "tevent.ident : " << tevent.ident << RESET << std::endl;
+// std::cerr << RED << "client->getReadFd() : " << client->getReadFd() << RESET << std::endl;
+// std::cerr << RED << "tevent.ident : " << tevent.ident << RESET << std::endl;
 
 				if (tevent.ident == client->getSocket())
 				{	
@@ -178,6 +176,7 @@ std::cerr << RED << "tevent.ident : " << tevent.ident << RESET << std::endl;
 				}
 				else if (tevent.ident == client->getWriteFd())
 				{
+					std::cerr << RED << ": writeevent" << RESET << std::endl;
 					client->uploadFile(tevent.data);
 				}
 			}
@@ -249,7 +248,7 @@ void Operation::acceptClient(int kq, int index)
 	sockaddr_in		socketAddr;
 	socklen_t		socketLen;
 	// struct kevent	revent 
-	std::cerr << GREEN << "testcode" << "= = = = = = ======= ACCEPT =========================" << RESET << std::endl;	
+	std::cerr << GREEN << "testcode" << "================ ACCEPT =========================" << RESET << std::endl;	
 	socketFd = accept(_servers[index].getSocket(), reinterpret_cast<struct sockaddr*>(&socketAddr), &socketLen);
 	if (socketFd == -1)
 		throw std::logic_error("Error: Accept failed");
@@ -274,7 +273,7 @@ std::cerr << "==============================Send data===========================
 
 	size_t byteWrite = send(tevent.ident, client->getBuffer().str().c_str(), client->getBuffer().str().length(), 0);
 // std::cerr << "==============================Send data==============================" << std::endl;
-std::cerr << client->getBuffer().str().c_str() << std::endl;
+// std::cerr << client->getBuffer().str().c_str() << std::endl;
 //std::cerr << "buffer length :" << client->getBuffer().str().length() << std::endl;
 //std::cerr << "write byte count :" << byteWrite << std::endl;
 std::cerr << GREEN << "testcode : " << "send code: " << client->getStateCode() << RESET << std::endl;
