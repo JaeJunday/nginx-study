@@ -28,7 +28,7 @@ class Request
 		int					_state;
 		// int					_socket;
 		std::string			_headerBuffer;
-		std::string			_buffer;
+		std::string			_requestBuffer;
 		std::string			_method;
 		std::string			_requestUrl;
 		std::string			_version;

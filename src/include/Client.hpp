@@ -1,6 +1,7 @@
 #pragma once
 
 // #include "Operation.hpp"
+
 #include "Request.hpp"
 #include "enum.hpp"
 #include "Util.hpp"
@@ -23,8 +24,6 @@
 #define TIME_SIZE 40
 #define PIPESIZE 42000
 
-class Server;
-
 class Client
 {
 	private:
@@ -41,7 +40,7 @@ class Client
 		std::string 		_serverName;
 		std::string			_contentType;
 		size_t				_contentLength;
-		std::stringstream	_buffer;
+		std::stringstream	_responseBuffer;
 		int					_kq;
 		int					_writeIndex;
 		// bool				_writeEventFlag;
@@ -59,11 +58,10 @@ class Client
 		void checkLimitExcept() const;
 		std::string findContentType(const std::string& filePath);
 
-
 		void getProcess();
 		void postProcess();
 		void deleteProcess();
-		void errorProcess();
+		void errorProcess(int errnum);
 
 	// get.cpp
         // void getCreateResponse(); //override
@@ -92,7 +90,7 @@ class Client
 		pid_t getPid() const;
 	// error.cpp
 		// void errorCreateResponse(); // override
-		void makeErrorPage(int errnum);
+		// void makeErrorPage(int errnum);
 		void pushErrorBuffer(std::string body, int errnum);
 	// setevent
 		void addEvent(int fd, int filter);

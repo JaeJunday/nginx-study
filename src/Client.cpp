@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "Request.hpp"
  
 // Client::Client(int kq)
 // : _version("HTTP/1.1"), 
@@ -85,7 +86,7 @@ void Client::stamp() const
 
 const std::stringstream& Client::getBuffer() const
 {
-    return _buffer;
+    return _responseBuffer;
 }
 
 std::string Client::findLocationPath() const
@@ -185,10 +186,10 @@ int Client::getStateCode() const
 	return util::stoui(_stateCode);
 }
 
-// int Client::getSocket() const
-// {
-// 	return _socketFd;
-// }
+int Client::getSocket() const
+{
+	return _socketFd;
+}
 
 void Client::deleteEvent()
 {
@@ -257,6 +258,13 @@ void Client::clearClient()
 	_readFd[1] = 0;
 	_pid = -1;
 	_kq = 0;
+	_chunkedFilename.clear();
+	_stateCode.clear();
+	_reasonPhrase.clear();
+	_contentType.clear();
+	_contentLength = 0;
+	_responseBuffer.str("");
+	_writeIndex = 0;
 }
 
 int Client::getWriteFd() const

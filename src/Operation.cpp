@@ -230,10 +230,10 @@ void Operation::handleResponse(Client* client, struct kevent *tevent)
 		{
 			client->deleteProcess();
 		}
-		if (req.getMethod() == "ERROR")
-		{
-			client->errorProcess();
-		}
+		// if (req.getMethod() == "ERROR")
+		// {
+		// 	client->errorProcess();
+		// }
 		// req.getResponse()->createRe();
 		// EV_SET(tevent, tevent->ident, EVFILT_WRITE, EV_ADD, 0, 0, client);
 		// kevent(kq, tevent, 1, NULL, 0, NULL);

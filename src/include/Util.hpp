@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Request.hpp"
-#include "Client.hpp"
 
 #include <netinet/in.h> // sockaddr_in
 #include <cstdint>

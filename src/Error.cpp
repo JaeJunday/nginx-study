@@ -15,10 +15,10 @@ void Client::pushErrorBuffer(std::string body, int errnum)
 	responseData << "Content-Length: " << _contentLength << "\r\n";
 	responseData << "Date: " << Client::getDate() << "\r\n\r\n";
 	responseData << body;
-	_buffer << responseData.str();
+	_responseBuffer << responseData.str();
 }
 
-void Client::makeErrorPage(int errnum)
+void Client::errorProcess(int errnum)
 {
 	std::ifstream       file;
 	std::string         filePath;

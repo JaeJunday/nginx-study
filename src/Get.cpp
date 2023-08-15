@@ -1,4 +1,5 @@
 #include "Client.hpp"
+
 // Get::Get(Request* request, int kq) : AResponse(kq)
 // {
 //     _request = request;
@@ -100,10 +101,10 @@ void Client::autoIndexProcess(DIR* dirStream, std::stringstream& body)
 
 void Client::pushBuffer(std::stringstream& body)
 {
-	_buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
-	_buffer << "Date: " << getDate() << "\r\n";
-	_buffer << "Server: " << _serverName << "\r\n";
-	_buffer << "Content-Type: " << _contentType << "\r\n";
-	_buffer << "Content-Length: " << _contentLength << "\r\n\r\n";
-	_buffer << body.str();
+	_responseBuffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
+	_responseBuffer << "Date: " << getDate() << "\r\n";
+	_responseBuffer << "Server: " << _serverName << "\r\n";
+	_responseBuffer << "Content-Type: " << _contentType << "\r\n";
+	_responseBuffer << "Content-Length: " << _contentLength << "\r\n\r\n";
+	_responseBuffer << body.str();
 }

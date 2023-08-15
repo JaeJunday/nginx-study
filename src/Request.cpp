@@ -29,7 +29,7 @@ Request& Request::operator=(const Request& rhs)
 		_location = rhs._location;
 		_state = rhs._state;
 		_headerBuffer = rhs._headerBuffer;
-		_buffer = rhs._buffer;
+		_requestBuffer = rhs._requestBuffer;
 		_method = rhs._method;
 		_requestUrl = rhs._requestUrl;
 		_version = rhs._version;
@@ -174,30 +174,30 @@ void Request::parseChunkedData(Client* client)
 {
 	if (_readIndex == false)
 		_readIndex = _bodyStartIndex;
-	size_t index = _buffer.find("\r\n", _readIndex);
+	size_t index = _requestBuffer.find("\r\n", _readIndex);
 	if (index != std::string::npos)
 	{
 		char*   endptr;
 		size_t bodyStart = index + 2;
-		size_t bodySize = std::strtol(_buffer.c_str() + _readIndex, &endptr, HEX);
-		if (endptr - _buffer.c_str() != index)
+		size_t bodySize = std::strtol(_requestBuffer.c_str() + _readIndex, &endptr, HEX);
+		if (endptr - _requestBuffer.c_str() != index)
 			throw 400;
 		if (bodySize == 0)
 		{
-			if (_buffer.find("\r\n", bodyStart) != std::string::npos)
+			if (_requestBuffer.find("\r\n", bodyStart) != std::string::npos)
 			{
-				_bodyTotalSize = _buffer.size() - _bodyStartIndex;
+				_bodyTotalSize = _requestBuffer.size() - _bodyStartIndex;
 				// _response->endResponse();
 				_chunkedState = chunk::END;
 				return;
 			}
 		} 
-		else if (bodyStart + bodySize + 2 <= _buffer.length())//body뒤의 \r\n고려
+		else if (bodyStart + bodySize + 2 <= _requestBuffer.length())//body뒤의 \r\n고려
 		{	
 			// _perpectBody add && pipe write event add
-			if (_buffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
+			if (_requestBuffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
 				throw 400;
-			_perfectBody.append(_buffer.substr(bodyStart, bodySize), bodySize);
+			_perfectBody.append(_requestBuffer.substr(bodyStart, bodySize), bodySize);
 			// dynamic_cast<Chunked *>(_response)->uploadFile(perfectBody); //cgi
 			// _writeFd[1] event set required
 			// client->addEvent(writeFd[1], client->getKq(), EVFILT_WRITE);
@@ -239,7 +239,7 @@ void Request::clearRequest()
 	// _response = NULL;
 	_state = 0;
 	_headerBuffer = "";
-	_buffer = "";
+	_requestBuffer = "";
 	_method = "";
 	_requestUrl = "";
 	_version = "";
@@ -257,7 +257,7 @@ void Request::clearRequest()
 
 void Request::setBuffer(char *buffer, int size)
 {
-	_buffer.append(buffer, size);
+	_requestBuffer.append(buffer, size);
 }
 
 void Request::setEventState(int eventState)
@@ -322,7 +322,7 @@ int Request::getState() const
 
 const std::string& Request::getBuffer() const
 {
-	return _buffer;
+	return _requestBuffer;
 }
 
 const Server& Request::getServer() const

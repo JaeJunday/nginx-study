@@ -1,11 +1,11 @@
 #include "Client.hpp"
 
-void Client::deleteCreateResponse() //override
+void Client::deleteProcess() //override
 {
-    _buffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
-	_buffer << "Date: " << getDate() << "\r\n";
-	_buffer << "Server: " << _serverName << "\r\n";
-	_buffer << "Content-Type: " << _contentType << "\r\n";
+    _responseBuffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
+	_responseBuffer << "Date: " << getDate() << "\r\n";
+	_responseBuffer << "Server: " << _serverName << "\r\n";
+	_responseBuffer << "Content-Type: " << _contentType << "\r\n";
     std::string filePath = findLocationPath();
     checkLimitExcept();
     removeFile(filePath.c_str());

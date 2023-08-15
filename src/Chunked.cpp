@@ -107,7 +107,7 @@ void Client::printResult()
 	if (readSize < 0)
 		return;
 	readBuffer.append(tempBuffer, readSize);
-	_buffer << readBuffer;
+	_responseBuffer << readBuffer;
 }
 
 pid_t Client::getPid() const
@@ -132,6 +132,6 @@ void Client::initCgi()
 
 void Client::postProcess()
 {
-	_request->setPerfectBody(_buffer.str().c_str() + _request->getBodyStartIndex());
-	_request->setBodyTotalSize(_buffer.str().size() - _request->getBodyStartIndex());
+	_request->setPerfectBody(_request->getBuffer().c_str() + _request->getBodyStartIndex());
+	_request->setBodyTotalSize(_request->getBuffer().size() - _request->getBodyStartIndex());
 }
