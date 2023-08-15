@@ -26,14 +26,29 @@
 // 	close(_readFd[1]);
 // }
 
-void Client::endResponse()
+void Client::initCgi()
 {
-	close(_writeFd[1]);
-	waitpid(_pid, NULL, 0);
-	printResult();
-	close(_readFd[0]);
-	addEvent(_socketFd, EVFILT_WRITE);
-	_request->setEventState(EVFILT_WRITE);
+	std::vector<std::string> url = util::getToken(_request->getRequestUrl(), "/");
+	if (url.size() >= 1)
+		_request->setChunkedFilename(url[url.size() - 1]);
+	pipe(_writeFd);
+	pipe(_readFd);
+	// addEvent(_readFd[0], EVFILT_READ);
+	_pid = fork();
+	if (_pid == 0)
+		childProcess();
+	close(_writeFd[0]);
+	close(_readFd[1]);
+}
+
+// void Client::endResponse()
+// {
+	// close(_writeFd[1]);
+	// waitpid(_pid, NULL, 0);
+	// 	// std::cerr << RED << "print" << RESET << std::endl;
+	// 	// printResult();
+	// addEvent(_socketFd, EVFILT_WRITE);
+	// _request->setEventState(EVFILT_WRITE);
 	// _request->setChunkedState(chunk::END); // 업로드 데이터로 옮길부분
 	// _request->setEventState(event::WRITE);
 	// EV_SET(tevent, tevent->ident, EVFILT_WRITE, EV_ADD, 0, 0, client);
@@ -41,7 +56,7 @@ void Client::endResponse()
 // if (findLocationPath().empty())
 	// 	throw 405;
 	// checkLimitExcept();
-}
+// }
 
 void Client::childProcess()
 {
@@ -91,10 +106,18 @@ void Client::uploadFile(size_t pipeSize)
 	std::string perfectBody = _request->getPerfectBody();
 	size_t writeSize = std::min(perfectBody.size() - _writeIndex, pipeSize);
 	writeSize = write(_writeFd[1], perfectBody.c_str() + _writeIndex, writeSize);
-	if (writeSize > 0)
+	if (writeSize < 0)
+		return;
+	if (writeSize >= 0)
 		_writeIndex += writeSize;
 	if (_request->getBodyTotalSize() == _writeIndex)
-		endResponse();
+	{
+		close(_writeFd[1]);
+		addEvent(_readFd[0], EVFILT_READ);
+	}
+	// 엔드리스폰스 하는게 아니라 리드이벤트 걸어야함
+	// cgi에서 메인 프로세스로 다 받았다는 플래그도 체크할 방법을 찾아야함
+		// endResponse();
 }
 
 void Client::printResult()
@@ -106,6 +129,14 @@ void Client::printResult()
 	size_t readSize = read(_readFd[0], tempBuffer, PIPESIZE);
 	if (readSize < 0)
 		return;
+	if (readSize == 0) // end
+	{
+		close(_readFd[0]);
+		waitpid(_pid, NULL, 0);
+		deleteEvent();	
+		addEvent(_socketFd, EVFILT_WRITE); // socket
+		_request->setEventState(EVFILT_WRITE);
+	}
 	readBuffer.append(tempBuffer, readSize);
 	_responseBuffer << readBuffer;
 }
@@ -115,20 +146,7 @@ pid_t Client::getPid() const
 	return _pid;
 }
 
-void Client::initCgi()
-{
-	std::vector<std::string> url = util::getToken(_request->getRequestUrl(), "/");
-	if (url.size() >= 1)
-		_request->setChunkedFilename(url[url.size() - 1]);
-	pipe(_writeFd);
-	pipe(_readFd);
-	addEvent(_readFd[0], EVFILT_READ);
-	_pid = fork();
-	if (_pid == 0)
-		childProcess();
-	close(_writeFd[0]);
-	close(_readFd[1]);
-}
+
 
 void Client::postProcess()
 {

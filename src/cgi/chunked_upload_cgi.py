@@ -34,4 +34,3 @@ else:
     content_length = len(body)
     response = header + "Content-Length: " + str(content_length) + "\r\n" + "Content-Type: text/html\r\n\r\n" + body
     print(response)
-

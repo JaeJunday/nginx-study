@@ -82,7 +82,7 @@ class Client
 		// void chunkedCreateResponse();
 		void uploadFile(size_t pipeSize);
 		void printResult();
-		void endResponse();
+		// void endResponse();
 		void childProcess();
 		void execveCgi() const;
 		void initCgi();

@@ -62,7 +62,7 @@ int Operation::createBoundSocket(std::string listen)
 */
 int Operation::findServer(uintptr_t ident) const
 {
-	for (int i = 0; i < _servers.size(); ++i)
+	for (size_t i = 0; i < _servers.size(); ++i)
 		if (static_cast<uintptr_t>(_servers[i].getSocket()) == ident)
 			return i;
 	return -1;
@@ -114,6 +114,7 @@ void Operation::start() {
 		}
 		else // 클라이언트일 경우
 		{
+
 			if (tevent.filter == EVFILT_READ)
 			{
 				Client* client = static_cast<Client*>(tevent.udata);
@@ -122,6 +123,10 @@ void Operation::start() {
 				std::cerr << RED << "recv : " << tevent.ident << ":"<< RESET << std::endl;
 				write(1, buffer, bytesRead);
 				std::cerr << std::endl;
+
+std::cerr << RED << "client->getReadFd() : " << client->getReadFd() << RESET << std::endl;
+std::cerr << RED << "tevent.ident : " << tevent.ident << RESET << std::endl;
+
 				if (tevent.ident == client->getSocket())
 				{	
 					if (bytesRead == false || client->getReq().getConnection() == "close")
@@ -259,12 +264,14 @@ void Operation::acceptClient(int kq, int index)
 
 void Operation::sendData(struct kevent& tevent)
 {
+std::cerr << "==============================Send data==============================" << std::endl;
+
 	Client* client = static_cast<Client*>(tevent.udata);
 
 // std::cerr << RED << "===client->getReq()->getBuffer()\n"<< client->getReq().getBuffer() << "===" << RESET << std::endl;
 
 	size_t byteWrite = send(tevent.ident, client->getBuffer().str().c_str(), client->getBuffer().str().length(), 0);
-std::cerr << "==============================Send data==============================" << std::endl;
+// std::cerr << "==============================Send data==============================" << std::endl;
 std::cerr << client->getBuffer().str().c_str() << std::endl;
 //std::cerr << "buffer length :" << client->getBuffer().str().length() << std::endl;
 //std::cerr << "write byte count :" << byteWrite << std::endl;

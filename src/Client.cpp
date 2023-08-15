@@ -252,6 +252,10 @@ void Client::addEvent(int fd, int filter)
 void Client::clearClient()
 {
 	_request->clearRequest();
+	close(_writeFd[0]);
+	close(_writeFd[1]);
+	close(_readFd[0]);
+	close(_readFd[1]);
 	_writeFd[0] = 0;
 	_writeFd[1] = 0;
 	_readFd[0] = 0;
@@ -305,7 +309,7 @@ void Client::handleResponse(struct kevent *tevent)
 	// buffer의 len을 읽어서 숫자를 보고 
 	// body index 부터 
 	// Request req = client->getReq();
-	std::cerr << RED << "_request->getTransferEncoding() : " << _request->getTransferEncoding() << RESET << std::endl;
+	// std::cerr << RED << "_request->getTransferEncoding() : " << _request->getTransferEncoding() << RESET << std::endl;
 	if (_request->getTransferEncoding() == "chunked")
 	{
 		while (true) // 한번 돌때 완성된 문자열 하나씩 처리
@@ -317,7 +321,7 @@ void Client::handleResponse(struct kevent *tevent)
 				continue;
 			else if (chunkedState == chunk::END)
 			{
-				std::cerr << RED << "testcode" << "chunked::end" << RESET << std::endl;
+				std::cerr << RED << "testcode: " << "chunked::end" << RESET << std::endl;
 				break;
 			}
 			else if (chunkedState == chunk::INCOMPLETE_DATA)
