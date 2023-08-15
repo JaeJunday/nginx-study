@@ -103,15 +103,23 @@ void Client::uploadFile(size_t pipeSize)
 	// 써야되는 사이즈 
 	// _perfectBody.size(); // or pipeSize
 	// endresponse
+	//std::cerr << RED << "uploadFile========" << RESET << std::endl;
+std::cerr << BLUE << "pipe: " << pipeSize << RESET << std::endl;
+std::cerr << BLUE << "wirteindex: " << _writeIndex << RESET << std::endl;
 	std::string perfectBody = _request->getPerfectBody();
+std::cerr << RED << "perfectBody : " << perfectBody << RESET << std::endl;
 	size_t writeSize = std::min(perfectBody.size() - _writeIndex, pipeSize);
+std::cerr << RED << "writeSize : " << writeSize << RESET << std::endl;
 	writeSize = write(_writeFd[1], perfectBody.c_str() + _writeIndex, writeSize);
 	if (writeSize < 0)
 		return;
 	if (writeSize >= 0)
 		_writeIndex += writeSize;
+std::cerr << RED << _request->getBodyTotalSize() << " : " << _writeIndex << RESET << std::endl;
 	if (_request->getBodyTotalSize() == _writeIndex)
 	{
+std::cerr << RED << "end잇어용 😍" << RESET << std::endl;
+		
 		close(_writeFd[1]);
 		addEvent(_readFd[0], EVFILT_READ);
 	}
@@ -127,11 +135,13 @@ void Client::printResult()
 	memset(tempBuffer, 0, PIPESIZE);
 
 	size_t readSize = read(_readFd[0], tempBuffer, PIPESIZE);
+	std::cerr << RED << "readSize : " << readSize << RESET << std::endl;
 	if (readSize < 0)
 		return;
 	if (readSize == 0) // end
 	{
 		close(_readFd[0]);
+		
 		waitpid(_pid, NULL, 0);
 		deleteEvent();	
 		addEvent(_socketFd, EVFILT_WRITE); // socket
@@ -145,8 +155,6 @@ pid_t Client::getPid() const
 {
 	return _pid;
 }
-
-
 
 void Client::postProcess()
 {

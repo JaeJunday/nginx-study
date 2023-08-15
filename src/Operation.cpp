@@ -170,6 +170,7 @@ std::cerr << RED << "tevent.ident : " << tevent.ident << RESET << std::endl;
 			}
 			else if (tevent.filter == EVFILT_WRITE)
 			{
+// std::cerr << RED << "받고잇어용 😍" << RESET << std::endl;
 				Client* client = static_cast<Client*>(tevent.udata);
 				if (tevent.ident == client->getSocket())
 				{
@@ -252,6 +253,7 @@ void Operation::acceptClient(int kq, int index)
 	socketFd = accept(_servers[index].getSocket(), reinterpret_cast<struct sockaddr*>(&socketAddr), &socketLen);
 	if (socketFd == -1)
 		throw std::logic_error("Error: Accept failed");
+std::cerr << YELLOW << "socketFd: " << socketFd <<  RESET << std::endl;
 	fcntl(socketFd, F_SETFL, O_NONBLOCK);
 	// Request *request = new Request(socketFd, _servers[index]);
 	Request *request = new Request(_servers[index]);
@@ -279,6 +281,7 @@ std::cerr << GREEN << "testcode : " << "send code: " << client->getStateCode() <
 	
 	if (client->getStateCode() >= 400)
 	{		
+		client->clearClient();
 		close(client->getSocket());
 		delete client;
 		_clients.erase(tevent.ident);

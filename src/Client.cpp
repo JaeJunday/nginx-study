@@ -27,10 +27,10 @@ _contentLength(0),
 _kq(kq),
 _writeIndex(0)
 {
-	_readFd[0] = 0;
-	_readFd[1] = 0;
-	_writeFd[0] = 0;
-	_writeFd[1] = 0;
+	_readFd[0] = -1;
+	_readFd[1] = -1;
+	_writeFd[0] = -1;
+	_writeFd[1] = -1;
 }
 
 Client::Client(const Client& src)
@@ -252,10 +252,14 @@ void Client::addEvent(int fd, int filter)
 void Client::clearClient()
 {
 	_request->clearRequest();
-	close(_writeFd[0]);
-	close(_writeFd[1]);
-	close(_readFd[0]);
-	close(_readFd[1]);
+	if (_writeFd[0])
+		close(_writeFd[0]);
+	if (_writeFd[1])
+		close(_writeFd[1]);
+	if (_readFd[0])
+		close(_readFd[0]);
+	if (_readFd[1])
+		close(_readFd[1]);
 	_writeFd[0] = 0;
 	_writeFd[1] = 0;
 	_readFd[0] = 0;

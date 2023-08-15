@@ -1,9 +1,13 @@
 http://0.0.0.0:80
 [0;32mtestcode= = = = = = ======= ACCEPT =========================[0m
-[0;31m ==== recv : 5[0m
+[0;31mrecv : 5:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 5[0m
+[0;31mrecv : 5:[0m
 
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 5[0m
 [0;31mtestcode ====_headerBuffer
 GET / HTTP/1.1
 Host: 0.0.0.0:80
@@ -11,11 +15,9 @@ User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
 [0m
-😅
-[0;31m_request->getTransferEncoding() : [0m
 ==============================Send data==============================
 HTTP/1.1 200 OK
-Date: Tue, 15 Aug 2023 17:03:53 GMT
+Date: Tue, 15 Aug 2023 17:56:13 GMT
 Server: My Server
 Content-Type: text/html
 Content-Length: 312
@@ -35,28 +37,42 @@ Content-Length: 312
 
 [0;32mtestcode : send code: 200[0m
 [0;32mtestcode send clear[0m
-[0;31m ==== recv : 5[0m
+[0;31mrecv : 5:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 5[0m
+[0;31mrecv : 5:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 5[0m
+[0;31mrecv : 5:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 5[0m
+[0;31mrecv : 5:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 5[0m
+[0;31mrecv : 5:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 5[0m
+[0;31mrecv : 5:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 5[0m
+[0;31mrecv : 5:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 5[0m
+[0;31mrecv : 5:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 5[0m
+[0;31mrecv : 5:[0m
 
-[0;31m ==== recv : 5[0m
-
-[0;31m ==== recv : 5[0m
-
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 5[0m
 [0;31mtestcode ====_headerBuffer
 POST / HTTP/1.1
 Host: 0.0.0.0:80
@@ -73,19 +89,23 @@ Content-Type: text/html; charset=UTF-8
 Server: My Server
 Referrer-Policy: no-referrer
 Content-Length: 0
-Date: Tue, 15 Aug 2023 17:03:53 GMT
+Date: Tue, 15 Aug 2023 17:56:13 GMT
 
 
 [0;32mtestcode : send code: 405[0m
 [0;32mtestcode= = = = = = ======= ACCEPT =========================[0m
-[0;31m ==== recv : 5[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
-
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
 [0;31mtestcode ====_headerBuffer
 HEAD / HTTP/1.1
 Host: 0.0.0.0:80
@@ -99,21 +119,23 @@ Content-Type: text/html; charset=UTF-8
 Server: My Server
 Referrer-Policy: no-referrer
 Content-Length: 0
-Date: Tue, 15 Aug 2023 17:03:53 GMT
+Date: Tue, 15 Aug 2023 17:56:13 GMT
 
 
 [0;32mtestcode : send code: 405[0m
 [0;32mtestcode= = = = = = ======= ACCEPT =========================[0m
-[0;31m ==== recv : 5[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
-
-[0;31m ==== recv : 5[0m
-
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
 [0;31mtestcode ====_headerBuffer
 GET /directory HTTP/1.1
 Host: 0.0.0.0:80
@@ -121,30 +143,34 @@ User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
 [0m
-😅
-[0;31m_request->getTransferEncoding() : [0m
 ==============================Send data==============================
 HTTP/1.1 200 OK
-Date: Tue, 15 Aug 2023 17:03:53 GMT
+Date: Tue, 15 Aug 2023 17:56:13 GMT
 Server: My Server
 Content-Type: 
 Content-Length: 0
 
 
 [0;32mtestcode : send code: 200[0m
+invalid Read event set 1
 [0;32mtestcode send clear[0m
-[0;31m ==== recv : 5[0m
+[0;32mtestcode= = = = = = ======= ACCEPT =========================[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
-
-[0;31m ==== recv : 5[0m
-
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
 [0;31mtestcode ====_headerBuffer
 GET /directory/youpi.bad_extension HTTP/1.1
 Host: 0.0.0.0:80
@@ -152,26 +178,30 @@ User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
 [0m
-😅
-[0;31m_request->getTransferEncoding() : [0m
 ==============================Send data==============================
-HTTP/1.1 200 
-Date: Tue, 15 Aug 2023 17:03:53 GMT
+HTTP/1.1 200 OK
+Date: Tue, 15 Aug 2023 17:56:13 GMT
 Server: My Server
 Content-Type: 
 Content-Length: 0
 
 
 [0;32mtestcode : send code: 200[0m
+invalid Read event set 1
 [0;32mtestcode send clear[0m
-[0;31m ==== recv : 5[0m
+[0;32mtestcode= = = = = = ======= ACCEPT =========================[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
-
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
 [0;31mtestcode ====_headerBuffer
 GET /directory/youpi.bla HTTP/1.1
 Host: 0.0.0.0:80
@@ -179,28 +209,34 @@ User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
 [0m
-😅
-[0;31m_request->getTransferEncoding() : [0m
 ==============================Send data==============================
-HTTP/1.1 200 
-Date: Tue, 15 Aug 2023 17:03:53 GMT
+HTTP/1.1 200 OK
+Date: Tue, 15 Aug 2023 17:56:13 GMT
 Server: My Server
 Content-Type: 
 Content-Length: 0
 
 
 [0;32mtestcode : send code: 200[0m
+invalid Read event set 1
 [0;32mtestcode send clear[0m
-[0;31m ==== recv : 5[0m
+[0;32mtestcode= = = = = = ======= ACCEPT =========================[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
-
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
 [0;31mtestcode ====_headerBuffer
 GET /directory/oulalala HTTP/1.1
 Host: 0.0.0.0:80
@@ -208,8 +244,6 @@ User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
 [0m
-😅
-[0;31m_request->getTransferEncoding() : [0m
 not serverpath
 [0;31m_request->getMethod() : GET[0m
 ==============================Send data==============================
@@ -218,7 +252,7 @@ Content-Type: text/html; charset=UTF-8
 Server: My Server
 Referrer-Policy: no-referrer
 Content-Length: 346
-Date: Tue, 15 Aug 2023 17:03:53 GMT
+Date: Tue, 15 Aug 2023 17:56:13 GMT
 
 <!DOCTYPE html>
 <html lang="en">
@@ -238,20 +272,30 @@ Date: Tue, 15 Aug 2023 17:03:53 GMT
 
 [0;32mtestcode : send code: 404[0m
 [0;32mtestcode= = = = = = ======= ACCEPT =========================[0m
-[0;31m ==== recv : 5[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
-
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
 [0;31mtestcode ====_headerBuffer
 GET /directory/nop HTTP/1.1
 Host: 0.0.0.0:80
@@ -259,28 +303,30 @@ User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
 [0m
-😅
-[0;31m_request->getTransferEncoding() : [0m
 ==============================Send data==============================
 HTTP/1.1 200 OK
-Date: Tue, 15 Aug 2023 17:03:53 GMT
+Date: Tue, 15 Aug 2023 17:56:13 GMT
 Server: My Server
 Content-Type: 
 Content-Length: 0
 
 
 [0;32mtestcode : send code: 200[0m
+invalid Read event set 1
 [0;32mtestcode send clear[0m
-[0;31m ==== recv : 5[0m
+[0;32mtestcode= = = = = = ======= ACCEPT =========================[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
-
-[0;31m ==== recv : 5[0m
-
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
 [0;31mtestcode ====_headerBuffer
 GET /directory/nop/ HTTP/1.1
 Host: 0.0.0.0:80
@@ -288,22 +334,26 @@ User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
 [0m
-😅
-[0;31m_request->getTransferEncoding() : [0m
 ==============================Send data==============================
-HTTP/1.1 200 
-Date: Tue, 15 Aug 2023 17:03:53 GMT
+HTTP/1.1 200 OK
+Date: Tue, 15 Aug 2023 17:56:13 GMT
 Server: My Server
 Content-Type: 
 Content-Length: 0
 
 
 [0;32mtestcode : send code: 200[0m
+invalid Read event set 1
 [0;32mtestcode send clear[0m
-[0;31m ==== recv : 5[0m
+[0;32mtestcode= = = = = = ======= ACCEPT =========================[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
 [0;31mtestcode ====_headerBuffer
 GET /directory/nop/other.pouic HTTP/1.1
 Host: 0.0.0.0:80
@@ -311,30 +361,34 @@ User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
 [0m
-😅
-[0;31m_request->getTransferEncoding() : [0m
 ==============================Send data==============================
-HTTP/1.1 200 
-Date: Tue, 15 Aug 2023 17:03:53 GMT
+HTTP/1.1 200 OK
+Date: Tue, 15 Aug 2023 17:56:13 GMT
 Server: My Server
 Content-Type: 
 Content-Length: 0
 
 
 [0;32mtestcode : send code: 200[0m
+invalid Read event set 1
 [0;32mtestcode send clear[0m
-[0;31m ==== recv : 5[0m
+[0;32mtestcode= = = = = = ======= ACCEPT =========================[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
-
-[0;31m ==== recv : 5[0m
-
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
 [0;31mtestcode ====_headerBuffer
 GET /directory/nop/other.pouac HTTP/1.1
 Host: 0.0.0.0:80
@@ -342,8 +396,6 @@ User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
 [0m
-😅
-[0;31m_request->getTransferEncoding() : [0m
 not serverpath
 [0;31m_request->getMethod() : GET[0m
 ==============================Send data==============================
@@ -352,7 +404,7 @@ Content-Type: text/html; charset=UTF-8
 Server: My Server
 Referrer-Policy: no-referrer
 Content-Length: 346
-Date: Tue, 15 Aug 2023 17:03:53 GMT
+Date: Tue, 15 Aug 2023 17:56:13 GMT
 
 <!DOCTYPE html>
 <html lang="en">
@@ -372,18 +424,22 @@ Date: Tue, 15 Aug 2023 17:03:53 GMT
 
 [0;32mtestcode : send code: 404[0m
 [0;32mtestcode= = = = = = ======= ACCEPT =========================[0m
-[0;31m ==== recv : 5[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
-
-[0;31m ==== recv : 5[0m
-
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
 [0;31mtestcode ====_headerBuffer
 GET /directory/Yeah HTTP/1.1
 Host: 0.0.0.0:80
@@ -391,8 +447,6 @@ User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
 [0m
-😅
-[0;31m_request->getTransferEncoding() : [0m
 not serverpath
 [0;31m_request->getMethod() : GET[0m
 ==============================Send data==============================
@@ -401,7 +455,7 @@ Content-Type: text/html; charset=UTF-8
 Server: My Server
 Referrer-Policy: no-referrer
 Content-Length: 346
-Date: Tue, 15 Aug 2023 17:03:53 GMT
+Date: Tue, 15 Aug 2023 17:56:13 GMT
 
 <!DOCTYPE html>
 <html lang="en">
@@ -421,30 +475,34 @@ Date: Tue, 15 Aug 2023 17:03:53 GMT
 
 [0;32mtestcode : send code: 404[0m
 [0;32mtestcode= = = = = = ======= ACCEPT =========================[0m
-[0;31m ==== recv : 5[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
-
-[0;31m ==== recv : 5[0m
-
-[0;31m ==== recv : 5[0m
-
-[0;31m ==== recv : 5[0m
-
-[0;31m ==== recv : 5[0m
-
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
 [0;31mtestcode ====_headerBuffer
 GET /directory/Yeah/not_happy.bad_extension HTTP/1.1
 Host: 0.0.0.0:80
@@ -452,30 +510,34 @@ User-Agent: Go-http-client/1.1
 Accept-Encoding: gzip
 
 [0m
-😅
-[0;31m_request->getTransferEncoding() : [0m
 ==============================Send data==============================
 HTTP/1.1 200 OK
-Date: Tue, 15 Aug 2023 17:03:53 GMT
+Date: Tue, 15 Aug 2023 17:56:13 GMT
 Server: My Server
 Content-Type: 
 Content-Length: 23
 
 not_happy.bad_extension
 [0;32mtestcode : send code: 200[0m
+invalid Read event set 1
 [0;32mtestcode send clear[0m
-[0;31m ==== recv : 5[0m
+[0;32mtestcode= = = = = = ======= ACCEPT =========================[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-[0;31m ==== recv : 5[0m
-
-[0;31m ==== recv : 5[0m
-
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
 [0;31mtestcode ====_headerBuffer
 PUT /put_test/file_should_exist_after HTTP/1.1
 Host: 0.0.0.0:80
@@ -484,72 +546,28 @@ Transfer-Encoding: chunked
 Accept-Encoding: gzip
 
 [0m
-😅
-[0;31m_request->getTransferEncoding() : chunked[0m
-[0;31m ==== recv : 5[0m
+[0;31mrecv : 0:[0m
 
-😅
-[0;31m_request->getTransferEncoding() : chunked[0m
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-😅
-[0;31m_request->getTransferEncoding() : chunked[0m
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-😅
-[0;31m_request->getTransferEncoding() : chunked[0m
-[0;31m ==== recv : 5[0m
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-😅
-[0;31m_request->getTransferEncoding() : chunked[0m
-[0;31mtestcodechunked::end[0m
-=================================================================
-==47601==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x615000000ee4 at pc 0x000107ee4874 bp 0x7ffee7d52e30 sp 0x7ffee7d52e28
-READ of size 4 at 0x615000000ee4 thread T0
-    #0 0x107ee4873 in Client::uploadFile(unsigned long) Chunked.cpp:92
-    #1 0x107ec32eb in Operation::start() Operation.cpp:175
-    #2 0x107eace63 in main main.cpp:22
-    #3 0x7fff6ccc9cc8 in start+0x0 (libdyld.dylib:x86_64+0x1acc8)
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+[0;31mrecv : 0:[0m
 
-0x615000000ee4 is located 12 bytes to the right of 472-byte region [0x615000000d00,0x615000000ed8)
-allocated by thread T0 here:
-    #0 0x107f6b7ed in wrap__Znwm+0x7d (libclang_rt.asan_osx_dynamic.dylib:x86_64h+0x557ed)
-    #1 0x107ec4670 in Operation::acceptClient(int, int) Operation.cpp:253
-    #2 0x107ec2ed2 in Operation::start() Operation.cpp:113
-    #3 0x107eace63 in main main.cpp:22
-    #4 0x7fff6ccc9cc8 in start+0x0 (libdyld.dylib:x86_64+0x1acc8)
+[0;31mclient->getReadFd() : 0[0m
+[0;31mtevent.ident : 0[0m
+==============================Send data==============================
 
-SUMMARY: AddressSanitizer: heap-buffer-overflow Chunked.cpp:92 in Client::uploadFile(unsigned long)
-Shadow bytes around the buggy address:
-  0x1c2a00000180: fd fd fd fd fd fd fd fd fd fd fd fa fa fa fa fa
-  0x1c2a00000190: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
-  0x1c2a000001a0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x1c2a000001b0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x1c2a000001c0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-=>0x1c2a000001d0: 00 00 00 00 00 00 00 00 00 00 00 fa[fa]fa fa fa
-  0x1c2a000001e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
-  0x1c2a000001f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
-  0x1c2a00000200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
-  0x1c2a00000210: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
-  0x1c2a00000220: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
-Shadow byte legend (one shadow byte represents 8 application bytes):
-  Addressable:           00
-  Partially addressable: 01 02 03 04 05 06 07 
-  Heap left redzone:       fa
-  Freed heap region:       fd
-  Stack left redzone:      f1
-  Stack mid redzone:       f2
-  Stack right redzone:     f3
-  Stack after return:      f5
-  Stack use after scope:   f8
-  Global redzone:          f9
-  Global init order:       f6
-  Poisoned by user:        f7
-  Container overflow:      fc
-  Array cookie:            ac
-  Intra object redzone:    bb
-  ASan internal:           fe
-  Left alloca redzone:     ca
-  Right alloca redzone:    cb
-  Shadow gap:              cc
-==47601==ABORTING
+[0;32mtestcode : send code: 200[0m
+invalid Read event set 1
+[0;32mtestcode send clear[0m
