@@ -1,6 +1,7 @@
 #include "Server.hpp"
 
 Server::Server()
+    : _socket(-1)
 {
 }
 

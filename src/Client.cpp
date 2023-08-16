@@ -2,6 +2,8 @@
 #include "Request.hpp"
 #include "include/Color.hpp"
  
+// extern int gcount; // -- delete
+
 // Client::Client(int kq)
 // : _version("HTTP/1.1"), 
 //   _stateCode("200"), 
@@ -14,6 +16,7 @@
 // {
 //     /* Constructor Implementation */
 // }
+
 
 Client::Client(Request* request, int kq, int socketFd) 
 : _request(request),
@@ -139,15 +142,23 @@ void Client::checkLimitExcept() const
 		int limitSize = allowMethod.size();
 		if (limitSize)
 		{
+			std::cerr << B_RED << "testcode " << "allowMethod IN" << RESET << std::endl;
 			int i = 0;
 			while(i < limitSize)
 			{
 				if (allowMethod[i] == _request->getMethod())
+				{
+std::cerr << B_RED << "get method : " << _request->getMethod() << RESET << std::endl; 
+std::cerr << B_RED << "testcode allowMethod" << allowMethod[i] << RESET << std::endl;
 					break;
+				}
 				++i;
 			}
-			if (i == allowMethod.size())
+			if (i == limitSize)
+			{
+				std::cerr << B_RED << "testcode " << "Error : no accept method." << RESET << std::endl;
 				throw 405;
+			}
 		}
 	}
 }
@@ -315,8 +326,8 @@ void Client::handleResponse(struct kevent *tevent)
 	}
 	else if (_request->getBuffer().size() - _request->getBodyIndex()  == _request->getContentLength())
 	{
-		if (_request->getMethod() == "POST" && (_request->getContentLength() == 0 || _request->getBuffer().size() == 0))
-			throw 405;
+		// if (_request->getMethod() == "POST" && (_request->getContentLength() == 0 || _request->getBuffer().size() == 0))
+		// 	throw 405;
 		if (_request->getMethod() == "GET")
 		{
 			getProcess();
@@ -329,14 +340,7 @@ void Client::handleResponse(struct kevent *tevent)
 		{
 			deleteProcess();
 		}
-		// if (_request->getMethod() == "ERROR")
-		// {
-		// 	errorProcess();
-		// }
-		// _request->getResponse()->createRe();
-		// EV_SET(tevent, tevent->ident, EVFILT_WRITE, EV_ADD, 0, 0, client);
-		// kevent(kq, tevent, 1, NULL, 0, NULL);
-		// GET, POST, DLETE, ERROR 분기 필요 - kyeonkim
+		deleteEvent();
 		addEvent(tevent->ident, EVFILT_WRITE);
 		_request->setEventState(EVFILT_WRITE);
 	}
@@ -344,33 +348,37 @@ void Client::handleResponse(struct kevent *tevent)
 
 bool Client::sendData(struct kevent& tevent)
 {
+	// ++gcount;
+	// std::cerr << RED << gcount << RESET << std::endl;
 // std::cerr << "==============================Send data==============================" << std::endl;
-std::cerr << B_CYAN << "testcode " << "tevent.data: " << tevent.data << RESET << std::endl;
+// std::cerr << B_CYAN << "testcode " << "tevent.data: " << tevent.data << RESET << std::endl;
 	size_t responseBufferSize = _responseBuffer.str().size();
 	size_t sendBufferSize = std::min(responseBufferSize - _sendIndex, (size_t)tevent.data);
-std::cerr << BLUE << "_sendIndex before:" << _sendIndex << RESET << std::endl;
+// std::cerr << BLUE << "_sendIndex before:" << _sendIndex << RESET << std::endl;
 	size_t byteWrite = send(tevent.ident, _responseBuffer.str().c_str() + _sendIndex, sendBufferSize, 0);
-	if (byteWrite <= 0 || _stateCode >= 400)
+	if (byteWrite < 0 || _stateCode >= 400)
 	{
 		clearClient();
+		std::cerr << B_BG_CYAN << "끊겼어용" << RESET << std::endl;
 		close(_socketFd);
 		delete this;
 		return false;
 	}
 	_sendIndex += byteWrite;
 // std::cerr << YELLOW << client->getBuffer().str().c_str() << RESET << std::endl;
-std::cerr << GREEN << "buffer length :" << responseBufferSize << RESET << std::endl;
-std::cerr << GREEN << "write byte count :" << byteWrite << RESET << std::endl;
-std::cerr << RED << "_sendIndex after:" << _sendIndex << RESET << std::endl;
-std::cerr << GREEN << "testcode : " << "send code: " << _stateCode << RESET << std::endl;
+// std::cerr << GREEN << "buffer length :" << responseBufferSize << RESET << std::endl;
+// std::cerr << GREEN << "write byte count :" << byteWrite << RESET << std::endl;
+// std::cerr << RED << "_sendIndex after:" << _sendIndex << RESET << std::endl;
+// std::cerr << GREEN << "testcode : " << "send code: " << _stateCode << RESET << std::endl;
 	if (_sendIndex == responseBufferSize)
 	{
-		clearClient();
-		_request->clearRequest();
+		// gcount = 0;
 		deleteEvent();
+		clearClient();
+		// _request->clearRequest();
 		addEvent(tevent.ident, EVFILT_READ);
 		_request->setEventState(EVFILT_READ);
-		std::cerr << GREEN << "testcode " << "send clear" << RESET << std::endl;	
+		// std::cerr << GREEN << "testcode " << "===========send clear==============" << RESET << std::endl;
 	}
 	else
 	{

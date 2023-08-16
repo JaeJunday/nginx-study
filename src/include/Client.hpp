@@ -50,11 +50,9 @@ class Client
 		Client(const Client& src); 
 		Client& operator=(const Client& rhs);
 	public:
-		// Client(int kq);
 		virtual ~Client();
 		Client(Request* request, int kq, int socketFd);
 		static std::string getDate();
-		// virtual void createResponse() =0;
 		void stamp() const;
 		std::string findLocationPath() const;
 		void checkLimitExcept() const;
@@ -67,35 +65,22 @@ class Client
 
 
 		bool sendData(struct kevent& tevent);
-
 	// get.cpp
-        // void getCreateResponse(); //override
         void openPath(const std::string& path);
         void fileProcess(const std::string& filePath, std::stringstream& body);
         void pushBuffer(std::stringstream& body);
 		void autoIndexProcess(DIR* dirStream, std::stringstream& body);
-	// post.cpp
-		// void postCreateResponse(); // override
-        void childProcess(int *writeFd, int *readFd);
-		void uploadFile();
-        const std::string printResult(int fd, int kq);
 	// delete.cpp
-		// void deleteCreateResponse(); // override
 		void removeFile(std::string file) const;
-
-	// chunked.cpp
-		// void chunkedCreateResponse();
+	// post.cpp
 		void uploadFile(size_t pipeSize);
-		void printResult();
-		// void endResponse();
+		void printResult(size_t pipeSize);
 		void childProcess();
 		void execveCgi() const;
 		void initCgi();
 		//get.cpp
 		pid_t getPid() const;
 	// error.cpp
-		// void errorCreateResponse(); // override
-		// void makeErrorPage(int errnum);
 		void pushErrorBuffer(std::string body, int errnum);
 	// setevent
 		void addEvent(int fd, int filter);

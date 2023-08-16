@@ -1,6 +1,4 @@
 #include "Client.hpp"
-#include "include/Color.hpp"
-#include <cstdint>
 
 // NOTE_EXIT -> 프로세스 종료될때 이벤트 발생
 // EV_SET(&event, pid, NOTE_EXIT, EV_ADD, 0, 0, nullptr);
@@ -47,8 +45,8 @@ void Client::execveCgi() const
 	std::string scriptPath;
 	std::string engine;
 
-std::cerr << RED << "location: " << _request->getLocation()->_path << RESET << std::endl;
-std::cerr << RED << "_chunkedFilename : " << _request->getChunkedFilename() << RESET << std::endl;
+//std::cerr << RED << "location: " << _request->getLocation()->_path << RESET << std::endl;
+//std::cerr << RED << "_chunkedFilename : " << _request->getChunkedFilename() << RESET << std::endl;
 
 	if (_request->getChunkedFilename().find(".bla") != std::string::npos)
 	{
@@ -61,8 +59,8 @@ std::cerr << RED << "_chunkedFilename : " << _request->getChunkedFilename() << R
 		engine = scriptPath;
 	}
 
-	std::cerr << RED << "testcode : " << "scriptPath :" << scriptPath << RESET << std::endl;
-	std::cerr << RED << "testcode : " << "egine :" << engine << RESET << std::endl;
+	// std::cerr << RED << "testcode : " << "scriptPath :" << scriptPath << RESET << std::endl;
+	// std::cerr << RED << "testcode : " << "egine :" << engine << RESET << std::endl;
 
 	// std::string argFirst;
 	// size_t lastSlashPos = scriptPath.find_last_of('/');
@@ -78,6 +76,8 @@ std::cerr << RED << "_chunkedFilename : " << _request->getChunkedFilename() << R
 	setenv("SERVER_PROTOCOL", "HTTP/1.1", true);
 	setenv("PATH_INFO", scriptPath.c_str(), true);
 	setenv("DOCUMENT_ROOT", _convertRequestPath.c_str(), true);
+	if (_request->getSecretHeader().empty() == false)
+		setenv("X_SECRET_HEADER_FOR_TEST", _request->getSecretHeader().c_str(), true);
 	extern char** environ;
 	if (execve(engine.c_str(), args, environ) == -1) {
 		perror("execve");  // 오류 처리
@@ -95,33 +95,27 @@ void Client::uploadFile(size_t pipeSize)
 	if (writeSize <= 0)
 		throw 500;
 	_writeIndex += writeSize;
-	std::cerr << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << "\n";
+// std::cerr << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << "\n";
 	if (_request->getBodyTotalSize() == _writeIndex)
 	{	
-		// std::cerr << "🥳" << YELLOW << "😘end😘" << RESET << std::endl;
 		// addEvent(_readFd[0], EVFILT_READ);
-std::cerr << PURPLE << "uploadFile" << RESET << std::endl;
+// std::cerr << PURPLE << "uploadFile" << RESET << std::endl;
 		close(_writeFd[1]);
 	}
 }
 
-void Client::printResult()
+void Client::printResult(size_t pipeSize)
 {
-	char tempBuffer[PIPESIZE];
+	char tempBuffer[pipeSize];
 	std::string readBuffer;
-	memset(tempBuffer, 0, PIPESIZE);
+	memset(tempBuffer, 0, pipeSize);
 
-	ssize_t readSize = read(_readFd[0], tempBuffer, PIPESIZE);
-	// std::cerr << RED << "readSize : " << readSize << RESET << std::endl;
+	std::cerr << RED << "pipeSize : " << pipeSize << RESET << std::endl;
+	ssize_t readSize = read(_readFd[0], tempBuffer, pipeSize);
 	if (readSize < 0)
 		throw 500;
 	if (readSize == 0) // end
 	{
-		// 근데 이거 .bla는 이렇게 처리하는게 맞는데 그냥 저희 cgi로 돌린 건 다르게 나와서 바로 여기서 만들어주면 안될 거 같아여
-		//d일단 이렇게 넘어가는지 확인해보려구요
-		// 근데 테스트 케이스가 .bla 보다 먼저 저희 cgi 쓰는게 나오더라구여
-		//그럼 이프문으로 하면 될듯 네네 이프문이라도 들어가야할 거 같아여
-		//일단 이렇게 되는지 봅시다
 		// std::cerr << BLUE << _responseBuffer.str() << RESET << std::endl; // 어떻게 넘어왔는지 확인
 		if (_request->getChunkedFilename().find(".bla") != std::string::npos) {
 			std::string msg = _responseBuffer.str();
@@ -132,10 +126,12 @@ void Client::printResult()
 			_responseBuffer << "Content-Length: " << cgiBodySize << "\r\n";
 // std::cerr << B_RED << "testcode " << "_responseBuffer : head >>> " << _responseBuffer.str() << RESET << std::endl;
 // std::cerr << PURPLE << "testcode " << "msg : head >>> " << msg.substr(0, msg.find("\r\n\r\n") + 4) << RESET << std::endl;
-			_responseBuffer << msg.substr(cgiHeaderSize, cgiBodySize);
-			_responseBuffer << "\r\n\r\n";
+			_responseBuffer << msg.substr(cgiHeaderSize, msg.size() - cgiHeaderSize);
+			// _responseBuffer << "test"
+			//  std::cerr << PURPLE << "testcode " << "_responseBuffer : head >>> " << _responseBuffer.str().substr(0, _responseBuffer.str().find("\r\n\r\n") + 4) << RESET << std::endl;
+			// _responseBuffer << "\r\n\r\n";
 			//body 제대로 만들어졌는지 확인
-			// std::cerr << YELLOW << _responseBuffer.str() << RESET << std::endl;
+			// std::cout << _responseBuffer.str() << std::endl;
 		}
 		close(_readFd[0]);	
 		waitpid(_pid, NULL, 0);
@@ -158,3 +154,7 @@ void Client::postProcess()
 	_request->setBodyTotalSize(_request->getPerfectBody().size());
 	addEvent(_writeFd[1], EVFILT_WRITE);
 }
+
+
+//secret header set env해줘야함
+// 0은 가능 100까지만 가능하게 제한 pos

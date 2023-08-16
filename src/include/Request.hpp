@@ -12,6 +12,7 @@
 #include <type_traits>
 #include <vector>
 #include <fcntl.h> 
+#include <cstdint>
 
 #define HEX 16
 
@@ -20,13 +21,9 @@ class Client;
 class Request
 {
 	private:
-		//int					_writeFd[2]; // parent(w) -> child(r)
-		//int					_readFd[2]; // child(w) -> parent(r)
-		Server				_server;
+		Server&				_server;
 		Location*			_location;
-		//Client*				_response;
 		int					_state;
-		// int					_socket;
 		std::string			_headerBuffer;
 		std::string			_requestBuffer;
 		std::string			_method;
@@ -41,7 +38,6 @@ class Request
 		std::string			_boundary;
 		int					_eventState;
 		int 				_bodyStartIndex;
-
 		int 				_bodyTotalSize;
 		// chunked
 		std::string			_chunkedFilename;
@@ -49,13 +45,14 @@ class Request
 		std::string 		_perfectBody;
 		int					_readIndex;
 		bool				_writeEventFlag;
-		// int					_writeIndex;
-		
+		std::string			_secretHeader;
+
 	public:
 		Request(Server& server);
 		Request(const Request& request);
 		Request& operator=(Request const& rhs);
-		void				headerParsing(char* buf, intptr_t size);
+		// ~Request();
+		void 				headerParsing(char* buf, intptr_t size);
 		void				checkMultipleSpaces(const std::string& str);
 		void				clearRequest();
 		void				makeResponse(int kq);
@@ -65,7 +62,6 @@ class Request
 		void				childProcess();
 
 		// get
-		// int					getSocket() const;
 		int					getState() const;
 		const Server& 		getServer() const;
 		const std::string&	getIp() const;
@@ -82,12 +78,11 @@ class Request
 		const std::string& 	getBuffer() const;
 		const std::string& 	getChunkedFilename();
 		int 				getBodyIndex() const;
-		// Client* 			getResponse() const;
 		int 				getChunkedState() const;
-		// int 				getWriteFd() const;
 		int 				getBodyTotalSize() const;
 		std::string&		getPerfectBody();
 		int getBodyStartIndex() const;
+		const std::string&	getSecretHeader() const;
 
 		// set
 		void setState(int state);

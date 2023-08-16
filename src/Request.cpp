@@ -1,8 +1,5 @@
 #include "Request.hpp"
 #include "Client.hpp"
-#include "include/Color.hpp"
-#include <iostream>
-#include <unistd.h>
 
 Request::Request(Server& server)
 	: _server(server), 
@@ -17,18 +14,26 @@ Request::Request(Server& server)
 	_readIndex(0),
 	_writeEventFlag(false)
 {
+// std::cerr << CYAN << "testcode overloding constructor" << RESET << std::endl;
 }
 
 Request::Request(const Request& request)
+	: _server(request._server)
 {
+// std::cerr << CYAN << "testcode copy constructor" << RESET << std::endl;
 	*this = request;
 }
 
+// Request::~Request()
+// {
+// }
+
 Request& Request::operator=(const Request& rhs)
 {
+// std::cerr << BLUE << "assign operator" << RESET << std::endl;
 	if (this != &rhs)
 	{
-		_server = rhs._server;
+		// _server = rhs._server;
 		_location = rhs._location;
 		_state = rhs._state;
 		_headerBuffer = rhs._headerBuffer;
@@ -96,14 +101,11 @@ void Request::setFieldLine(std::string& fieldLine)
 	std::vector<std::string> token = util::getToken(fieldLine, ": ");
 	token[1].erase(0, 1);
 	if (token.size() != 2)
-		throw 401;
-		//throw std::runtime_error("Error: Header error");
+		throw 401; // Header error
 	if (token[0].empty() || token[1].empty())
-		throw 402;
-		// throw std::runtime_error("Error: Header Key Value Empty");
+		throw 402; // Header Key Value Empty
 	if (token[0].find(' ') != std::string::npos)
-		throw 403;
-		// throw std::runtime_error("Error: Header Key have space");
+		throw 403; // Header Key have space
 	if (token[0] == "Host") {
 		size_t mid = token[1].find(":");
 		if (mid == std::string::npos)
@@ -128,8 +130,9 @@ void Request::setFieldLine(std::string& fieldLine)
 		_transferEncoding = token[1];
 	if (token[0] == "Connection")
 		_connection = token[1];
+	if (token[0] == "X-Secret-Header-For-Test")
+		_secretHeader = token[1];
 }
-
 
 // 헤더 + 본문 길이 = buffersize
 // 본문길이  = contentLength
@@ -138,16 +141,12 @@ void Request::setFieldLine(std::string& fieldLine)
 // buffersize - bodyindx == contesntLength : ok
 void Request::headerParsing(char* buf, intptr_t size)
 {
-	// testcode
-	// std::cerr << "========================parsing========================" << std::endl;
 	// 헤더 끝줄 찾기
-	_headerBuffer.append(buf, size);
-	// std::string buffer(buf, size);
-	// _headerBuffer += buffer;
+	_headerBuffer.append(buf, size); // 나중에 삭제해도 될 거 같음 - kyeonkim
 	int headerBoundary = _headerBuffer.find("\r\n\r\n");
 	if (headerBoundary == std::string::npos)
 		return ;
-std::cerr << BLUE << "testcode " << "====_headerBuffer\n" << _headerBuffer << RESET << std::endl;
+std::cout << BLUE << "testcode " << "====_headerBuffer\n" << _headerBuffer.substr(0, _headerBuffer.find("\r\n\r\n")) << RESET << std::endl;
 	_state = request::CREATE;
 	int endLine = _headerBuffer.find("\r\n");
 	std::string requestLine(_headerBuffer, 0, endLine);
@@ -158,7 +157,6 @@ std::cerr << BLUE << "testcode " << "====_headerBuffer\n" << _headerBuffer << RE
 	while (endLine < headerBoundary) { 
 		newEndLine = _headerBuffer.find("\r\n", endLine);
 		std::string fieldLine(_headerBuffer, endLine, newEndLine - endLine);
-
 		setFieldLine(fieldLine);
 		endLine = newEndLine + 2;
 	}
@@ -222,25 +220,26 @@ void Request::parseChunkedData(Client* client)
 void Request::clearRequest()
 {
 	_location = NULL;
-	// _response = NULL;
 	_state = 0;
-	_headerBuffer = "";
-	_requestBuffer = "";
-	_method = "";
-	_requestPath = "";
-	_version = "";
-	_connection = "";
-	_contentType = "";
+	_headerBuffer.clear();
+	_requestBuffer.clear();
+	_method.clear();
+	_requestPath.clear();
+	_version.clear();
+	_connection.clear();
+	_contentType.clear();
 	_contentLength = 0;
-	_transferEncoding = "";
-	_boundary = "";
+	_transferEncoding.clear();
+	_boundary.clear();
+	_chunkedFilename.clear();
+	_eventState = 0;
 	_bodyStartIndex = 0;
 	_readIndex = 0;
-	// _writeIndex = 0;
 	_chunkedState = 0;
 	_writeEventFlag = false;
 	_bodyTotalSize = -1;
-	_perfectBody = "";
+	_perfectBody.clear();
+	_secretHeader.clear();
 }
 
 void Request::setBuffer(char *buffer, int size)
@@ -354,11 +353,6 @@ const std::string& Request::getChunkedFilename()
 	return _chunkedFilename;
 }
 
-// Client* Request::getResponse() const
-// {
-// 	return _response;
-// }
-
 int Request::getChunkedState() const
 {
 	return _chunkedState;
@@ -377,7 +371,6 @@ std::string& Request::getPerfectBody()
 
 void Request::setChunkedFilename(std::string& chunkedFilename)
 {
-// std::cerr << RED << "chunkedFilename : " << chunkedFilename << RESET << std::endl;
 	_chunkedFilename = chunkedFilename;
 }
 
@@ -386,3 +379,8 @@ int Request::getBodyStartIndex() const
 	return _bodyStartIndex;
 }
 
+
+const std::string& Request::getSecretHeader() const
+{
+	return _secretHeader;
+}

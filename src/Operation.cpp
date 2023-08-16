@@ -135,7 +135,7 @@ void Operation::start() {
 					else if(tevent.ident == client->getReadFd())
 					{
 						// std::cerr << YELLOW << "readfd" << RESET << std::endl;
-						client->printResult();
+						client->printResult(static_cast<size_t>(tevent.data));
 					}	
 					delete[] buffer;
 				}
@@ -149,7 +149,9 @@ void Operation::start() {
 					}
 					else if (tevent.ident == client->getWriteFd())
 					{
-							client->uploadFile(tevent.data);
+					// gcount++;
+					// std::cerr << RED << gcount << RESET << std::endl;
+						client->uploadFile(tevent.data);
 					} 
 				}
 			}
@@ -169,14 +171,13 @@ void Operation::start() {
 	}
 }
 
-
 void Operation::acceptClient(int kq, int index)
 {
 	int				socketFd;
 	sockaddr_in		socketAddr;
 	socklen_t		socketLen;
 	
-	std::cerr << GREEN << "testcode" << "================ ACCEPT =========================" << RESET << std::endl;	
+	std::cerr << GREEN << "testcode" << "================ ACCEPT =========================" << RESET << std::endl;
 	socketFd = accept(_servers[index].getSocket(), reinterpret_cast<struct sockaddr*>(&socketAddr), &socketLen);
 	if (socketFd == -1)
 		throw std::runtime_error("Error: Accept failed");
@@ -188,40 +189,3 @@ std::cerr << YELLOW << "socketFd: " << socketFd <<  RESET << std::endl;
 	client->addEvent(socketFd, EVFILT_READ);
 	client->getReq().setEventState(EVFILT_READ);
 }
-
-// void Operation::sendData(struct kevent& tevent)
-// {
-// std::cerr << "==============================Send data==============================" << std::endl;
-
-// 	Client* client = static_cast<Client*>(tevent.udata);
-
-// // std::cerr << RED << "===client->getReq()->getBuffer()\n"<< client->getReq().getBuffer() << "===" << RESET << std::endl;
-// 	std::cerr << B_CYAN << "testcode " << "tevent.data: " << tevent.data << RESET << std::endl;
-// 	size_t byteWrite = send(tevent.ident, client->getBuffer().str().c_str(), client->getBuffer().str().length(), 0);
-// // std::cerr << "==============================Send data==============================" << std::endl;
-// // std::cerr << YELLOW << client->getBuffer().str().c_str() << RESET << std::endl;
-// std::cerr << GREEN << "buffer length :" << client->getBuffer().str().length() << RESET << std::endl;
-// std::cerr << GREEN << "write byte count :" << byteWrite << RESET << std::endl;
-// std::cerr << GREEN << "testcode : " << "send code: " << client->getStateCode() << RESET << std::endl;
-	
-// 	if (client->getStateCode() >= 400)
-// 	{		
-// 		client->clearClient();
-// 		close(client->getSocket());
-// 		delete client;
-// 		_clients.erase(tevent.ident);
-// 	}
-// 	else if (byteWrite == client->getBuffer().str().length())
-// 	{
-// 		client->clearClient();
-// 		// client->getRequest()->clearRequest();
-// 		client->deleteEvent();
-// 		client->addEvent(tevent.ident, EVFILT_READ);
-// 		client->getReq().setEventState(EVFILT_READ);
-
-// 		// delete client;
-// 		std::cerr << GREEN << "testcode " << "send clear" << RESET << std::endl;	
-// 	}
-// 	else
-// 		std::cerr << GREEN << "testcode " << "bytewrite fail" << RESET << std::endl;
-// }
