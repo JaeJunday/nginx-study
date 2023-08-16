@@ -2,6 +2,7 @@
 #include "Client.hpp"
 #include "include/Color.hpp"
 #include <iostream>
+#include <unistd.h>
 
 Request::Request(Server& server)
 	: _server(server), 

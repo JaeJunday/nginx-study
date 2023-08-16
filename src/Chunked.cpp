@@ -65,6 +65,7 @@ void Client::initCgi()
 
 void Client::childProcess()
 {
+std::cerr << PURPLE << "child process()" << RESET << std::endl;
 	dup2(_writeFd[0], STDIN_FILENO);
 	close(_writeFd[0]);
 	close(_writeFd[1]);
@@ -97,9 +98,14 @@ std::cerr << RED << "_chunkedFilename : " << _request->getChunkedFilename() << R
 	std::cerr << RED << "testcode : " << "scriptPath :" << scriptPath << RESET << std::endl;
 	std::cerr << RED << "testcode : " << "egine :" << engine << RESET << std::endl;
 
+	// std::string argFirst;
+	// size_t lastSlashPos = scriptPath.find_last_of('/');
+    // if (lastSlashPos != std::string::npos) {
+    //     argFirst = scriptPath.substr(lastSlashPos + 1);
+    // }
 	// "./src/cgi/chunked_upload_cgi.py";  // 실행할 파이썬 스크립트의 경로
-	char* const args[] = {const_cast<char*>(engine.c_str()), const_cast<char*>(scriptPath.c_str()), NULL}; 
-	// setenv("FILENAME", _chunkedFilename.c_str(), true);
+	char* const args[] = {const_cast<char*>(engine.c_str()), NULL}; 
+
 	setenv("FILENAME", _request->getChunkedFilename().c_str(), true);
 	setenv("CONTENT_TYPE", _request->getContentType().c_str(), true);
 	setenv("REQUEST_METHOD", _request->getMethod().c_str(), true);
@@ -126,8 +132,9 @@ void Client::uploadFile(size_t pipeSize)
 	std::cerr << RED << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << RESET << std::endl;
 	if (_request->getBodyTotalSize() == _writeIndex)
 	{	
-		std::cerr << "🥳" << YELLOW << "😘end😘" << RESET << std::endl;
+		// std::cerr << "🥳" << YELLOW << "😘end😘" << RESET << std::endl;
 		
+std::cerr << PURPLE << "uploadFile" << RESET << std::endl;
 		close(_writeFd[1]);
 		addEvent(_readFd[0], EVFILT_READ);
 	}
@@ -158,7 +165,7 @@ void Client::printResult()
 			_responseBuffer << "HTTP/1.1 200 OK\r\n";
 			_responseBuffer << msg.substr(msg.find("\r\n") + 2, msg.size() - msg.find("\r\n") - 2);	
 			//body 제대로 만들어졌는지 확인
-			// std::cerr << YELLOW << _responseBuffer.str() << RESET << std::endl;
+			std::cerr << YELLOW << _responseBuffer.str() << RESET << std::endl;
 		}
 		close(_readFd[0]);	
 		waitpid(_pid, NULL, 0);

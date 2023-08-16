@@ -116,6 +116,7 @@ void Operation::start() {
 		{	
 			if (tevent.filter == EVFILT_READ)
 			{
+				std::cerr << B_CYAN << "create recv(char *)buffer in operation" << RESET << std::endl;
 				Client* client = static_cast<Client*>(tevent.udata);
 				char* buffer = new char[tevent.data];
 				ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
@@ -158,17 +159,18 @@ void Operation::start() {
 				}
 				else if(tevent.ident == client->getReadFd())
 				{
+					std::cerr << YELLOW << "readfd" << RESET << std::endl;
 					client->printResult();
 				}	
 				// Request *req = static_cast<Request*>(tevent.udata);
 				// std::cerr << RED << "testcode " << "recv, detect socket fd : " << tevent.ident << RESET << std::endl;
 				// write(1, buffer, tevent.data);
 				// std::cerr << std::endl;
+				std::cerr << CYAN << "delete recv(char *)buffer in operation" << RESET << std::endl;
 				delete[] buffer;
 			}
 			else if (tevent.filter == EVFILT_WRITE)
 			{
-// std::cerr << RED << "받고잇어용 😍" << RESET << std::endl;
 				Client* client = static_cast<Client*>(tevent.udata);
 				if (tevent.ident == client->getSocket())
 				{
@@ -176,7 +178,8 @@ void Operation::start() {
 				}
 				else if (tevent.ident == client->getWriteFd())
 				{
-					std::cerr << RED << ": writeevent" << RESET << std::endl;
+					std::cerr << YELLOW << "writeFD" << RESET << std::endl;
+					// std::cerr << RED << ": writeevent" << RESET << std::endl;
 					client->uploadFile(tevent.data);
 				}
 			}

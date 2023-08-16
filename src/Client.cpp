@@ -252,7 +252,7 @@ void Client::addEvent(int fd, int filter)
 
 void Client::clearClient()
 {
-std::cerr << YELLOW << "clear!" << RESET << std::endl;
+// std::cerr << YELLOW << "clear!" << RESET << std::endl;
 	_request->clearRequest();
 	if (_writeFd[0] != -1)
 		close(_writeFd[0]);
@@ -364,4 +364,5 @@ void Client::handleResponse(struct kevent *tevent)
 		addEvent(tevent->ident, EVFILT_WRITE);
 		_request->setEventState(EVFILT_WRITE);
 	}
+	std::cerr << GREEN << "end handle response" << RESET << std::endl;
 }
