@@ -30,7 +30,7 @@ class Request
 		std::string			_headerBuffer;
 		std::string			_requestBuffer;
 		std::string			_method;
-		std::string			_requestUrl;
+		std::string			_requestPath;
 		std::string			_version;
 		std::string			_ip;
 		uint32_t			_port;

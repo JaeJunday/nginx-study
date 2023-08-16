@@ -34,7 +34,7 @@ Request& Request::operator=(const Request& rhs)
 		_headerBuffer = rhs._headerBuffer;
 		_requestBuffer = rhs._requestBuffer;
 		_method = rhs._method;
-		_requestUrl = rhs._requestUrl;
+		_requestPath = rhs._requestPath;
 		_version = rhs._version;
 		_ip = rhs._ip;
 		_port = rhs._port;
@@ -86,7 +86,7 @@ void Request::setRequestLine(std::string& requestLine)
 	if (token[2] != "HTTP/1.1")
 		throw 400;
 	_method = token[0];
-	_requestUrl = token[1];
+	_requestPath = token[1];
 	_version = token[2];
 }
 
@@ -219,24 +219,6 @@ void Request::parseChunkedData(Client* client)
 	_chunkedState = chunk::INCOMPLETE_DATA;
 }
 
-// void Request::makeResponse(int kq)
-// {
-// 	if (_method.empty())
-// 		throw 405;
-// 	if (_method == "GET")
-// 		_response = new Get(this, kq);
-// 	else if (_transferEncoding == "chunked")
-// 	{
-// 		_response = new Chunked(this, kq);
-// 		_response->createResponse();
-// 	}
-// 	else if (_method == "POST" || _method == "PUT")
-// 		_response = new Post(this, kq);
-// 	else if (_method == "DELETE")
-// 		_response = new Delete(this, kq);
-// 	_state = request::DONE;
-// }
-
 void Request::clearRequest()
 {
 	_location = NULL;
@@ -245,7 +227,7 @@ void Request::clearRequest()
 	_headerBuffer = "";
 	_requestBuffer = "";
 	_method = "";
-	_requestUrl = "";
+	_requestPath = "";
 	_version = "";
 	_connection = "";
 	_contentType = "";
@@ -318,7 +300,7 @@ const std::string& Request::getVersion() const
 
 const std::string& Request::getRequestUrl() const
 {
-	return _requestUrl;
+	return _requestPath;
 }
 
 int Request::getState() const

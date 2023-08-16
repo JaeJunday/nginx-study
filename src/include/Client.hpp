@@ -7,6 +7,7 @@
 #include "Util.hpp"
 #include "Server.hpp"
 #include "Color.hpp"
+#include <cstdint>
 #include <iostream> 
 #include <string> 
 #include <ctime>
@@ -43,7 +44,8 @@ class Client
 		std::stringstream	_responseBuffer;
 		int					_kq;
 		int					_writeIndex;
-		// bool				_writeEventFlag;
+		std::string			_convertRequestPath;
+		size_t				_sendIndex;
 	
 		Client(const Client& src); 
 		Client& operator=(const Client& rhs);
@@ -62,6 +64,9 @@ class Client
 		void postProcess();
 		void deleteProcess();
 		void errorProcess(int errnum);
+
+
+		bool sendData(struct kevent& tevent);
 
 	// get.cpp
         // void getCreateResponse(); //override

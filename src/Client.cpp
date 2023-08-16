@@ -26,12 +26,13 @@ _serverName("My Server"),
 _contentType("text/html"),
 _contentLength(0),
 _kq(kq),
-_writeIndex(0)
+_writeIndex(0),
+_sendIndex(0)
 {
-	_readFd[0] = -1;
-	_readFd[1] = -1;
-	_writeFd[0] = -1;
-	_writeFd[1] = -1;
+	_readFd[0] = -2;
+	_readFd[1] = -2;
+	_writeFd[0] = -2;
+	_writeFd[1] = -2;
 }
 
 Client::Client(const Client& src)
@@ -216,56 +217,36 @@ void Client::addEvent(int fd, int filter)
 
     if (filter == EVFILT_READ)
     {
+		std::cerr << GREEN << "Read eventSet" << RESET << std::endl;
         EV_SET(&event, fd, EVFILT_READ, EV_ADD, 0, 0, this);
         if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
             std::cerr << "invalid Read event set 1" << std::endl;
     }
     else if (filter == EVFILT_WRITE)
     {
+		std::cerr << GREEN << "Write eventSet" << RESET << std::endl;
         EV_SET(&event, fd, EVFILT_WRITE, EV_ADD, 0, 0, this);
         if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
             std::cerr << "invalid Write event set 1" << std::endl;
     }
 }
 
-//pipe 전용 event setter
-// void Client::addEvent(int filter)
-// {
-//     struct kevent event;
-
-//     // ADD
-//     if (filter == event::READ)
-//     {
-//         EV_SET(&event, _socketFd, EVFILT_READ, EV_ADD, 0, 0, this);
-//         if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
-//             std::cerr << "invalid Read event set 2" << std::endl;
-//     }
-//     else if (filter == event::WRITE && _writeEventFlag == false)
-//     {
-//         EV_SET(&event, _socketFd, EVFILT_WRITE, EV_ADD, 0, 0, this);
-//         if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
-//             std::cerr << "invalid Write event set 2" << std::endl;
-// 		// state set
-// 		_writeEventFlag = true;
-//     }
-// }
-
 void Client::clearClient()
 {
 // std::cerr << YELLOW << "clear!" << RESET << std::endl;
 	_request->clearRequest();
-	if (_writeFd[0] != -1)
+	if (_writeFd[0] != -2)
 		close(_writeFd[0]);
-	if (_writeFd[1] != -1)
+	if (_writeFd[1] != -2)
 		close(_writeFd[1]);
-	if (_readFd[0] != -1)
+	if (_readFd[0] != -2)
 		close(_readFd[0]);
-	if (_readFd[1] != -1)
+	if (_readFd[1] != -2)
 		close(_readFd[1]);
-	_writeFd[0] = -1;
-	_writeFd[1] = -1;
-	_readFd[0] = -1;
-	_readFd[1] = -1;
+	_writeFd[0] = -2;
+	_writeFd[1] = -2;
+	_readFd[0] = -2;
+	_readFd[1] = -2;
 	_pid = -2;
 	_chunkedFilename.clear();
 	_stateCode = 200;
@@ -273,7 +254,9 @@ void Client::clearClient()
 	_contentType.clear();
 	_contentLength = 0;
 	_responseBuffer.str("");
+	_convertRequestPath.clear();
 	_writeIndex = 0;
+	_sendIndex = 0;
 }
 
 int Client::getWriteFd() const
@@ -295,7 +278,7 @@ void Client::handleRequest(struct kevent* tevent, char* buffer)
 	}
 	if (_request->getState() == request::CREATE)
 	{	
-		findLocationPath();
+		_convertRequestPath = findLocationPath();
 		checkLimitExcept();
 		if (_request->getMethod() == "POST" || _request->getMethod() == "PUT")
 			initCgi();
@@ -309,13 +292,6 @@ void Client::handleRequest(struct kevent* tevent, char* buffer)
 
 void Client::handleResponse(struct kevent *tevent)
 {
-// chunkedBuffer 를 파싱하여 body길이가 정확할 경우 substr을 통해 body 데이터를 잘라서 (createResponse) writeFd에 써줌
-// index로 파싱한 부분의 시작지점을 가지고 있음 (즉, body size 의 시작지점)
-// 0/r/n/r/n 만나고 나서  파이프 다 쓰면 close(writeFd)
-	// buffer의 len을 읽어서 숫자를 보고 
-	// body index 부터 
-	// Request req = client->getReq();
-	// std::cerr << RED << "_request->getTransferEncoding() : " << _request->getTransferEncoding() << RESET << std::endl;
 	if (_request->getTransferEncoding() == "chunked")
 	{
 		while (true) // 한번 돌때 완성된 문자열 하나씩 처리
@@ -364,5 +340,42 @@ void Client::handleResponse(struct kevent *tevent)
 		addEvent(tevent->ident, EVFILT_WRITE);
 		_request->setEventState(EVFILT_WRITE);
 	}
-	std::cerr << GREEN << "end handle response" << RESET << std::endl;
 }
+
+bool Client::sendData(struct kevent& tevent)
+{
+// std::cerr << "==============================Send data==============================" << std::endl;
+std::cerr << B_CYAN << "testcode " << "tevent.data: " << tevent.data << RESET << std::endl;
+	size_t responseBufferSize = _responseBuffer.str().size();
+	size_t sendBufferSize = std::min(responseBufferSize - _sendIndex, (size_t)tevent.data);
+std::cerr << BLUE << "_sendIndex before:" << _sendIndex << RESET << std::endl;
+	size_t byteWrite = send(tevent.ident, _responseBuffer.str().c_str() + _sendIndex, sendBufferSize, 0);
+	if (byteWrite <= 0 || _stateCode >= 400)
+	{
+		clearClient();
+		close(_socketFd);
+		delete this;
+		return false;
+	}
+	_sendIndex += byteWrite;
+// std::cerr << YELLOW << client->getBuffer().str().c_str() << RESET << std::endl;
+std::cerr << GREEN << "buffer length :" << responseBufferSize << RESET << std::endl;
+std::cerr << GREEN << "write byte count :" << byteWrite << RESET << std::endl;
+std::cerr << RED << "_sendIndex after:" << _sendIndex << RESET << std::endl;
+std::cerr << GREEN << "testcode : " << "send code: " << _stateCode << RESET << std::endl;
+	if (_sendIndex == responseBufferSize)
+	{
+		clearClient();
+		_request->clearRequest();
+		deleteEvent();
+		addEvent(tevent.ident, EVFILT_READ);
+		_request->setEventState(EVFILT_READ);
+		std::cerr << GREEN << "testcode " << "send clear" << RESET << std::endl;	
+	}
+	else
+	{
+		// std::cerr << GREEN << "testcode " << "bytewrite fail" << RESET << std::endl;
+	}
+	return true;
+}
+

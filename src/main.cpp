@@ -25,8 +25,9 @@ int main(int argc, char **argv)
     catch(std::exception &e) 
     {
         std::cerr << "Main catch >> " << e.what() << std::endl;
+        // operation.start();
         // exit(0);
-        return EXIT_FAILURE;
+        // return EXIT_FAILURE;
     }
     
 //---------------------------------------------- testcode
