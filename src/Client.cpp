@@ -324,7 +324,7 @@ void Client::handleResponse(struct kevent *tevent)
 			}
 		}
 	}
-	else if (_request->getBuffer().size() - _request->getBodyIndex()  == _request->getContentLength())
+	else if (_request->getBuffer().size() - _request->getBodyIndex()  == util::stoui(_request->getContentLength()))
 	{
 		// if (_request->getMethod() == "POST" && (_request->getContentLength() == 0 || _request->getBuffer().size() == 0))
 		// 	throw 405;

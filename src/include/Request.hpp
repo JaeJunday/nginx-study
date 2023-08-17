@@ -23,35 +23,36 @@ class Request
 	private:
 		Server&				_server;
 		Location*			_location;
-		int					_state;
 		std::string			_headerBuffer;
 		std::string			_requestBuffer;
 		std::string			_method;
 		std::string			_requestPath;
 		std::string			_version;
 		std::string			_ip;
-		uint32_t			_port;
 		std::string			_connection;
 		std::string			_contentType;
-		unsigned int		_contentLength;
+		std::string			_contentLength;
 		std::string			_transferEncoding;
 		std::string			_boundary;
+		std::string			_chunkedFilename;
+		std::string 		_perfectBody;
+		std::string			_secretHeader;
+
+		uint32_t			_port;
+		int					_state;
 		int					_eventState;
 		int 				_bodyStartIndex;
 		int 				_bodyTotalSize;
 		// chunked
-		std::string			_chunkedFilename;
 		int					_chunkedState;
-		std::string 		_perfectBody;
 		int					_readIndex;
 		bool				_writeEventFlag;
-		std::string			_secretHeader;
 
 	public:
 		Request(Server& server);
 		Request(const Request& request);
 		Request& operator=(Request const& rhs);
-		// ~Request();
+		~Request();
 		void 				headerParsing(char* buf, intptr_t size);
 		void				checkMultipleSpaces(const std::string& str);
 		void				clearRequest();
@@ -70,7 +71,7 @@ class Request
 		const std::string&	getRequestUrl() const;
 		const std::string&	getTransferEncoding() const;
 		const std::string&	getConnection() const;
-		unsigned int 		getContentLength() const;
+		const std::string&	getContentLength() const;
 		const std::string&	getBoundary() const;
 		Location*			getLocation() const;
 		const std::string&	getContentType();
@@ -81,7 +82,7 @@ class Request
 		int 				getChunkedState() const;
 		int 				getBodyTotalSize() const;
 		std::string&		getPerfectBody();
-		int getBodyStartIndex() const;
+		int 				getBodyStartIndex() const;
 		const std::string&	getSecretHeader() const;
 
 		// set

@@ -11,6 +11,7 @@ class ChunkedData:
 def create_files(chunked_data, output_directory):
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
+
     # 바이너리 파일 처리
     if chunked_data.content_type and '/' in chunked_data.content_type:
         chunked_data.filename = f"{chunked_data.filename}"
@@ -23,7 +24,7 @@ if __name__ == "__main__":
     try:
         # 바운더리 변수
         output_directory = "./public"
-        filename = os.environ.get("FILENAME")
+        # filename = os.environ.get("FILENAME")
         content_type = os.environ.get("CONTENT_TYPE")
         # 테스트를 위한 HTTP 본문 예제 (바이트로 변환)
         http_body = sys.stdin.buffer.read()

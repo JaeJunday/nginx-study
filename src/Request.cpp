@@ -2,11 +2,10 @@
 #include "Client.hpp"
 
 Request::Request(Server& server)
-	: _server(server), 
+	: _server(server),
 	_location(NULL),
-	_state(request::READY),
 	_port(0), 
-	_contentLength(0), 
+	_state(request::READY),
 	_eventState(0), 
 	_bodyStartIndex(0), 
 	_bodyTotalSize(-1),
@@ -24,9 +23,9 @@ Request::Request(const Request& request)
 	*this = request;
 }
 
-// Request::~Request()
-// {
-// }
+Request::~Request()
+{
+}
 
 Request& Request::operator=(const Request& rhs)
 {
@@ -110,8 +109,9 @@ void Request::setFieldLine(std::string& fieldLine)
 		size_t mid = token[1].find(":");
 		if (mid == std::string::npos)
 		{
-			std:: cerr << "ERROR : HOST ERROR" << std::endl;
-			throw 404;
+			token[1] += ":80";
+			// std:: cerr << "ERROR : HOST ERROR" << std::endl;
+			// throw 404;
 		}
 		_ip = std::string(token[1], 0, mid);
 		_port = util::stoui(std::string(token[1], mid + 1, token[1].size() - (mid + 1)));
@@ -125,7 +125,7 @@ void Request::setFieldLine(std::string& fieldLine)
 			_contentType = token[1]; 
 	} 
 	if (token[0] == "Content-Length")
-		_contentLength = util::stoui(token[1]);
+		_contentLength = token[1];
 	if (token[0] == "Transfer-Encoding")
 		_transferEncoding = token[1];
 	if (token[0] == "Connection")
@@ -191,10 +191,17 @@ void Request::parseChunkedData(Client* client)
 		{
 			if (_requestBuffer.find("\r\n", bodyStart) != std::string::npos)
 			{
-				_bodyTotalSize = _perfectBody.size();
-				// _response->endResponse();
-				// std::cerr << GREEN << _bodyTotalSize << RESET << std::endl;
 				_chunkedState = chunk::END;
+				_bodyTotalSize = _perfectBody.size();
+				if (_location->_clientMaxBodySize.empty() == false)
+				{
+					std::cerr << BLUE << "maxbodysize: " <<  util::stoui(_location->_clientMaxBodySize) << RESET << std::endl;
+					std::cerr << BLUE << "bodySize: " << _perfectBody.size() << std::endl;
+					if (_perfectBody.size() > util::stoui(_location->_clientMaxBodySize))
+						throw 413;
+				}
+				// _response->endResponse();
+				std::cerr << GREEN << _bodyTotalSize << RESET << std::endl;
 				return;
 			}
 		} 
@@ -228,7 +235,7 @@ void Request::clearRequest()
 	_version.clear();
 	_connection.clear();
 	_contentType.clear();
-	_contentLength = 0;
+	_contentLength.clear();
 	_transferEncoding.clear();
 	_boundary.clear();
 	_chunkedFilename.clear();
@@ -277,7 +284,7 @@ const std::string& Request::getTransferEncoding() const
 	return _transferEncoding;
 }
 
-unsigned int Request::getContentLength() const
+const std::string& Request::getContentLength() const
 {
 	return _contentLength;
 }
@@ -362,7 +369,6 @@ int Request::getBodyTotalSize() const
 {
 	return _bodyTotalSize;
 }
-
 
 std::string& Request::getPerfectBody()
 {

@@ -12,10 +12,11 @@
 
 void Client::initCgi()
 {
-	std::cerr << RED << "_request->getRequestUrl() : " << _request->getRequestUrl() << RESET << std::endl;
-	std::vector<std::string> url = util::getToken(_request->getRequestUrl(), "/");
-	if (url.size() >= 1)
-		_request->setChunkedFilename(url[url.size() - 1]);
+	std::cerr << RED << "0/r/n/r/n to check broken pipe" << RESET << std::endl;
+	// std::cerr << RED << "_request->getRequestUrl() : " << _request->getRequestUrl() << RESET << std::endl;
+	// std::vector<std::string> url = util::getToken(_request->getRequestUrl(), "/");
+	// if (url.size() >= 1)
+		// _request->setChunkedFilename(url[url.size() - 1]);
 	pipe(_writeFd);
 	pipe(_readFd);
 	addEvent(_readFd[0], EVFILT_READ);
@@ -42,42 +43,20 @@ std::cerr << PURPLE << "child process()" << RESET << std::endl;
 
 void Client::execveCgi() const
 {
-	std::string scriptPath;
-	std::string engine;
-
-//std::cerr << RED << "location: " << _request->getLocation()->_path << RESET << std::endl;
-//std::cerr << RED << "_chunkedFilename : " << _request->getChunkedFilename() << RESET << std::endl;
-
-	if (_request->getChunkedFilename().find(".bla") != std::string::npos)
-	{
-		scriptPath = "." + _request->getLocation()->_bla;
-		engine = scriptPath;
-	}
-	else
-	{
-		scriptPath = "." + _request->getLocation()->_py;
-		engine = scriptPath;
-	}
-
-	// std::cerr << RED << "testcode : " << "scriptPath :" << scriptPath << RESET << std::endl;
-	// std::cerr << RED << "testcode : " << "egine :" << engine << RESET << std::endl;
-
-	// std::string argFirst;
-	// size_t lastSlashPos = scriptPath.find_last_of('/');
-    // if (lastSlashPos != std::string::npos) {
-    //     argFirst = scriptPath.substr(lastSlashPos + 1);
-    // }
-	// "./src/cgi/chunked_upload_cgi.py";  // 실행할 파이썬 스크립트의 경로
+	std::string engine = "." + _request->getLocation()->_py;
 	char* const args[] = {const_cast<char*>(engine.c_str()), NULL}; 
 
-	setenv("FILENAME", _request->getChunkedFilename().c_str(), true);
-	setenv("CONTENT_TYPE", _request->getContentType().c_str(), true);
-	setenv("REQUEST_METHOD", _request->getMethod().c_str(), true);
-	setenv("SERVER_PROTOCOL", "HTTP/1.1", true);
-	setenv("PATH_INFO", scriptPath.c_str(), true);
+	if (_request->getChunkedFilename().find(".bla") != std::string::npos)
+		engine = "." + _request->getLocation()->_bla;
+	setenv("BOUNDARY", _request->getBoundary().c_str(), true);
 	setenv("DOCUMENT_ROOT", _convertRequestPath.c_str(), true);
-	if (_request->getSecretHeader().empty() == false)
-		setenv("X_SECRET_HEADER_FOR_TEST", _request->getSecretHeader().c_str(), true);
+	setenv("REQUEST_METHOD", _request->getMethod().c_str(), true);
+	setenv("PATH_INFO", engine.c_str(), true);
+	setenv("SERVER_PROTOCOL", "HTTP/1.1", true);
+	setenv("CONTENT_LENGTH", _request->getContentLength().c_str(), true);
+	setenv("CONTENT_TYPE", _request->getContentType().c_str(), true);
+	setenv("TRANSFER_ENCODING", _request->getTransferEncoding().c_str(), true);
+	setenv("X_SECRET_HEADER_FOR_TEST", _request->getSecretHeader().c_str(), true);
 	extern char** environ;
 	if (execve(engine.c_str(), args, environ) == -1) {
 		perror("execve");  // 오류 처리
@@ -110,7 +89,7 @@ void Client::printResult(size_t pipeSize)
 	std::string readBuffer;
 	memset(tempBuffer, 0, pipeSize);
 
-	std::cerr << RED << "pipeSize : " << pipeSize << RESET << std::endl;
+	// std::cerr << RED << "pipeSize : " << pipeSize << RESET << std::endl;
 	ssize_t readSize = read(_readFd[0], tempBuffer, pipeSize);
 	if (readSize < 0)
 		throw 500;

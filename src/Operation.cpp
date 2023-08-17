@@ -117,8 +117,9 @@ void Operation::start() {
 				{
 					char* buffer = new char[tevent.data];
 					ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
-					// std::cerr << RED << "recv : " << tevent.ident << ":"<< RESET << std::endl;
-					// write(1, buffer, bytesRead);
+					std::cerr << RED << "recv : " << tevent.ident << ":"<< RESET << std::endl;
+					write(1, buffer, bytesRead);
+					std::cerr << std::endl;
 					if (tevent.ident == client->getSocket())
 					{	
 						if (bytesRead == false || client->getReq().getConnection() == "close")
@@ -177,7 +178,7 @@ void Operation::acceptClient(int kq, int index)
 	sockaddr_in		socketAddr;
 	socklen_t		socketLen;
 	
-	std::cerr << GREEN << "testcode" << "================ ACCEPT =========================" << RESET << std::endl;
+std::cerr << GREEN << "testcode" << "================ ACCEPT =========================" << RESET << std::endl;
 	socketFd = accept(_servers[index].getSocket(), reinterpret_cast<struct sockaddr*>(&socketAddr), &socketLen);
 	if (socketFd == -1)
 		throw std::runtime_error("Error: Accept failed");
