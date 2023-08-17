@@ -1,14 +1,5 @@
 #include "Client.hpp"
 
-// NOTE_EXIT -> 프로세스 종료될때 이벤트 발생
-// EV_SET(&event, pid, NOTE_EXIT, EV_ADD, 0, 0, nullptr);
-// kevent(kq, &event, 1, NULL, 0, NULL);
-
-// Chunked::Chunked(Request* request, int kq) : Client(kq), _pid(-2)
-// {
-// 	_request = request;
-// }
-
 void Client::initCgi()
 {
 	std::cerr << RED << "func: initCgi()" << RESET << std::endl;
@@ -44,7 +35,7 @@ void Client::execveCgi() const
 {
 	std::string engine = "." + _request->getLocation()->_py;
 
-	if (_request->getChunkedFilename().find(".bla") != std::string::npos)
+	if (_convertRequestPath.find(".bla") != std::string::npos)
 		engine = "." + _request->getLocation()->_bla;
 	char* const args[] = {const_cast<char*>(engine.c_str()), NULL};
 	setenv("BOUNDARY", _request->getBoundary().c_str(), true);
@@ -54,8 +45,8 @@ void Client::execveCgi() const
 	setenv("SERVER_PROTOCOL", "HTTP/1.1", true);
 	setenv("CONTENT_LENGTH", _request->getContentLength().c_str(), true);
 	setenv("CONTENT_TYPE", _request->getContentType().c_str(), true);
-	setenv("TRANSFER_ENCODING", _request->getTransferEncoding().c_str(), true);
-	setenv("X_SECRET_HEADER_FOR_TEST", _request->getSecretHeader().c_str(), true);
+	setenv("HTTP_TRANSFER_ENCODING", _request->getTransferEncoding().c_str(), true);
+	setenv("HTTP_X_SECRET_HEADER_FOR_TEST", _request->getSecretHeader().c_str(), true);
 	extern char** environ;
 	if (execve(engine.c_str(), args, environ) == -1) {
 		perror("execve");  // 오류 처리
@@ -71,7 +62,7 @@ void Client::uploadFile(size_t pipeSize)
 	if (writeSize <= 0)
 		throw 500;
 	_writeIndex += writeSize;
-// std::cerr << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << std::endl;
+std::cerr << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << std::endl;
 	if (_request->getBodyTotalSize() == _writeIndex)
 		close(_writeFd[1]);
 }
@@ -102,6 +93,7 @@ void Client::printResult(size_t pipeSize)
 
 void Client::endChildProcess()
 {
+	// std::cerr << RED << "endchildprocess" << RESET << std::endl;
 	waitpid(_pid, NULL, 0);
 	// 반환값 받아서 확인 
 	deleteEvent();	
@@ -116,11 +108,11 @@ pid_t Client::getPid() const
 
 void Client::postProcess()
 {
-	_request->setPerfectBody(_request->getBuffer().c_str() + _request->getBodyStartIndex());
-	_request->setBodyTotalSize(_request->getPerfectBody().size());
+	std::string body = _request->getBuffer().substr(_request->getBodyStartIndex(), util::stoui(_request->getContentLength()));
+	_request->setPerfectBody(body);
+	_request->setBodyTotalSize(body.size());
 	addEvent(_writeFd[1], EVFILT_WRITE);
 }
-
 
 //secret header set env해줘야함
 // 0은 가능 100까지만 가능하게 제한 pos

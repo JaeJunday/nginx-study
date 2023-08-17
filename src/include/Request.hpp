@@ -94,7 +94,7 @@ class Request
 		void setEventState(int eventState);
 		void setChunkedFilename(std::string& chunkedFilename);
 		void setBodyTotalSize(int bodyTotalSize);
-		void setPerfectBody(std::string perfectBody);
+		void setPerfectBody(std::string& body);
 
 };
 //event process

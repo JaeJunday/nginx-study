@@ -119,10 +119,10 @@ void Request::setFieldLine(std::string& fieldLine)
 	if (token[0] == "Content-Type")
 	{
 		const std::string hash = "boundary=";
-		if (int index = token[1].find(hash) != std::string::npos)
-			_boundary = "--" + std::string(token[1], index + hash.length(), token[1].size() - index);
-		else 
-			_contentType = token[1]; 
+		int index = token[1].find(hash);
+		if (index != std::string::npos)
+			_boundary = "--" + std::string(token[1], index + hash.length(), token[1].size() - (index + hash.length()));
+		_contentType = token[1];
 	} 
 	if (token[0] == "Content-Length")
 		_contentLength = token[1];
@@ -146,7 +146,7 @@ void Request::headerParsing(char* buf, intptr_t size)
 	int headerBoundary = _headerBuffer.find("\r\n\r\n");
 	if (headerBoundary == std::string::npos)
 		return ;
-std::cout << BLUE << "testcode " << "====_headerBuffer\n" << _headerBuffer.substr(0, _headerBuffer.find("\r\n\r\n")) << RESET << std::endl;
+std::cout << BLUE << "testcode " << "====headerbuff <" << _headerBuffer.substr(0, _headerBuffer.find("\r\n\r\n")) << RESET << std::endl;
 	_state = request::CREATE;
 	int endLine = _headerBuffer.find("\r\n");
 	std::string requestLine(_headerBuffer, 0, endLine);
@@ -201,7 +201,6 @@ void Request::parseChunkedData(Client* client)
 						throw 413;
 				}
 				// _response->endResponse();
-				std::cerr << GREEN << _bodyTotalSize << RESET << std::endl;
 				return;
 			}
 		} 
@@ -264,9 +263,9 @@ void Request::setState(int state)
 	_state = state;
 }
 
-void Request::setPerfectBody(std::string perfectBody)
+void Request::setPerfectBody(std::string& body)
 {
-	_perfectBody = perfectBody;
+	_perfectBody = body;
 }
 
 void Request::setBodyTotalSize(int bodyTotalSize)

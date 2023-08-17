@@ -4,19 +4,18 @@ import os
 import re
 
 def get_filename():
-    filepath = os.eviron.get("DOCUMENT_ROOT")
+    filepath = os.environ.get("DOCUMENT_ROOT")
     lastpart = filepath.split("/")[-1]
     return lastpart
 
 def handle_chunked(output_directory):
     post_data = sys.stdin.read() # Read the raw POST data till EOF
-
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
     filename = get_filename()
     output_path = os.path.join(output_directory, filename)
     with open(output_path, 'wb') as file:
-        file.write(post_data)
+        file.write(post_data.encode("utf-8"))
 
 def parse_data(output_directory):
     boundary = os.environ.get("BOUNDARY")
@@ -31,11 +30,10 @@ def parse_data(output_directory):
             filename = get_filename()
             output_path = os.path.join(output_directory, filename)
             with open(output_path, 'wb') as file:
-                file.write(post_data)
-        elif content_type.startswith(' multipart/form-data'):
-            print("here")
-            parts = post_data.split(boundary)
-            for part in parts[:-1]:
+                file.write(post_data.encode("utf-8"))
+        elif content_type.startswith('multipart/form-data'):
+            parts = post_data.split(boundary.encode('utf-8'))
+            for part in parts[1:-1]:
                 header, content = part.split(b'\r\n\r\n', 1)
                 filename_match = re.search(r'filename="(.*?)"', header.decode(), re.DOTALL)
                 if filename_match:
@@ -71,7 +69,7 @@ if __name__ == "__main__":
         sys.exit(1)
     try:
         print("State: 200 OK\r\n", end='')
-        print("Content-Type: text/plain\r\n\r\n", end='')
+        print("Content-Type: text/html\r\n\r\n", end='')
         print(cgi_body, end='')
     except Exception as e:
         print(f"PRINT ERROR IN CGI.PY: {str(e)}", file=sys.stderr)
