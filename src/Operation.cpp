@@ -189,6 +189,10 @@ std::cerr << GREEN << "testcode" << "================ ACCEPT ===================
 	socketFd = accept(_servers[index].getSocket(), reinterpret_cast<struct sockaddr*>(&socketAddr), &socketLen);
 	if (socketFd == -1)
 		throw std::runtime_error("Error: Accept failed");
+	struct linger linger_opt;
+    linger_opt.l_onoff = 1; // Linger 활성화
+    linger_opt.l_linger = 0; // Linger 시간 (0은 즉시 소켓 버퍼를 비우도록 설정)
+    setsockopt(socketFd, SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
 std::cerr << YELLOW << "socketFd: " << socketFd <<  RESET << std::endl;
 	fcntl(socketFd, F_SETFL, O_NONBLOCK);
 	Request *request = new Request(_servers[index]);
