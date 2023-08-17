@@ -134,31 +134,22 @@ std::string Client::findLocationPath() const
 }
 
 void Client::checkLimitExcept() const
-{	
-	std::string limit = _request->getLocation()->_limitExcept;
-	if (!limit.empty())
+{
+	std::vector<std::string> limit = _request->getLocation()->_limitExcept;
+	int limitSize = limit.size();
+	if (limitSize)
 	{	
-		std::vector<std::string> allowMethod = util::getToken(limit, " ");
-		int limitSize = allowMethod.size();
-		if (limitSize)
+		int i = 0;
+		while(i < limitSize)
 		{
-			std::cerr << B_RED << "testcode " << "allowMethod IN" << RESET << std::endl;
-			int i = 0;
-			while(i < limitSize)
-			{
-				if (allowMethod[i] == _request->getMethod())
-				{
-std::cerr << B_RED << "get method : " << _request->getMethod() << RESET << std::endl; 
-std::cerr << B_RED << "testcode allowMethod" << allowMethod[i] << RESET << std::endl;
-					break;
-				}
-				++i;
-			}
-			if (i == limitSize)
-			{
-				std::cerr << B_RED << "testcode " << "Error : no accept method." << RESET << std::endl;
-				throw 405;
-			}
+			if (limit[i] == _request->getMethod())
+				break;
+			++i;
+		}
+		if (i == limitSize)
+		{
+			std::cerr << B_RED << "testcode " << "Error : no accept method." << RESET << std::endl;
+			throw 405;
 		}
 	}
 }
@@ -332,11 +323,12 @@ void Client::handleResponse(struct kevent *tevent)
 		{
 			getProcess();
 		}
-		if (_request->getMethod() == "POST" || _request->getMethod() == "PUT")
+		else if (_request->getMethod() == "POST" || _request->getMethod() == "PUT")
 		{
 			postProcess();
+			return;
 		}
-		if (_request->getMethod() == "DELETE")
+		else if (_request->getMethod() == "DELETE")
 		{
 			deleteProcess();
 		}
@@ -348,9 +340,7 @@ void Client::handleResponse(struct kevent *tevent)
 
 bool Client::sendData(struct kevent& tevent)
 {
-	// ++gcount;
-	// std::cerr << RED << gcount << RESET << std::endl;
-// std::cerr << "==============================Send data==============================" << std::endl;
+std::cerr << "==============================Send data==============================" << std::endl;
 // std::cerr << B_CYAN << "testcode " << "tevent.data: " << tevent.data << RESET << std::endl;
 	size_t responseBufferSize = _responseBuffer.str().size();
 	size_t sendBufferSize = std::min(responseBufferSize - _sendIndex, (size_t)tevent.data);
@@ -372,10 +362,8 @@ bool Client::sendData(struct kevent& tevent)
 // std::cerr << GREEN << "testcode : " << "send code: " << _stateCode << RESET << std::endl;
 	if (_sendIndex == responseBufferSize)
 	{
-		// gcount = 0;
 		deleteEvent();
 		clearClient();
-		// _request->clearRequest();
 		addEvent(tevent.ident, EVFILT_READ);
 		_request->setEventState(EVFILT_READ);
 		// std::cerr << GREEN << "testcode " << "===========send clear==============" << RESET << std::endl;

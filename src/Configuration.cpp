@@ -226,7 +226,12 @@ void Configuration::setValue(std::vector<std::string> &token, int *checklist)
 			else if (state == state::LOCATION)
 			{
 				index = findLocationKey(token[i]);
-				setLocationValue(location, index, token[++i]);
+				i += 1;
+				while (checklist[i] != token::SEMICOLON)
+				{
+					setLocationValue(location, index, token[i]);
+					++i;
+				}
 			}
 		}
 		else if (checklist[i] == token::PATH)
@@ -332,7 +337,7 @@ void Configuration::setLocationValue(Location& location, int index, std::string&
 		case location::CLIENT_MAX_BODY_SIZE:
 			location._clientMaxBodySize = value; break;
 		case location::LIMIT_EXCEPT:
-			location._limitExcept = value; break;
+			location._limitExcept.push_back(value); break;
 		case location::TRY_FILES:
 			location._tryFiles = value; break;
 	}

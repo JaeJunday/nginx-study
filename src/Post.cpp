@@ -9,20 +9,20 @@
 // 	_request = request;
 // }
 
-
 void Client::initCgi()
 {
-	std::cerr << RED << "0/r/n/r/n to check broken pipe" << RESET << std::endl;
-	// std::cerr << RED << "_request->getRequestUrl() : " << _request->getRequestUrl() << RESET << std::endl;
-	// std::vector<std::string> url = util::getToken(_request->getRequestUrl(), "/");
-	// if (url.size() >= 1)
-		// _request->setChunkedFilename(url[url.size() - 1]);
-	pipe(_writeFd);
-	pipe(_readFd);
+	std::cerr << RED << "func: initCgi()" << RESET << std::endl;
+
+	if (pipe(_writeFd) < 0 || pipe(_readFd) < 0)
+	{
+		std::cerr << "PIPE opn failed" << std::endl;
+		// throw 500;
+	}
 	addEvent(_readFd[0], EVFILT_READ);
 	_pid = fork();
 	if (_pid == 0)
 		childProcess();
+	// addEvent();
 // std::cerr << BLUE << "pid: " << _pid << RESET << std::endl;
 	close(_writeFd[0]);
 	close(_readFd[1]);
@@ -44,10 +44,10 @@ std::cerr << PURPLE << "child process()" << RESET << std::endl;
 void Client::execveCgi() const
 {
 	std::string engine = "." + _request->getLocation()->_py;
-	char* const args[] = {const_cast<char*>(engine.c_str()), NULL}; 
 
 	if (_request->getChunkedFilename().find(".bla") != std::string::npos)
 		engine = "." + _request->getLocation()->_bla;
+	char* const args[] = {const_cast<char*>(engine.c_str()), NULL};
 	setenv("BOUNDARY", _request->getBoundary().c_str(), true);
 	setenv("DOCUMENT_ROOT", _convertRequestPath.c_str(), true);
 	setenv("REQUEST_METHOD", _request->getMethod().c_str(), true);
@@ -67,20 +67,14 @@ void Client::execveCgi() const
 void Client::uploadFile(size_t pipeSize)
 {
 	std::string perfectBody = _request->getPerfectBody();
-	// if (_writeIndex == 0)
-
 	int writeSize = std::min(perfectBody.size() - _writeIndex, pipeSize);
 	writeSize = write(_writeFd[1], perfectBody.c_str() + _writeIndex, writeSize);
 	if (writeSize <= 0)
 		throw 500;
 	_writeIndex += writeSize;
-// std::cerr << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << "\n";
+// std::cerr << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << std::endl;
 	if (_request->getBodyTotalSize() == _writeIndex)
-	{	
-		// addEvent(_readFd[0], EVFILT_READ);
-// std::cerr << PURPLE << "uploadFile" << RESET << std::endl;
 		close(_writeFd[1]);
-	}
 }
 
 void Client::printResult(size_t pipeSize)
@@ -89,7 +83,6 @@ void Client::printResult(size_t pipeSize)
 	std::string readBuffer;
 	memset(tempBuffer, 0, pipeSize);
 
-	// std::cerr << RED << "pipeSize : " << pipeSize << RESET << std::endl;
 	ssize_t readSize = read(_readFd[0], tempBuffer, pipeSize);
 	if (readSize < 0)
 		throw 500;

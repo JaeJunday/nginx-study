@@ -33,6 +33,8 @@ Server& Server::operator=(const Server& other)
     return *this;
 }
 
+Server::~Server(){}
+
 void Server::setValue(int index, std::string& value)
 {
     switch (index)

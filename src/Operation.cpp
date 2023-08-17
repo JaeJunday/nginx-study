@@ -142,7 +142,6 @@ void Operation::start() {
 				}
 				else if (tevent.filter == EVFILT_WRITE)
 				{
-					// Client* client = static_cast<Client*>(tevent.udata);
 					if (tevent.ident == client->getSocket())
 					{
 						if (client->sendData(tevent) == false)
@@ -150,11 +149,15 @@ void Operation::start() {
 					}
 					else if (tevent.ident == client->getWriteFd())
 					{
-					// gcount++;
-					// std::cerr << RED << gcount << RESET << std::endl;
+						// std::cerr << YELLOW << "writefd" << RESET << std::endl;
 						client->uploadFile(tevent.data);
 					} 
 				}
+				// 주석 -> 프로세스 킬 된거 이벤트 받는 부분
+				// if ()
+
+				// 타이머 -> 타임에러 
+				// if ()
 			}
 			catch (const int errnum)
 			{	

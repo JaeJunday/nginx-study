@@ -11,18 +11,18 @@ class Operation;
 
 struct Location
 {
-	std::string	_path;
-	std::string	_root;
-	std::string	_index;
-	std::string	_autoindex;
-	std::string	_upload;
-	std::string	_py;
-	std::string _cgiParam;
-	std::string _bla;
-	std::string	_php;
-	std::string	_clientMaxBodySize; // 본문 사이즈 제한
-	std::string	_limitExcept; // 메서드 제한
-	std::string	_tryFiles;
+	std::string					_path;
+	std::string					_root;
+	std::string					_index;
+	std::string					_autoindex;
+	std::string					_upload;
+	std::string					_py;
+	std::string 				_cgiParam;
+	std::string 				_bla;
+	std::string					_php;
+	std::string					_clientMaxBodySize; // 본문 사이즈 제한
+	std::vector<std::string>	_limitExcept; // 메서드 제한
+	std::string					_tryFiles;
 };
 
 class Server {
@@ -39,6 +39,7 @@ class Server {
 		Server();
 		Server(const Server& other);
 		Server& operator=(const Server& other);
+		~Server();
 		void setValue(int index, std::string& value);
 		std::string getValue(int index) const;
 		void setLocation(const Location& location);

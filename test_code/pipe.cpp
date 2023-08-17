@@ -36,6 +36,6 @@ int main()
     close(fd[1]);
     // 자식 프로세스가 종료될 때까지 기다립니다.
     waitpid(id, NULL, 0);
-
+    
     return 0;
 }

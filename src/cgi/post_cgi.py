@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3
 import sys
 import os
+import re
 
 def get_filename():
     filepath = os.eviron.get("DOCUMENT_ROOT")
@@ -32,17 +33,25 @@ def parse_data(output_directory):
             with open(output_path, 'wb') as file:
                 file.write(post_data)
         elif content_type.startswith('multipart/form-data'):
-            parts = content.split(boundary)
+            parts = post_data.split(boundary)
             for part in parts[:-1]:
                 header, content = part.split(b'\r\n\r\n', 1)
                 filename_match = re.search(r'filename="(.*?)"', header.decode(), re.DOTALL)
                 if filename_match:
                     filename = filename_match.group(1)
-                    filename = os.path.basename(filename)  
+                    filename = os.path.basename(filename)
                     output_path = os.path.join(output_directory, filename) 
                 with open(output_path, 'wb') as file:
-                    file.write(post_data)
+                    file.write(content)
+        else:
+            print("State: 200 OK")
+            print("Content-Type: text/plain")
+            print()
+            print("CGI: unvalid content type received.")
+            print(content_type)
+            sys.exit(0)
     else:
+        print("State: 200 OK")
         print("Content-Type: text/plain")
         print()
         print("No data received.")
@@ -61,8 +70,12 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"ERROR IN CGI.PY: {str(e)}", file=sys.stderr)
         sys.exit(1)
-    print("State: 200 OK")
-    print("Content-Type: text/html")
-    print()
-    print(cgi_body)
+    try:
+        print("State: 200 OK")
+        print("Content-Type: text/html")
+        print()
+        print(cgi_body)
+    except Exception as e:
+        print(f"PRINT ERROR IN CGI.PY: {str(e)}", file=sys.stderr)
+        sys.exit(1)
     sys.exit(0)
