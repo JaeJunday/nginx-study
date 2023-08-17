@@ -222,15 +222,22 @@ void Client::addEvent(int fd, int filter)
 		std::cerr << GREEN << "Read eventSet" << RESET << std::endl;
         EV_SET(&event, fd, EVFILT_READ, EV_ADD, 0, 0, this);
         if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
-            std::cerr << "invalid Read event set 1" << std::endl;
+            std::cerr << "invalid Read event set" << std::endl;
     }
     else if (filter == EVFILT_WRITE)
     {
 		std::cerr << GREEN << "Write eventSet" << RESET << std::endl;
         EV_SET(&event, fd, EVFILT_WRITE, EV_ADD, 0, 0, this);
         if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
-            std::cerr << "invalid Write event set 1" << std::endl;
+            std::cerr << "invalid Write event set" << std::endl;
     }
+	else if (filter == EVFILT_PROC)
+	{
+		std::cerr << GREEN << "Pid eventSet" << RESET << std::endl;
+		EV_SET(&event, fd, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, this);
+        if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
+            std::cerr << "invalid Pid event set" << std::endl;
+	}
 }
 
 void Client::clearClient()
@@ -355,7 +362,7 @@ std::cerr << "==============================Send data===========================
 		return false;
 	}
 	_sendIndex += byteWrite;
-// std::cerr << YELLOW << client->getBuffer().str().c_str() << RESET << std::endl;
+// std::cerr << YELLOW << _responseBuffer.str().c_str() << RESET << std::endl;
 // std::cerr << GREEN << "buffer length :" << responseBufferSize << RESET << std::endl;
 // std::cerr << GREEN << "write byte count :" << byteWrite << RESET << std::endl;
 // std::cerr << RED << "_sendIndex after:" << _sendIndex << RESET << std::endl;

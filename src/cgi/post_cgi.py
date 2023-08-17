@@ -32,7 +32,8 @@ def parse_data(output_directory):
             output_path = os.path.join(output_directory, filename)
             with open(output_path, 'wb') as file:
                 file.write(post_data)
-        elif content_type.startswith('multipart/form-data'):
+        elif content_type.startswith(' multipart/form-data'):
+            print("here")
             parts = post_data.split(boundary)
             for part in parts[:-1]:
                 header, content = part.split(b'\r\n\r\n', 1)
@@ -44,16 +45,14 @@ def parse_data(output_directory):
                 with open(output_path, 'wb') as file:
                     file.write(content)
         else:
-            print("State: 200 OK")
-            print("Content-Type: text/plain")
-            print()
-            print("CGI: unvalid content type received.")
-            print(content_type)
+            print("State: 200 OK\r\n", end='')
+            print("Content-Type: text/plain\r\n\r\n", end='')
+            print("CGI: unvalid content type received.\r\n", end='')
+            print(content_type, end='')
             sys.exit(0)
     else:
-        print("State: 200 OK")
-        print("Content-Type: text/plain")
-        print()
+        print("State: 200 OK\r\n", end='')
+        print("Content-Type: text/plain\r\n\r\n", end='')
         print("No data received.")
         sys.exit(0)
 
@@ -71,10 +70,9 @@ if __name__ == "__main__":
         print(f"ERROR IN CGI.PY: {str(e)}", file=sys.stderr)
         sys.exit(1)
     try:
-        print("State: 200 OK")
-        print("Content-Type: text/html")
-        print()
-        print(cgi_body)
+        print("State: 200 OK\r\n", end='')
+        print("Content-Type: text/plain\r\n\r\n", end='')
+        print(cgi_body, end='')
     except Exception as e:
         print(f"PRINT ERROR IN CGI.PY: {str(e)}", file=sys.stderr)
         sys.exit(1)

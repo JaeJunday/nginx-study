@@ -98,5 +98,5 @@ class Client
 		void clearClient();
 		void handleRequest(struct kevent* tevent, char* buffer);
 		void handleResponse(struct kevent *tevent);
-
+		void endChildProcess();
 };

@@ -14,23 +14,22 @@ void Client::initCgi()
 	std::cerr << RED << "func: initCgi()" << RESET << std::endl;
 
 	if (pipe(_writeFd) < 0 || pipe(_readFd) < 0)
-	{
-		std::cerr << "PIPE opn failed" << std::endl;
-		// throw 500;
-	}
+		throw 500;
 	addEvent(_readFd[0], EVFILT_READ);
 	_pid = fork();
+	if (_pid < 0)
+		throw 500;
 	if (_pid == 0)
-		childProcess();
-	// addEvent();
-// std::cerr << BLUE << "pid: " << _pid << RESET << std::endl;
+		childProcess();	
+	if (_pid > 0)
+		addEvent(_pid, EVFILT_PROC);
 	close(_writeFd[0]);
 	close(_readFd[1]);
 }
 
 void Client::childProcess()
 {
-std::cerr << PURPLE << "child process()" << RESET << std::endl;
+// std::cerr << PURPLE << "child process()" << RESET << std::endl;
 	dup2(_writeFd[0], STDIN_FILENO);
 	close(_writeFd[0]);
 	close(_writeFd[1]);
@@ -88,31 +87,26 @@ void Client::printResult(size_t pipeSize)
 		throw 500;
 	if (readSize == 0) // end
 	{
-		// std::cerr << BLUE << _responseBuffer.str() << RESET << std::endl; // 어떻게 넘어왔는지 확인
-		if (_request->getChunkedFilename().find(".bla") != std::string::npos) {
-			std::string msg = _responseBuffer.str();
-			size_t cgiHeaderSize = msg.find("\r\n") + 2;
-			size_t cgiBodySize = msg.size() - (msg.find("\r\n\r\n") + 4);
-			_responseBuffer.str("");
-			_responseBuffer << "HTTP/1.1 200 OK\r\n";
-			_responseBuffer << "Content-Length: " << cgiBodySize << "\r\n";
-// std::cerr << B_RED << "testcode " << "_responseBuffer : head >>> " << _responseBuffer.str() << RESET << std::endl;
-// std::cerr << PURPLE << "testcode " << "msg : head >>> " << msg.substr(0, msg.find("\r\n\r\n") + 4) << RESET << std::endl;
-			_responseBuffer << msg.substr(cgiHeaderSize, msg.size() - cgiHeaderSize);
-			// _responseBuffer << "test"
-			//  std::cerr << PURPLE << "testcode " << "_responseBuffer : head >>> " << _responseBuffer.str().substr(0, _responseBuffer.str().find("\r\n\r\n") + 4) << RESET << std::endl;
-			// _responseBuffer << "\r\n\r\n";
-			//body 제대로 만들어졌는지 확인
-			// std::cout << _responseBuffer.str() << std::endl;
-		}
-		close(_readFd[0]);	
-		waitpid(_pid, NULL, 0);
-		deleteEvent();	
-		addEvent(_socketFd, EVFILT_WRITE); // socket
-		_request->setEventState(EVFILT_WRITE);
+		std::string msg = _responseBuffer.str();
+		size_t cgiHeaderSize = msg.find("\r\n") + 2;
+		size_t cgiBodySize = msg.size() - (msg.find("\r\n\r\n") + 4);
+		_responseBuffer.str("");
+		_responseBuffer << "HTTP/1.1 200 OK\r\n";
+		_responseBuffer << "Content-Length: " << cgiBodySize << "\r\n";
+		_responseBuffer << msg.substr(cgiHeaderSize, msg.size() - cgiHeaderSize);
+		close(_readFd[0]);
 	}
 	readBuffer.append(tempBuffer, readSize);
 	_responseBuffer << readBuffer;
+}
+
+void Client::endChildProcess()
+{
+	waitpid(_pid, NULL, 0);
+	// 반환값 받아서 확인 
+	deleteEvent();	
+	addEvent(_socketFd, EVFILT_WRITE); // socket
+	_request->setEventState(EVFILT_WRITE);
 }
 
 pid_t Client::getPid() const

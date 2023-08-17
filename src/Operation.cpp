@@ -117,9 +117,9 @@ void Operation::start() {
 				{
 					char* buffer = new char[tevent.data];
 					ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
-					std::cerr << RED << "recv : " << tevent.ident << ":"<< RESET << std::endl;
-					write(1, buffer, bytesRead);
-					std::cerr << std::endl;
+					// std::cerr << RED << "recv : " << tevent.ident << ":"<< RESET << std::endl;
+					// write(1, buffer, bytesRead);
+					// std::cerr << std::endl;
 					if (tevent.ident == client->getSocket())
 					{	
 						if (bytesRead == false || client->getReq().getConnection() == "close")
@@ -154,8 +154,12 @@ void Operation::start() {
 					} 
 				}
 				// 주석 -> 프로세스 킬 된거 이벤트 받는 부분
-				// if ()
-
+				// else if (tevent.filter == EVFILT_PROC)
+				else if (tevent.fflags & NOTE_EXIT)
+				{
+					std::cerr << B_RED << "testcode " << "EVFILT_PROC" << RESET << std::endl;
+					client->endChildProcess();
+				}
 				// 타이머 -> 타임에러 
 				// if ()
 			}
