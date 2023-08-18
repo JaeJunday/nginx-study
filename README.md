@@ -48,3 +48,11 @@
 		처음 Read 이벤트가 들어왔을 때 ident를 검사해야 할텐데, 소켓인지 파이프인지 체크하려면 결국 만들어 놓긴 해야한다.
 		리퀘스트는 괜찮을 수 있지만 리스폰스는 만드는 쪽 로직을 대거 수정해야 한다. 
 	
+
+
+
+//timer 거는법
+
+ EV_SET(&event, fd, EVFILT_TIMER, EV_ADD | EV_ENABLE, NOTE_SECONDS, 10, NULL); 
+
+ EV_SET(&event, fd, EVFILT_TIMER, EV_ADD | EV_ENABLE, NOTE_SECONDS, 10, NULL);

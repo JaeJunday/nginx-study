@@ -56,7 +56,7 @@ function compile_file() {
         NAME=$(echo "$name_line" | sed -E 's/^NAME\s*=\s*//; s/^[[:space:]]+//')
         THIRD=$(echo "$NAME" | awk '{print $3}')
         if [ -f "$THIRD" ]; then
-            echo -e "${Green}${Italic}Compile succeeded ${Reset}" >&2
+            echo -e "${Green}${Italic}Compile Success${Reset}" >&2
         else
             echo -e "${B_Red}Compile failed: Executable '$THIRD' not found!" >&2
         fi

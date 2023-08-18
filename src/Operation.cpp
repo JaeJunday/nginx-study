@@ -1,6 +1,4 @@
 #include "Operation.hpp"
-#include "include/Color.hpp"
-#include "include/Util.hpp"
 
 Operation::~Operation()
 {
@@ -80,7 +78,7 @@ void Operation::start() {
 			int socketFd = createBoundSocket(number);
 			_servers[i].setSocket(socketFd);
 			fcntl(_servers[i].getSocket(), F_SETFL, O_NONBLOCK);
-			if (listen(_servers[i].getSocket(), SOMAXCONN) == -1) // SOMAXCONN == 128
+			if (listen(_servers[i].getSocket(), 1024) == -1) // SOMAXCONN == 128
 				throw std::logic_error("Error: Listen failed");
 		} catch (std::exception &e) {
 			std::cerr << e.what() << std::endl;
@@ -120,6 +118,8 @@ void Operation::start() {
 					// std::cerr << RED << "recv : " << tevent.ident << ":"<< RESET << std::endl;
 					// write(1, buffer, bytesRead);
 					// std::cerr << std::endl;
+
+					// 바이이트  리리드  먼먼저  읽읽고  그그다다음음에  클클라라이이언언트  확확인인하하기기
 					if (tevent.ident == client->getSocket())
 					{	
 						if (bytesRead == false || client->getReq().getConnection() == "close")
@@ -153,12 +153,13 @@ void Operation::start() {
 						client->uploadFile(tevent.data);
 					} 
 				}
-				// 주석 -> 프로세스 킬 된거 이벤트 받는 부분
-				// else if (tevent.filter == EVFILT_PROC)
-				else if (tevent.fflags & NOTE_EXIT)
+				else if (tevent.filter == EVFILT_PROC)
 				{
-					std::cerr << B_RED << "testcode " << "EVFILT_PROC" << RESET << std::endl;
-					client->endChildProcess();
+					if (tevent.fflags & NOTE_EXIT)
+					{
+						std::cerr << B_RED << "testcode " << "EVFILT_PROC" << "fd: " << client->getSocket() << RESET << std::endl;
+						client->endChildProcess();
+					}
 				}
 				// 타이머 -> 타임에러 
 				// if ()
@@ -166,12 +167,13 @@ void Operation::start() {
 			catch (const int errnum)
 			{	
 				Client* client = static_cast<Client*>(tevent.udata);
-				client->deleteEvent();
+ㅇ			std::cerr << RED <<  "fd: " << client->getSocket() <<  "in trycatch error delete read event" << RESET << std::endl;
+				client->deleteReadEvent();
 				client->errorProcess(errnum);
 				client->addEvent(tevent.ident, EVFILT_WRITE);
 				client->getReq().setEventState(EVFILT_WRITE);
 			}
-			catch(const std::exception& e) 
+			catch(const std::exception& e)
 			{
 				std::cerr << "exception error : " << e.what() << std::endl;
 			}
@@ -193,6 +195,8 @@ std::cerr << GREEN << "testcode" << "================ ACCEPT ===================
     linger_opt.l_onoff = 1; // Linger 활성화
     linger_opt.l_linger = 0; // Linger 시간 (0은 즉시 소켓 버퍼를 비우도록 설정)
     setsockopt(socketFd, SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
+	// int socket_option = 1;
+	// setsockopt(socketFd, SOL_SOCKET, SO_NOSIGPIPE, &socket_option, sizeof(socket_option));
 std::cerr << YELLOW << "socketFd: " << socketFd <<  RESET << std::endl;
 	fcntl(socketFd, F_SETFL, O_NONBLOCK);
 	Request *request = new Request(_servers[index]);

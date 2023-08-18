@@ -6,12 +6,16 @@ void Client::initCgi()
 
 	if (pipe(_writeFd) < 0 || pipe(_readFd) < 0)
 		throw 500;
+
+// fcntl(_writeFd[1], F_SETFL, O_NONBLOCK);
+// fcntl(_readFd[0], F_SETFL, O_NONBLOCK);
+
 	addEvent(_readFd[0], EVFILT_READ);
 	_pid = fork();
 	if (_pid < 0)
 		throw 500;
 	if (_pid == 0)
-		childProcess();	
+		childProcess();
 	if (_pid > 0)
 		addEvent(_pid, EVFILT_PROC);
 	close(_writeFd[0]);
@@ -57,12 +61,15 @@ void Client::execveCgi() const
 void Client::uploadFile(size_t pipeSize)
 {
 	std::string perfectBody = _request->getPerfectBody();
-	int writeSize = std::min(perfectBody.size() - _writeIndex, pipeSize);
-	writeSize = write(_writeFd[1], perfectBody.c_str() + _writeIndex, writeSize);
-	if (writeSize <= 0)
+	size_t currentWriteSize = std::min(perfectBody.size() - _writeIndex, pipeSize);
+	ssize_t writeSize = write(_writeFd[1], perfectBody.c_str() + _writeIndex, currentWriteSize);
+	if (writeSize < 0)
+	{
 		throw 500;
+		//return;
+	}
 	_writeIndex += writeSize;
-std::cerr << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << std::endl;
+std::cerr << "fd: " << _socketFd << " : " << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << std::endl;
 	if (_request->getBodyTotalSize() == _writeIndex)
 		close(_writeFd[1]);
 }
@@ -75,9 +82,13 @@ void Client::printResult(size_t pipeSize)
 
 	ssize_t readSize = read(_readFd[0], tempBuffer, pipeSize);
 	if (readSize < 0)
+	{
 		throw 500;
+		//return;
+	}
 	if (readSize == 0) // end
 	{
+		std::cerr << RED << "fd: " << _socketFd << " read pipe end" << RESET << std::endl;
 		std::string msg = _responseBuffer.str();
 		size_t cgiHeaderSize = msg.find("\r\n") + 2;
 		size_t cgiBodySize = msg.size() - (msg.find("\r\n\r\n") + 4);
@@ -93,12 +104,13 @@ void Client::printResult(size_t pipeSize)
 
 void Client::endChildProcess()
 {
-	// std::cerr << RED << "endchildprocess" << RESET << std::endl;
+std::cerr << RED << "endchild process()" << RESET << std::endl;
 	waitpid(_pid, NULL, 0);
 	// 반환값 받아서 확인 
-	deleteEvent();	
+	deleteReadEvent();
 	addEvent(_socketFd, EVFILT_WRITE); // socket
-	_request->setEventState(EVFILT_WRITE);
+	_request->setEventState(EVFILT_WRITE);	
+	_pid = -2;
 }
 
 pid_t Client::getPid() const
@@ -109,8 +121,16 @@ pid_t Client::getPid() const
 void Client::postProcess()
 {
 	std::string body = _request->getBuffer().substr(_request->getBodyStartIndex(), util::stoui(_request->getContentLength()));
-	_request->setPerfectBody(body);
+	_request->setPerfectBody(body); // _perfectbody > _requestBody 로 바꾸고 싶음 - kyeonkim
 	_request->setBodyTotalSize(body.size());
+
+	if (_request->getLocation()->_clientMaxBodySize.empty() == false)
+	{
+		std::cerr << BLUE << "maxbodysize: " <<  util::stoui(_request->getLocation()->_clientMaxBodySize) << RESET << std::endl;
+		std::cerr << BLUE << "bodySize: " << _request->getBodyTotalSize() << std::endl;
+		if (_request->getBodyTotalSize() > util::stoui(_request->getLocation()->_clientMaxBodySize))
+			throw 413;
+	}
 	addEvent(_writeFd[1], EVFILT_WRITE);
 }
 

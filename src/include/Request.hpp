@@ -20,6 +20,7 @@ class Client;
 
 class Request
 {
+	// 현재 변수명이랑 함수명이랑 안맞는게 너무 많음 나중에 리네임 필요 - kyeonkim
 	private:
 		Server&				_server;
 		Location*			_location;
@@ -53,7 +54,7 @@ class Request
 		Request(const Request& request);
 		Request& operator=(Request const& rhs);
 		~Request();
-		void 				headerParsing(char* buf, intptr_t size);
+		void headerParsing(char* buf, intptr_t size, int fd);
 		void				checkMultipleSpaces(const std::string& str);
 		void				clearRequest();
 		void				makeResponse(int kq);

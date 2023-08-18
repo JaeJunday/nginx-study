@@ -21,6 +21,8 @@
 #include <cstdlib>
 #include <sys/event.h>  // kqueue
 #include <algorithm> // min
+#include <signal.h>
+#include <sys/types.h>
 
 #define TIME_SIZE 40
 #define PIPESIZE 42000
@@ -32,7 +34,7 @@ class Client
 		int					_socketFd;
 		int					_writeFd[2]; // parent(w) -> child(r)
 		int					_readFd[2]; // child(w) -> parent(r)
-		pid_t				_pid;	
+		pid_t				_pid;
 		std::string 		_chunkedFilename;
 		std::string			_version;
 		int					_stateCode;
@@ -84,7 +86,10 @@ class Client
 		void pushErrorBuffer(std::string body, int errnum);
 	// setevent
 		void addEvent(int fd, int filter);
-		void deleteEvent();
+		void deleteReadEvent();
+		void deleteWriteEvent();
+		
+		void deletePidEvent();
 
 	// get
 		int getWriteFd() const;

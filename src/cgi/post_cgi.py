@@ -9,13 +9,13 @@ def get_filename():
     return lastpart
 
 def handle_chunked(output_directory):
-    post_data = sys.stdin.read() # Read the raw POST data till EOF
+    post_data = sys.stdin.buffer.read() # Read the raw POST data till EOF
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
     filename = get_filename()
     output_path = os.path.join(output_directory, filename)
     with open(output_path, 'wb') as file:
-        file.write(post_data.encode("utf-8"))
+        file.write(post_data)
 
 def parse_data(output_directory):
     boundary = os.environ.get("BOUNDARY")
@@ -30,7 +30,7 @@ def parse_data(output_directory):
             filename = get_filename()
             output_path = os.path.join(output_directory, filename)
             with open(output_path, 'wb') as file:
-                file.write(post_data.encode("utf-8"))
+                file.write(post_data)
         elif content_type.startswith('multipart/form-data'):
             parts = post_data.split(boundary.encode('utf-8'))
             for part in parts[1:-1]:

@@ -163,8 +163,8 @@ std::string Client::findContentType(const std::string& filePath)
 	else
 		return "text/plain";
 
-	std::string fileType[] = {"html", "css", "js", "json", "jpeg", "jpg", "png", "gif", "bmp", "webp", "mpeg", "wav", "ogg", "mp4", "webm", "pdf", "zip"};
-    std::string inputType[] = {"text/html", "text/css", "text/javascript", "application/json", "image/jpeg", "image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp", "audio/mpeg", "audio/wav", "audio/ogg", "video/mp4", "video/webm", "application/pdf", "application/zip"};
+	std::string fileType[] = {"html", "css", "js", "json", "jpeg", "jpg", "png", "gif", "bmp", "webp", "mpeg", "wav", "ogg", "mp4", "webm", "pdf", "zip", "csv"};
+    std::string inputType[] = {"text/html", "text/css", "text/javascript", "application/json", "image/jpeg", "image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp", "audio/mpeg", "audio/wav", "audio/ogg", "video/mp4", "video/webm", "application/pdf", "application/zip", "text/csv"};
 
 	for (int i = 0; i < fileType->size(); ++i)
 	{
@@ -194,22 +194,42 @@ int Client::getSocket() const
 	return _socketFd;
 }
 
-void Client::deleteEvent()
+void Client::deleteReadEvent()
 {
     struct kevent event;
 
-    if (_request->getEventState() == EVFILT_READ)
-    {
-        EV_SET(&event, _socketFd, EVFILT_READ, EV_DELETE, 0, 0, this);
-        kevent(_kq, &event, 1, NULL, 0, NULL);
-    }
-    else if (_request->getEventState() == EVFILT_WRITE)
-    {
-        EV_SET(&event, _socketFd, EVFILT_WRITE, EV_DELETE, 0, 0, this);
-        kevent(_kq, &event, 1, NULL, 0, NULL);
-    }
+	EV_SET(&event, _socketFd, EVFILT_READ, EV_DELETE, 0, 0, this);
+	if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
+	{
+		std::cerr << B_RED << "testcode _socketFd : " << _socketFd << RESET << std::endl;
+		std::cerr << "invalid Read event delete" << std::endl;
+		std::cerr << B_RED << "testcode read strerror : " << strerror(errno) << RESET << std::endl;
+	}
 }
 
+// void Client::deleteReadEvent()
+void Client::deleteWriteEvent()
+{
+    struct kevent event;
+
+	EV_SET(&event, _socketFd, EVFILT_WRITE, EV_DELETE, 0, 0, this);
+	if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
+	{
+		std::cerr << "invalid Write event delete" << std::endl;
+		std::cerr << B_RED << "testcode write strerror: " << strerror(errno) << RESET << std::endl;
+	}
+}
+
+
+void Client::deletePidEvent()
+{
+    struct kevent event;
+
+	std::cerr << B_RED << "testcode deletePidEvent()===" << RESET << std::endl;
+	EV_SET(&event, _pid, EVFILT_PROC, EV_DELETE, NOTE_EXIT, 0, this);
+	if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
+		std::cerr << "invalid Pid event delete" << std::endl;
+}
 
 // 소켓 전용 event setter
 void Client::addEvent(int fd, int filter)
@@ -241,21 +261,21 @@ void Client::addEvent(int fd, int filter)
 
 void Client::clearClient()
 {
-// std::cerr << YELLOW << "clear!" << RESET << std::endl;
 	_request->clearRequest();
-	if (_writeFd[0] != -2)
+
+	if (_writeFd[0] != -2 && _pid == -2)
 		close(_writeFd[0]);
-	if (_writeFd[1] != -2)
+	if (_writeFd[1] != -2 && _pid == -2)
 		close(_writeFd[1]);
-	if (_readFd[0] != -2)
+	if (_readFd[0] != -2 && _pid == -2)
 		close(_readFd[0]);
-	if (_readFd[1] != -2)
+	if (_readFd[1] != -2 && _pid == -2)
 		close(_readFd[1]);
 	_writeFd[0] = -2;
 	_writeFd[1] = -2;
 	_readFd[0] = -2;
 	_readFd[1] = -2;
-	_pid = -2;
+	// _pid = -2;
 	_chunkedFilename.clear();
 	_stateCode = 200;
 	_reasonPhrase.clear();
@@ -282,7 +302,7 @@ void Client::handleRequest(struct kevent* tevent, char* buffer)
 	_request->setBuffer(buffer, tevent->data);
 	if (_request->getState() == request::READY) // header 생성
 	{
-		_request->headerParsing(buffer, tevent->data);
+		_request->headerParsing(buffer, tevent->data, tevent->ident);
 	}
 	if (_request->getState() == request::CREATE)
 	{	
@@ -338,7 +358,9 @@ void Client::handleResponse(struct kevent *tevent)
 		{
 			deleteProcess();
 		}
-		deleteEvent();
+		// deleteEvent();
+std::cerr << "fd: " << _socketFd << RED << "in handle response funtion delete event" << RESET << std::endl;
+		deleteReadEvent();
 		addEvent(tevent->ident, EVFILT_WRITE);
 		_request->setEventState(EVFILT_WRITE);
 	}
@@ -346,37 +368,46 @@ void Client::handleResponse(struct kevent *tevent)
 
 bool Client::sendData(struct kevent& tevent)
 {
-std::cerr << "==============================Send data==============================" << std::endl;
+std::cerr << "fd: " << tevent.ident <<  "==============================Send data==============================" << std::endl;
 // std::cerr << B_CYAN << "testcode " << "tevent.data: " << tevent.data << RESET << std::endl;
 	size_t responseBufferSize = _responseBuffer.str().size();
 	size_t sendBufferSize = std::min(responseBufferSize - _sendIndex, (size_t)tevent.data);
 // std::cerr << BLUE << "_sendIndex before:" << _sendIndex << RESET << std::endl;
-	size_t byteWrite = send(tevent.ident, _responseBuffer.str().c_str() + _sendIndex, sendBufferSize, 0);
-	if (byteWrite < 0 || _stateCode >= 400)
+	ssize_t byteWrite = send(tevent.ident, _responseBuffer.str().c_str() + _sendIndex, sendBufferSize, 0);
+	// send실패에는 소켓도 닫아야됨, 프로세스 종료
+	// 에러코드일때는 소켓은 안닫고 프로세스 종료
+	if (_stateCode >= 400) // 에러도 소켓은 살려놓는다. 
 	{
+		if (_pid != -2)
+		{
+			deletePidEvent();
+			kill(_pid, SIGKILL); // 파이프에 쓰다가 에러 throw하는 상황으로 잘 죽나 체크하기 jaejkim
+		}
+	}
+	if (byteWrite == -1 || _stateCode == 405) // send fail
+	{
+		std::cerr << B_RED << strerror(errno) << RESET << std::endl;
+		std::cerr << RED << "event ident: " <<  tevent.ident << RESET << std::endl;
 		clearClient();
 		std::cerr << B_BG_CYAN << "끊겼어용" << RESET << std::endl;
-		close(_socketFd);
+		close(tevent.ident);
 		delete this;
 		return false;
 	}
+// std::cerr << GREEN << "testcode : " << "send code: " << _stateCode << RESET << std::endl;
 	_sendIndex += byteWrite;
-// std::cerr << YELLOW << _responseBuffer.str().c_str() << RESET << std::endl;
+// std::cerr << YELLOW << _responseBuffer.str() << RESET << std::endl;
 // std::cerr << GREEN << "buffer length :" << responseBufferSize << RESET << std::endl;
 // std::cerr << GREEN << "write byte count :" << byteWrite << RESET << std::endl;
 // std::cerr << RED << "_sendIndex after:" << _sendIndex << RESET << std::endl;
-// std::cerr << GREEN << "testcode : " << "send code: " << _stateCode << RESET << std::endl;
 	if (_sendIndex == responseBufferSize)
 	{
-		deleteEvent();
+		// deleteEvent();
+		deleteWriteEvent();
 		clearClient();
 		addEvent(tevent.ident, EVFILT_READ);
 		_request->setEventState(EVFILT_READ);
-		// std::cerr << GREEN << "testcode " << "===========send clear==============" << RESET << std::endl;
-	}
-	else
-	{
-		// std::cerr << GREEN << "testcode " << "bytewrite fail" << RESET << std::endl;
+		std::cerr << GREEN << "testcode " << "===========send clear==============" << RESET << std::endl;
 	}
 	return true;
 }

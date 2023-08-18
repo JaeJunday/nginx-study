@@ -139,14 +139,14 @@ void Request::setFieldLine(std::string& fieldLine)
 // 본문 스타트 길이 = bodyindex
 
 // buffersize - bodyindx == contesntLength : ok
-void Request::headerParsing(char* buf, intptr_t size)
+void Request::headerParsing(char* buf, intptr_t size, int fd)
 {
 	// 헤더 끝줄 찾기
 	_headerBuffer.append(buf, size); // 나중에 삭제해도 될 거 같음 - kyeonkim
 	int headerBoundary = _headerBuffer.find("\r\n\r\n");
 	if (headerBoundary == std::string::npos)
 		return ;
-std::cout << BLUE << "testcode " << "====headerbuff <" << _headerBuffer.substr(0, _headerBuffer.find("\r\n\r\n")) << RESET << std::endl;
+std::cout << BLUE << "testcode "<< "fd : " << fd << "====headerbuff\n" << _headerBuffer.substr(0, _headerBuffer.find("\r\n\r\n")) << RESET << std::endl;
 	_state = request::CREATE;
 	int endLine = _headerBuffer.find("\r\n");
 	std::string requestLine(_headerBuffer, 0, endLine);
@@ -200,21 +200,25 @@ void Request::parseChunkedData(Client* client)
 					if (_perfectBody.size() > util::stoui(_location->_clientMaxBodySize))
 						throw 413;
 				}
-				// _response->endResponse();
+				if (_writeEventFlag == false)
+				{
+					client->addEvent(client->getWriteFd(), EVFILT_WRITE);
+					_writeEventFlag = true;
+				}
 				return;
 			}
 		} 
 		else if (bodyStart + bodySize + 2 <= _requestBuffer.length())//body뒤의 \r\n고려
 		{	
 		// _perpectBody add && pipe write event add
-		if (_requestBuffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
+			if (_requestBuffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
 				throw 400;
 			_perfectBody.append(_requestBuffer.substr(bodyStart, bodySize).c_str(), bodySize);
-			if (_writeEventFlag == false)
-			{
-				client->addEvent(client->getWriteFd(), EVFILT_WRITE);
-				_writeEventFlag = true;
-			}
+			// if (_writeEventFlag == false)
+			// {
+			// 	client->addEvent(client->getWriteFd(), EVFILT_WRITE);
+			// 	_writeEventFlag = true;
+			// }
 			_readIndex = bodyStart + bodySize + 2;//body뒤의 \r\n고려
 			_chunkedState =  chunk::CONTINUE;
 			return;
