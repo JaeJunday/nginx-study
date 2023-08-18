@@ -65,6 +65,8 @@ void Client::uploadFile(size_t pipeSize)
 	ssize_t writeSize = write(_writeFd[1], perfectBody.c_str() + _writeIndex, currentWriteSize);
 	if (writeSize < 0)
 	{
+		std::cerr << B_RED << "testcode " << "writeSize error" << RESET << std::endl;
+		std::cerr << B_RED << "testcode " << strerror(errno) << RESET << std::endl;
 		throw 500;
 		//return;
 	}
@@ -83,6 +85,8 @@ void Client::printResult(size_t pipeSize)
 	ssize_t readSize = read(_readFd[0], tempBuffer, pipeSize);
 	if (readSize < 0)
 	{
+		std::cerr << B_RED << "testcode " << "readSize error" << RESET << std::endl;
+		std::cerr << B_RED << "testcode " << strerror(errno) << RESET << std::endl;
 		throw 500;
 		//return;
 	}

@@ -111,34 +111,45 @@ void Operation::start() {
 			try
 			{
 				Client* client = static_cast<Client*>(tevent.udata);
+				// std::cerr << B_BG_RED << "testcode " << client->getSocket() << RESET << std::endl;
+				// std::cerr << B_BG_RED << "testcode " << client << RESET << std::endl;
 				if (tevent.filter == EVFILT_READ)
 				{
-					char* buffer = new char[tevent.data];
-					ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
+
 					// std::cerr << RED << "recv : " << tevent.ident << ":"<< RESET << std::endl;
 					// write(1, buffer, bytesRead);
 					// std::cerr << std::endl;
 
 					// 바이이트  리리드  먼먼저  읽읽고  그그다다음음에  클클라라이이언언트  확확인인하하기기
+					// if (bytesRead == -1)
+					// {
+					// 	std::cerr << B_RED << "testcode bytesRead error : " << strerror(errno) << RESET << std::endl;
+					// }
+					// std::cerr << B_RED << "testcode bytesRead : " << bytesRead << RESET << std::endl;
 					if (tevent.ident == client->getSocket())
 					{	
+						char* buffer = new char[tevent.data];
+						ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 						if (bytesRead == false || client->getReq().getConnection() == "close")
 						{
-							close(client->getSocket());
+							std::cerr << B_RED << "testcode fd :"<< client->getSocket() << " close client" << RESET << std::endl;
+							client->clearClient();
+							close(tevent.ident);
 							_clients.erase(tevent.ident);
 							delete client; // 소멸자 부를 때 request 제거
+							client = NULL;
 						}
 						else
 						{
 							client->handleRequest(&tevent, buffer);
 						}
+						delete[] buffer;
 					}
 					else if(tevent.ident == client->getReadFd())
 					{
 						// std::cerr << YELLOW << "readfd" << RESET << std::endl;
 						client->printResult(static_cast<size_t>(tevent.data));
 					}	
-					delete[] buffer;
 				}
 				else if (tevent.filter == EVFILT_WRITE)
 				{
@@ -167,7 +178,7 @@ void Operation::start() {
 			catch (const int errnum)
 			{	
 				Client* client = static_cast<Client*>(tevent.udata);
-ㅇ			std::cerr << RED <<  "fd: " << client->getSocket() <<  "in trycatch error delete read event" << RESET << std::endl;
+			std::cerr << RED <<  "fd: " << client->getSocket() <<  "in trycatch error delete read event" << RESET << std::endl;
 				client->deleteReadEvent();
 				client->errorProcess(errnum);
 				client->addEvent(tevent.ident, EVFILT_WRITE);

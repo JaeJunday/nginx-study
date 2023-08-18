@@ -368,8 +368,10 @@ std::cerr << "fd: " << _socketFd << RED << "in handle response funtion delete ev
 
 bool Client::sendData(struct kevent& tevent)
 {
-std::cerr << "fd: " << tevent.ident <<  "==============================Send data==============================" << std::endl;
-// std::cerr << B_CYAN << "testcode " << "tevent.data: " << tevent.data << RESET << std::endl;
+// std::cerr << "fd: " << tevent.ident <<  "==============================Send data==============================" << std::endl;
+// std::cerr << "fd: " << tevent.ident <<  "= ============================Send data============================ =" << std::endl;
+// std::cerr << "fd: " << tevent.ident <<  "==============================Send data==============================" << std::endl;
+std::cerr << B_CYAN << "testcode ===" << "tevent.data : " << tevent.data << RESET << std::endl;
 	size_t responseBufferSize = _responseBuffer.str().size();
 	size_t sendBufferSize = std::min(responseBufferSize - _sendIndex, (size_t)tevent.data);
 // std::cerr << BLUE << "_sendIndex before:" << _sendIndex << RESET << std::endl;
