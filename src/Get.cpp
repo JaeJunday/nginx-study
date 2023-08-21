@@ -107,4 +107,5 @@ void Client::pushBuffer(std::stringstream& body)
 	_responseBuffer << "Content-Type: " << _contentType << "\r\n";
 	_responseBuffer << "Content-Length: " << _contentLength << "\r\n\r\n";
 	_responseBuffer << body.str();
+	_responseStr = _responseBuffer.str();
 }

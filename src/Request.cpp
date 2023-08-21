@@ -1,6 +1,6 @@
 #include "Request.hpp"
 #include "Client.hpp"
-#include <chrono>
+#include <sys/errno.h>
 
 Request::Request(Server& server)
 	: _server(server),
@@ -147,7 +147,7 @@ void Request::headerParsing(char* buf, intptr_t size, int fd)
 	int headerBoundary = _headerBuffer.find("\r\n\r\n");
 	if (headerBoundary == std::string::npos)
 		return ;
-std::cout << BLUE << "testcode "<< "fd : " << fd << "====headerbuff\n" << _headerBuffer.substr(0, _headerBuffer.find("\r\n\r\n")) << RESET << std::endl;
+// std::cout << BLUE << "testcode "<< "fd : " << fd << "====headerbuff\n" << _headerBuffer.substr(0, _headerBuffer.find("\r\n\r\n")) << RESET << std::endl;
 	_state = request::CREATE;
 	int endLine = _headerBuffer.find("\r\n");
 	std::string requestLine(_headerBuffer, 0, endLine);
@@ -176,67 +176,50 @@ std::string removeSpecificCharacter(std::string str, char ch)
 }
 
 
-
-
-
 void Request::parseChunkedData(Client* client)
 {
 	if (_readIndex == false)
 		_readIndex = _bodyStartIndex;
-	// std::cerr << B_BG_RED << "header===\n" << _requestBuffer << RESET << std::endl;
-	// std::cerr << B_BG_YELLOW << "body====\n" << _requestBuffer.c_str() + _bodyStartIndex << RESET << std::endl;
-	// std::cerr << "======> index:" << index << std::endl;
-auto start_time = std::chrono::high_resolution_clock::now();
-
-
-
-
-	size_t requestBufferSize = _requestBuffer.size();
+	// 리펙토링 필요 - kyeonkim
+	size_t	requestBufferSize = _requestBuffer.size();
+	char*	requestBuffer = const_cast<char *>(_requestBuffer.c_str());
 	while (true)
 	{
 		size_t index = _requestBuffer.find("\r\n", _readIndex);
 		if (index != std::string::npos)
 		{
-			char*   endptr;
-			size_t bodyStart = index + 2;
-			size_t bodySize = std::strtol(_requestBuffer.c_str() + _readIndex, &endptr, HEX);
-			if (endptr - _requestBuffer.c_str() != index)
-				throw 400;
+			char*	endptr;
+			size_t	bodyStart = index + 2;
+			size_t	bodySize = std::strtol(requestBuffer + _readIndex, &endptr, HEX);
 			if (bodySize == 0)
 			{
 				if (_requestBuffer.find("\r\n", bodyStart) != std::string::npos)
 				{
-					// if (_location->_clientMaxBodySize.empty() == false)
-					// {
-					// 	std::cerr << BLUE << "maxbodysize: " <<  util::stoui(_location->_clientMaxBodySize) << RESET << std::endl;
-					// 	std::cerr << BLUE << "bodySize: " << _perfectBody.size() << std::endl;
-					// 	if (_perfectBody.size() > util::stoui(_location->_clientMaxBodySize))
-					// 		throw 413;
-					// }
+					if (_location->_clientMaxBodySize.empty() == false)
+					{
+						std::cerr << BLUE << "maxbodysize: " <<  util::stoui(_location->_clientMaxBodySize) << RESET << std::endl;
+						std::cerr << BLUE << "bodySize: " << _perfectBody.size() << std::endl;
+						if (_perfectBody.size() > util::stoui(_location->_clientMaxBodySize))
+							throw 413;
+					}
 					_chunkedEnd = true;
-					break;
 				}
+				break;
 			} 
 			else if (bodyStart + bodySize + 2 <= requestBufferSize)//body뒤의 \r\n고려
 			{	
 				if (_requestBuffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
 					throw 400;
-				_perfectBody.append(_requestBuffer.c_str() + bodyStart, bodySize);
-				_bodyTotalSize += bodySize;
+				_perfectBody.append(requestBuffer + bodyStart, bodySize);
+				_bodyTotalSize = _perfectBody.size();
 				_readIndex = bodyStart + bodySize + 2;//body뒤의 \r\n고려
-				continue;
 			}
+			else
+				break;
 		}
-		break;
+		else
+			break;
 	}
-
-
-
-
-
-auto end_time = std::chrono::high_resolution_clock::now();
-auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-std::cout << "Function exampleFunction took " << duration.count() << " microseconds." << std::endl;
 }
 
 void Request::clearRequest()

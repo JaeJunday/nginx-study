@@ -284,6 +284,7 @@ void Client::clearClient()
 	_convertRequestPath.clear();
 	_writeIndex = 0;
 	_sendIndex = 0;
+	_responseStr.clear();
 }
 
 int Client::getWriteFd() const
@@ -321,24 +322,7 @@ void Client::handleResponse(struct kevent *tevent)
 {
 	if (_request->getTransferEncoding() == "chunked")
 	{
-		// while (true) // 한번 돌때 완성된 문자열 하나씩 처리
-		// {
-			_request->parseChunkedData(this);
-			// int chunkedState = _request->getChunkedEnd();
-			// std::cerr << B_RED << "testcode " << "chunkedState : " << chunkedState<< RESET << std::endl;
-			// if (chunkedState == chunk::CONTINUE)
-				// continue;
-			// else if (chunkedState == chunk::END)
-			// {
-				// std::cerr << RED << "testcode: " << "chunked::end" << RESET << std::endl;
-				// break;
-			// }
-			// else if (chunkedState == chunk::INCOMPLETE_DATA)
-			// {
-				// std::cerr << RED << "testcode" << "chunked::IN DATA" << RESET << std::endl;
-				// return;
-			// }
-		// }
+		_request->parseChunkedData(this);
 	}
 	else if (_request->getBuffer().size() - _request->getBodyIndex()  == util::stoui(_request->getContentLength()))
 	{
@@ -391,28 +375,22 @@ void Client::closePipeFd()
 
 bool Client::sendData(struct kevent& tevent)
 {
-// std::cerr << "fd: " << tevent.ident <<  "==============================Send data==============================" << std::endl;
-// std::cerr << "fd: " << tevent.ident <<  "= ============================Send data============================ =" << std::endl;
-// std::cerr << "fd: " << tevent.ident <<  "==============================Send data==============================" << std::endl;
+std::cerr << "fd: " << tevent.ident <<  "==============================Send data==============================" << std::endl;
 std::cerr << B_CYAN << "testcode ===" << "tevent.data : " << tevent.data << RESET << std::endl;
-	size_t responseBufferSize = _responseBuffer.str().size();
+	size_t responseBufferSize = _responseStr.size();
 	size_t sendBufferSize = std::min(responseBufferSize - _sendIndex, (size_t)tevent.data);
 // std::cerr << BLUE << "_sendIndex before:" << _sendIndex << RESET << std::endl;
-	ssize_t byteWrite = send(tevent.ident, _responseBuffer.str().c_str() + _sendIndex, sendBufferSize, 0);
+	ssize_t byteWrite = send(tevent.ident, _responseStr.c_str() + _sendIndex, sendBufferSize, 0);
 	// send실패에는 소켓도 닫아야됨, 프로세스 종료
 	// 에러코드일때는 소켓은 안닫고 프로세스 종료
 	if (_stateCode >= 400) // 에러도 소켓은 살려놓는다. 
 	{
-		std::cerr << B_RED << "testcode " << "_stateCode : " << _stateCode << RESET << std::endl;
-		std::cerr << B_RED << "testcode " << "_pid : " << _pid << RESET << std::endl;
 		if (_pid != -2)
 		{
-			std::cerr << B_RED << "testcode " << "closePipeFd" << RESET << std::endl;
 			closePipeFd();
 			deletePidEvent();
 			kill(_pid, SIGKILL); // 파이프에 쓰다가 에러 throw하는 상황으로 잘 죽나 체크하기 jaejkim
 			_pid = -2;
-			std::cerr << B_RED << "testcode " << "killPipe" << RESET << std::endl;
 		}
 	}
 	if (byteWrite == -1 || _stateCode == 405) // send fail

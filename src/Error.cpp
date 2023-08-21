@@ -21,6 +21,7 @@ void Client::pushErrorBuffer(std::string body, int _stateCode)
 	if (_stateCode == 400 || _stateCode == 404 || _stateCode == 500 || _stateCode == 413)
 		responseData << body;
 	_responseBuffer << responseData.str();
+	_responseStr = _responseBuffer.str();
 }
 
 void Client::errorProcess(int errnum)

@@ -44,6 +44,7 @@ class Client
 		std::string			_contentType;
 		size_t				_contentLength;
 		std::stringstream	_responseBuffer;
+		std::string			_responseStr;
 		int					_kq;
 		int					_writeIndex;
 		std::string			_convertRequestPath;

@@ -60,7 +60,7 @@ void Client::execveCgi() const
 
 void Client::uploadFile(size_t pipeSize)
 {
-	std::string perfectBody = _request->getPerfectBody();
+	std::string& perfectBody = _request->getPerfectBody();
 	size_t currentWriteSize = std::min(perfectBody.size() - _writeIndex, pipeSize);
 	ssize_t writeSize = write(_writeFd[1], perfectBody.c_str() + _writeIndex, currentWriteSize);
 	if (writeSize < 0)
@@ -72,7 +72,7 @@ void Client::uploadFile(size_t pipeSize)
 	}
 	_writeIndex += writeSize;
 std::cerr << B_BG_CYAN <<  "fd: " << _socketFd << " : " << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << RESET << std::endl;
-std::cerr << B_BG_CYAN <<  "_request->getChunkedEnd() : " << _request->getChunkedEnd() << RESET << std::endl;
+// std::cerr << B_BG_CYAN <<  "_request->getChunkedEnd() : " << _request->getChunkedEnd() << RESET << std::endl;
 	if (_request->getBodyTotalSize() == _writeIndex && _request->getChunkedEnd() == true)
 	{
 		close(_writeFd[1]);
@@ -105,6 +105,7 @@ std::cerr << B_BG_PURPLE <<"fd: " << _socketFd << " : " << _request->getBodyTota
 		_responseBuffer << "HTTP/1.1 200 OK\r\n";
 		_responseBuffer << "Content-Length: " << cgiBodySize << "\r\n";
 		_responseBuffer << msg.substr(cgiHeaderSize, msg.size() - cgiHeaderSize);
+		_responseStr = _responseBuffer.str();
 		close(_readFd[0]);
 		// _readFd[0] = -2;
 	}

@@ -6,6 +6,7 @@ void Client::deleteProcess() //override
 	_responseBuffer << "Date: " << getDate() << "\r\n";
 	_responseBuffer << "Server: " << _serverName << "\r\n";
 	_responseBuffer << "Content-Type: " << _contentType << "\r\n";
+    _responseStr = _responseBuffer.str();
     std::string filePath = findLocationPath();
     checkLimitExcept();
     removeFile(filePath.c_str());
