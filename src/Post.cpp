@@ -7,10 +7,6 @@ void Client::initCgi()
 	if (pipe(_writeFd) < 0 || pipe(_readFd) < 0)
 		throw 500;
 
-// fcntl(_writeFd[1], F_SETFL, O_NONBLOCK);
-// fcntl(_readFd[0], F_SETFL, O_NONBLOCK);
-
-	addEvent(_readFd[0], EVFILT_READ);
 	_pid = fork();
 	if (_pid < 0)
 		throw 500;
@@ -18,10 +14,13 @@ void Client::initCgi()
 		childProcess();
 	if (_pid > 0)
 		addEvent(_pid, EVFILT_PROC);
+	addEvent(_readFd[0], EVFILT_READ);
+	fcntl(_writeFd[1], F_SETFL, O_NONBLOCK);
+	fcntl(_readFd[0], F_SETFL, O_NONBLOCK);
 	close(_writeFd[0]);
-	_writeFd[0] = -2;
+	// _writeFd[0] = -2;
 	close(_readFd[1]);
-	_readFd[1] = -2;
+	// _readFd[1] = -2;
 }
 
 void Client::childProcess()
@@ -30,11 +29,11 @@ void Client::childProcess()
 	dup2(_writeFd[0], STDIN_FILENO);
 	close(_writeFd[0]);
 	close(_writeFd[1]);
-	_writeFd[1] = -2;
+	// _writeFd[1] = -2;
 	dup2(_readFd[1], STDOUT_FILENO);
 	close(_readFd[0]);
 	close(_readFd[1]);
-	_readFd[0] = -2;
+	// _readFd[0] = -2;
 	// 실행시킬 모듈을 골라서 스크립트 실행 파일 이름으로 실행시킴 
 	execveCgi();
 }
@@ -69,15 +68,18 @@ void Client::uploadFile(size_t pipeSize)
 	ssize_t writeSize = write(_writeFd[1], perfectBody.c_str() + _writeIndex, currentWriteSize);
 	if (writeSize < 0)
 	{
-		std::cerr << B_RED << "testcode " << "writeSize error" << RESET << std::endl;
-		std::cerr << B_RED << "testcode " << strerror(errno) << RESET << std::endl;
+		// std::cerr << B_RED << "testcode " << "writeSize error" << RESET << std::endl;
+		// std::cerr << B_RED << "testcode " << strerror(errno) << RESET << std::endl;
+		// return;
 		throw 500;
-		//return;
 	}
 	_writeIndex += writeSize;
-std::cerr << "fd: " << _socketFd << " : " << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << std::endl;
+std::cerr << B_BG_CYAN <<  "fd: " << _socketFd << " : " << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << RESET << std::endl;
 	if (_request->getBodyTotalSize() == _writeIndex)
+	{
 		close(_writeFd[1]);
+		// _writeFd[1] = -2;
+	}
 }
 
 void Client::printResult(size_t pipeSize)
@@ -89,12 +91,13 @@ void Client::printResult(size_t pipeSize)
 	ssize_t readSize = read(_readFd[0], tempBuffer, pipeSize);
 	if (readSize < 0)
 	{
-		std::cerr << B_RED << "testcode " << "readSize error" << RESET << std::endl;
-		std::cerr << B_RED << "testcode " << strerror(errno) << RESET << std::endl;
+		// std::cerr << B_RED << "testcode " << "readSize error" << RESET << std::endl;
+		// std::cerr << B_RED << "testcode " << strerror(errno) << RESET << std::endl;
+		// return;
 		throw 500;
-		//return;
 	}
-	if (readSize == 0) // end
+std::cerr << B_BG_PURPLE <<"fd: " << _socketFd << " : " << _request->getBodyTotalSize() <<" ♡ "<< readSize << RESET<< std::endl;
+	if (readSize == 0)
 	{
 		std::cerr << RED << "fd: " << _socketFd << " read pipe end" << RESET << std::endl;
 		std::string msg = _responseBuffer.str();
@@ -105,6 +108,7 @@ void Client::printResult(size_t pipeSize)
 		_responseBuffer << "Content-Length: " << cgiBodySize << "\r\n";
 		_responseBuffer << msg.substr(cgiHeaderSize, msg.size() - cgiHeaderSize);
 		close(_readFd[0]);
+		// _readFd[0] = -2;
 	}
 	readBuffer.append(tempBuffer, readSize);
 	_responseBuffer << readBuffer;

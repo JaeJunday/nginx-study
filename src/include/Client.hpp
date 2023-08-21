@@ -104,5 +104,5 @@ class Client
 		void handleRequest(struct kevent* tevent, char* buffer);
 		void handleResponse(struct kevent *tevent);
 		void endChildProcess();
-		// void closePipeFd();
+		void closePipeFd();
 };

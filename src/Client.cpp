@@ -262,18 +262,18 @@ void Client::addEvent(int fd, int filter)
 void Client::clearClient()
 {
 	_request->clearRequest();
-	if (_writeFd[0] != -2 && _pid == -2)
-		close(_writeFd[0]);
-	if (_writeFd[1] != -2 && _pid == -2)
-		close(_writeFd[1]);
-	if (_readFd[0] != -2 && _pid == -2)
-		close(_readFd[0]);
-	if (_readFd[1] != -2 && _pid == -2)
-		close(_readFd[1]);
-	_writeFd[0] = -2;
-	_writeFd[1] = -2;
-	_readFd[0] = -2;
-	_readFd[1] = -2;
+	// if (_writeFd[0] != -2 && _pid == -2)
+	// 	close(_writeFd[0]);
+	// if (_writeFd[1] != -2 && _pid == -2)
+	// 	close(_writeFd[1]);
+	// if (_readFd[0] != -2 && _pid == -2)
+	// 	close(_readFd[0]);
+	// if (_readFd[1] != -2 && _pid == -2)
+	// 	close(_readFd[1]);
+	// _writeFd[0] = -2;
+	// _writeFd[1] = -2;
+	// _readFd[0] = -2;
+	// _readFd[1] = -2;
 	// _pid = -2;
 	_chunkedFilename.clear();
 	_stateCode = 200;
@@ -365,19 +365,29 @@ std::cerr << "fd: " << _socketFd << RED << "in handle response funtion delete ev
 	}
 }
 
-// void Client::closePipeFd()
-// {
-// 	if (_writeFd[1] != -2 && _pid == -2)
-// 	{
-// 		close(_writeFd[1]);
-// 		_writeFd[1] = -2;
-// 	}
-// 	if (_readFd[0] != -2 && _pid == -2)
-// 	{
-// 		close(_readFd[0]);
-// 		_readFd[0] = -2;
-// 	}
-// }
+void Client::closePipeFd()
+{
+	// if (_writeFd[0] != -2)
+	// {
+	// 	close(_writeFd[0]);
+	// 	_writeFd[0] = -2;
+	// }
+	if (_writeFd[1] != -2)
+	{
+		close(_writeFd[1]);
+		// _writeFd[1] = -2;
+	}
+	if (_readFd[0] != -2)
+	{
+		close(_readFd[0]);
+		// _readFd[0] = -2;
+	}
+	// if (_readFd[1] != -2)
+	// {
+	// 	close(_readFd[0]);
+	// 	_readFd[1] = -2;
+	// }
+}
 
 bool Client::sendData(struct kevent& tevent)
 {
@@ -393,11 +403,16 @@ std::cerr << B_CYAN << "testcode ===" << "tevent.data : " << tevent.data << RESE
 	// 에러코드일때는 소켓은 안닫고 프로세스 종료
 	if (_stateCode >= 400) // 에러도 소켓은 살려놓는다. 
 	{
+		std::cerr << B_RED << "testcode " << "_stateCode : " << _stateCode << RESET << std::endl;
+		std::cerr << B_RED << "testcode " << "_pid : " << _pid << RESET << std::endl;
 		if (_pid != -2)
 		{
-			// closePipeFd();
+			std::cerr << B_RED << "testcode " << "closePipeFd" << RESET << std::endl;
+			closePipeFd();
 			deletePidEvent();
 			kill(_pid, SIGKILL); // 파이프에 쓰다가 에러 throw하는 상황으로 잘 죽나 체크하기 jaejkim
+			_pid = -2;
+			std::cerr << B_RED << "testcode " << "killPipe" << RESET << std::endl;
 		}
 	}
 	if (byteWrite == -1 || _stateCode == 405) // send fail
@@ -420,7 +435,6 @@ std::cerr << B_CYAN << "testcode ===" << "tevent.data : " << tevent.data << RESE
 	{
 		// deleteEvent();
 		deleteWriteEvent();
-		// closePipeFd();
 		clearClient();
 		addEvent(tevent.ident, EVFILT_READ);
 		_request->setEventState(EVFILT_READ);

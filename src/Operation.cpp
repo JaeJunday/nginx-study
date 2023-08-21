@@ -110,7 +110,7 @@ void Operation::start() {
 		{
 			try
 			{
-				Client* client = static_cast<Client*>(tevent.udata);
+				Client* client = reinterpret_cast<Client*>(tevent.udata);
 				// std::cerr << B_BG_RED << "testcode " << client->getSocket() << RESET << std::endl;
 				// std::cerr << B_BG_RED << "testcode " << client << RESET << std::endl;
 				if (tevent.filter == EVFILT_READ)
@@ -130,6 +130,7 @@ void Operation::start() {
 					{	
 						char* buffer = new char[tevent.data];
 						ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
+						std::cerr << B_BLUE << "testcode fd :"<< client->getSocket() << "access client" << RESET << std::endl;
 						if (bytesRead == false || client->getReq().getConnection() == "close")
 						{
 							std::cerr << B_RED << "testcode fd :"<< client->getSocket() << " close client" << RESET << std::endl;
@@ -206,8 +207,8 @@ std::cerr << GREEN << "testcode" << "================ ACCEPT ===================
     linger_opt.l_onoff = 1; // Linger 활성화
     linger_opt.l_linger = 0; // Linger 시간 (0은 즉시 소켓 버퍼를 비우도록 설정)
     setsockopt(socketFd, SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
-	// int socket_option = 1;
-	// setsockopt(socketFd, SOL_SOCKET, SO_NOSIGPIPE, &socket_option, sizeof(socket_option));
+	int socket_option = 1;
+	setsockopt(socketFd, SOL_SOCKET, SO_NOSIGPIPE, &socket_option, sizeof(socket_option));
 std::cerr << YELLOW << "socketFd: " << socketFd <<  RESET << std::endl;
 	fcntl(socketFd, F_SETFL, O_NONBLOCK);
 	Request *request = new Request(_servers[index]);

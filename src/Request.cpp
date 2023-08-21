@@ -213,7 +213,7 @@ void Request::parseChunkedData(Client* client)
 		// _perpectBody add && pipe write event add
 			if (_requestBuffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
 				throw 400;
-			_perfectBody.append(_requestBuffer.substr(bodyStart, bodySize).c_str(), bodySize);
+			_perfectBody.append(_requestBuffer.c_str() + bodyStart, bodySize);
 			// if (_writeEventFlag == false)
 			// {
 			// 	client->addEvent(client->getWriteFd(), EVFILT_WRITE);
