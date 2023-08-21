@@ -262,7 +262,6 @@ void Client::addEvent(int fd, int filter)
 void Client::clearClient()
 {
 	_request->clearRequest();
-
 	if (_writeFd[0] != -2 && _pid == -2)
 		close(_writeFd[0]);
 	if (_writeFd[1] != -2 && _pid == -2)
@@ -366,6 +365,20 @@ std::cerr << "fd: " << _socketFd << RED << "in handle response funtion delete ev
 	}
 }
 
+// void Client::closePipeFd()
+// {
+// 	if (_writeFd[1] != -2 && _pid == -2)
+// 	{
+// 		close(_writeFd[1]);
+// 		_writeFd[1] = -2;
+// 	}
+// 	if (_readFd[0] != -2 && _pid == -2)
+// 	{
+// 		close(_readFd[0]);
+// 		_readFd[0] = -2;
+// 	}
+// }
+
 bool Client::sendData(struct kevent& tevent)
 {
 // std::cerr << "fd: " << tevent.ident <<  "==============================Send data==============================" << std::endl;
@@ -382,6 +395,7 @@ std::cerr << B_CYAN << "testcode ===" << "tevent.data : " << tevent.data << RESE
 	{
 		if (_pid != -2)
 		{
+			// closePipeFd();
 			deletePidEvent();
 			kill(_pid, SIGKILL); // 파이프에 쓰다가 에러 throw하는 상황으로 잘 죽나 체크하기 jaejkim
 		}
@@ -406,6 +420,7 @@ std::cerr << B_CYAN << "testcode ===" << "tevent.data : " << tevent.data << RESE
 	{
 		// deleteEvent();
 		deleteWriteEvent();
+		// closePipeFd();
 		clearClient();
 		addEvent(tevent.ident, EVFILT_READ);
 		_request->setEventState(EVFILT_READ);

@@ -19,7 +19,9 @@ void Client::initCgi()
 	if (_pid > 0)
 		addEvent(_pid, EVFILT_PROC);
 	close(_writeFd[0]);
+	_writeFd[0] = -2;
 	close(_readFd[1]);
+	_readFd[1] = -2;
 }
 
 void Client::childProcess()
@@ -28,9 +30,11 @@ void Client::childProcess()
 	dup2(_writeFd[0], STDIN_FILENO);
 	close(_writeFd[0]);
 	close(_writeFd[1]);
+	_writeFd[1] = -2;
 	dup2(_readFd[1], STDOUT_FILENO);
 	close(_readFd[0]);
 	close(_readFd[1]);
+	_readFd[0] = -2;
 	// 실행시킬 모듈을 골라서 스크립트 실행 파일 이름으로 실행시킴 
 	execveCgi();
 }
