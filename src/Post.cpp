@@ -14,13 +14,12 @@ void Client::initCgi()
 		childProcess();
 	if (_pid > 0)
 		addEvent(_pid, EVFILT_PROC);
-	addEvent(_readFd[0], EVFILT_READ);
 	fcntl(_writeFd[1], F_SETFL, O_NONBLOCK);
 	fcntl(_readFd[0], F_SETFL, O_NONBLOCK);
+	addEvent(_readFd[0], EVFILT_READ);
+	addEvent(_writeFd[1], EVFILT_WRITE);
 	close(_writeFd[0]);
-	// _writeFd[0] = -2;
 	close(_readFd[1]);
-	// _readFd[1] = -2;
 }
 
 void Client::childProcess()
@@ -29,11 +28,9 @@ void Client::childProcess()
 	dup2(_writeFd[0], STDIN_FILENO);
 	close(_writeFd[0]);
 	close(_writeFd[1]);
-	// _writeFd[1] = -2;
 	dup2(_readFd[1], STDOUT_FILENO);
 	close(_readFd[0]);
 	close(_readFd[1]);
-	// _readFd[0] = -2;
 	// 실행시킬 모듈을 골라서 스크립트 실행 파일 이름으로 실행시킴 
 	execveCgi();
 }
@@ -75,7 +72,8 @@ void Client::uploadFile(size_t pipeSize)
 	}
 	_writeIndex += writeSize;
 std::cerr << B_BG_CYAN <<  "fd: " << _socketFd << " : " << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << RESET << std::endl;
-	if (_request->getBodyTotalSize() == _writeIndex)
+std::cerr << B_BG_CYAN <<  "_request->getChunkedEnd() : " << _request->getChunkedEnd() << RESET << std::endl;
+	if (_request->getBodyTotalSize() == _writeIndex && _request->getChunkedEnd() == true)
 	{
 		close(_writeFd[1]);
 		// _writeFd[1] = -2;

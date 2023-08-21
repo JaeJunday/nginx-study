@@ -1,5 +1,6 @@
 #include "Request.hpp"
 #include "Client.hpp"
+#include <chrono>
 
 Request::Request(Server& server)
 	: _server(server),
@@ -8,10 +9,10 @@ Request::Request(Server& server)
 	_state(request::READY),
 	_eventState(0), 
 	_bodyStartIndex(0), 
-	_bodyTotalSize(-1),
-	_chunkedState(chunk::READY),
-	_readIndex(0),
-	_writeEventFlag(false)
+	_bodyTotalSize(0),
+	_chunkedEnd(false),
+	_readIndex(0)
+	// _writeEventFlag(false)
 {
 // std::cerr << CYAN << "testcode overloding constructor" << RESET << std::endl;
 }
@@ -51,10 +52,10 @@ Request& Request::operator=(const Request& rhs)
 		_bodyStartIndex = rhs._bodyStartIndex;	
 		_bodyTotalSize = rhs._bodyTotalSize;
 		_chunkedFilename = rhs._chunkedFilename;
-		_chunkedState = rhs._chunkedState;
+		_chunkedEnd = rhs._chunkedEnd;
 		_perfectBody = rhs._perfectBody;
 		_readIndex = rhs._readIndex;
-		_writeEventFlag = rhs._writeEventFlag;
+		// _writeEventFlag = rhs._writeEventFlag;
 	}
 	return *this;	
 }
@@ -174,57 +175,68 @@ std::string removeSpecificCharacter(std::string str, char ch)
 	return (str);
 }
 
+
+
+
+
 void Request::parseChunkedData(Client* client)
 {
 	if (_readIndex == false)
 		_readIndex = _bodyStartIndex;
-	size_t index = _requestBuffer.find("\r\n", _readIndex);
-	if (index != std::string::npos)
+	// std::cerr << B_BG_RED << "header===\n" << _requestBuffer << RESET << std::endl;
+	// std::cerr << B_BG_YELLOW << "body====\n" << _requestBuffer.c_str() + _bodyStartIndex << RESET << std::endl;
+	// std::cerr << "======> index:" << index << std::endl;
+auto start_time = std::chrono::high_resolution_clock::now();
+
+
+
+
+	size_t requestBufferSize = _requestBuffer.size();
+	while (true)
 	{
-		char*   endptr;
-		size_t bodyStart = index + 2;
-		size_t bodySize = std::strtol(_requestBuffer.c_str() + _readIndex, &endptr, HEX);
-		//std::cerr << "======> bodySize:" << bodySize << std::endl;
-		if (endptr - _requestBuffer.c_str() != index)
-			throw 400;
-		if (bodySize == 0)
+		size_t index = _requestBuffer.find("\r\n", _readIndex);
+		if (index != std::string::npos)
 		{
-			if (_requestBuffer.find("\r\n", bodyStart) != std::string::npos)
-			{
-				_chunkedState = chunk::END;
-				_bodyTotalSize = _perfectBody.size();
-				if (_location->_clientMaxBodySize.empty() == false)
-				{
-					std::cerr << BLUE << "maxbodysize: " <<  util::stoui(_location->_clientMaxBodySize) << RESET << std::endl;
-					std::cerr << BLUE << "bodySize: " << _perfectBody.size() << std::endl;
-					if (_perfectBody.size() > util::stoui(_location->_clientMaxBodySize))
-						throw 413;
-				}
-				if (_writeEventFlag == false)
-				{
-					client->addEvent(client->getWriteFd(), EVFILT_WRITE);
-					_writeEventFlag = true;
-				}
-				return;
-			}
-		} 
-		else if (bodyStart + bodySize + 2 <= _requestBuffer.length())//body뒤의 \r\n고려
-		{	
-		// _perpectBody add && pipe write event add
-			if (_requestBuffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
+			char*   endptr;
+			size_t bodyStart = index + 2;
+			size_t bodySize = std::strtol(_requestBuffer.c_str() + _readIndex, &endptr, HEX);
+			if (endptr - _requestBuffer.c_str() != index)
 				throw 400;
-			_perfectBody.append(_requestBuffer.c_str() + bodyStart, bodySize);
-			// if (_writeEventFlag == false)
-			// {
-			// 	client->addEvent(client->getWriteFd(), EVFILT_WRITE);
-			// 	_writeEventFlag = true;
-			// }
-			_readIndex = bodyStart + bodySize + 2;//body뒤의 \r\n고려
-			_chunkedState =  chunk::CONTINUE;
-			return;
+			if (bodySize == 0)
+			{
+				if (_requestBuffer.find("\r\n", bodyStart) != std::string::npos)
+				{
+					// if (_location->_clientMaxBodySize.empty() == false)
+					// {
+					// 	std::cerr << BLUE << "maxbodysize: " <<  util::stoui(_location->_clientMaxBodySize) << RESET << std::endl;
+					// 	std::cerr << BLUE << "bodySize: " << _perfectBody.size() << std::endl;
+					// 	if (_perfectBody.size() > util::stoui(_location->_clientMaxBodySize))
+					// 		throw 413;
+					// }
+					_chunkedEnd = true;
+					break;
+				}
+			} 
+			else if (bodyStart + bodySize + 2 <= requestBufferSize)//body뒤의 \r\n고려
+			{	
+				if (_requestBuffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
+					throw 400;
+				_perfectBody.append(_requestBuffer.c_str() + bodyStart, bodySize);
+				_bodyTotalSize += bodySize;
+				_readIndex = bodyStart + bodySize + 2;//body뒤의 \r\n고려
+				continue;
+			}
 		}
+		break;
 	}
-	_chunkedState = chunk::INCOMPLETE_DATA;
+
+
+
+
+
+auto end_time = std::chrono::high_resolution_clock::now();
+auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+std::cout << "Function exampleFunction took " << duration.count() << " microseconds." << std::endl;
 }
 
 void Request::clearRequest()
@@ -245,9 +257,9 @@ void Request::clearRequest()
 	_eventState = 0;
 	_bodyStartIndex = 0;
 	_readIndex = 0;
-	_chunkedState = 0;
-	_writeEventFlag = false;
-	_bodyTotalSize = -1;
+	_chunkedEnd = false;
+	// _writeEventFlag = false;
+	_bodyTotalSize = 0;
 	_perfectBody.clear();
 	_secretHeader.clear();
 }
@@ -363,9 +375,9 @@ const std::string& Request::getChunkedFilename()
 	return _chunkedFilename;
 }
 
-int Request::getChunkedState() const
+int Request::getChunkedEnd() const
 {
-	return _chunkedState;
+	return _chunkedEnd;
 }
 
 int Request::getBodyTotalSize() const

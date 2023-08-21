@@ -45,9 +45,9 @@ class Request
 		int 				_bodyStartIndex;
 		int 				_bodyTotalSize;
 		// chunked
-		int					_chunkedState;
+		bool				_chunkedEnd;
 		int					_readIndex;
-		bool				_writeEventFlag;
+		// bool				_writeEventFlag;
 
 	public:
 		Request(Server& server);
@@ -80,7 +80,7 @@ class Request
 		const std::string& 	getBuffer() const;
 		const std::string& 	getChunkedFilename();
 		int 				getBodyIndex() const;
-		int 				getChunkedState() const;
+		int 				getChunkedEnd() const;
 		int 				getBodyTotalSize() const;
 		std::string&		getPerfectBody();
 		int 				getBodyStartIndex() const;

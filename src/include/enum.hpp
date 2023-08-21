@@ -104,18 +104,18 @@ namespace event
     };
 }
 
-namespace chunk
-{
-    enum VAR
-    {
-        FIRST = -2,
-    };
-    enum STATE
-    {
-        READY = 0,
-        END = 1,
-        WAIT = 2,
-        INCOMPLETE_DATA = 3,
-        CONTINUE = 4
-    };
-}
+// namespace chunk
+// {
+//     enum VAR
+//     {
+//         FIRST = -2,
+//     };
+//     enum STATE
+//     {
+//         READY = 0,
+//         END = 1,
+//         WAIT = 2,
+//         INCOMPLETE_DATA = 3,
+//         CONTINUE = 4
+//     };
+// }

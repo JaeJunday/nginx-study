@@ -321,24 +321,24 @@ void Client::handleResponse(struct kevent *tevent)
 {
 	if (_request->getTransferEncoding() == "chunked")
 	{
-		while (true) // 한번 돌때 완성된 문자열 하나씩 처리
-		{
+		// while (true) // 한번 돌때 완성된 문자열 하나씩 처리
+		// {
 			_request->parseChunkedData(this);
-			int chunkedState = _request->getChunkedState();
+			// int chunkedState = _request->getChunkedEnd();
 			// std::cerr << B_RED << "testcode " << "chunkedState : " << chunkedState<< RESET << std::endl;
-			if (chunkedState == chunk::CONTINUE)
-				continue;
-			else if (chunkedState == chunk::END)
-			{
-				std::cerr << RED << "testcode: " << "chunked::end" << RESET << std::endl;
-				break;
-			}
-			else if (chunkedState == chunk::INCOMPLETE_DATA)
-			{
+			// if (chunkedState == chunk::CONTINUE)
+				// continue;
+			// else if (chunkedState == chunk::END)
+			// {
+				// std::cerr << RED << "testcode: " << "chunked::end" << RESET << std::endl;
+				// break;
+			// }
+			// else if (chunkedState == chunk::INCOMPLETE_DATA)
+			// {
 				// std::cerr << RED << "testcode" << "chunked::IN DATA" << RESET << std::endl;
-				return;
-			}
-		}
+				// return;
+			// }
+		// }
 	}
 	else if (_request->getBuffer().size() - _request->getBodyIndex()  == util::stoui(_request->getContentLength()))
 	{

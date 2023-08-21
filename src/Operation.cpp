@@ -130,7 +130,7 @@ void Operation::start() {
 					{	
 						char* buffer = new char[tevent.data];
 						ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
-						std::cerr << B_BLUE << "testcode fd :"<< client->getSocket() << "access client" << RESET << std::endl;
+						// std::cerr << B_BLUE << "testcode fd :"<< client->getSocket() << "access client" << RESET << std::endl;
 						if (bytesRead == false || client->getReq().getConnection() == "close")
 						{
 							std::cerr << B_RED << "testcode fd :"<< client->getSocket() << " close client" << RESET << std::endl;
