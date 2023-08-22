@@ -101,7 +101,7 @@ void Client::stamp() const
 		color = RED;
 	else 
 		color = GREEN;
-    std::cerr << color << getDate() << " : "<< _request->getIp() << " " << _request->getMethod() << " " << _request->getVersion() << " "<< _stateCode << " " << _reasonPhrase << RESET << std::endl;
+    std::cerr << color << getDate() << " : "<< _request->getHost() << " " << _request->getMethod() << " " << _request->getVersion() << " "<< _stateCode << " " << _reasonPhrase << RESET << std::endl;
 }
 
 const std::stringstream& Client::getBuffer() const
@@ -111,8 +111,9 @@ const std::stringstream& Client::getBuffer() const
 
 std::string Client::findLocationPath() const
 {
-	const Server server = _request->getServer();
-	const std::vector<Location>& locations = server.getLocations();
+	const Server* server = _request->getServer();
+	std::cerr << B_RED << "testcode server : " << server->getSocket() << RESET << std::endl;
+	const std::vector<Location>& locations = server->getLocations();
 	std::string result = _request->getRequestUrl();
 	Location location;
 	int length = 0;
@@ -121,6 +122,7 @@ std::string Client::findLocationPath() const
 	{
 		// 경로가 없는 경우 errorcode
 	}
+	std::cerr << B_BG_RED << "testcode locations.size() : " << locations.size() << RESET << std::endl;
 	for (int i = 0; i < locations.size(); ++i) {
 		int pathLength = locations[i]._path.length();
 		if (_request->getRequestUrl().compare(0, pathLength, locations[i]._path) == 0)
@@ -129,7 +131,7 @@ std::string Client::findLocationPath() const
 			{
 				length = pathLength;
 				location = locations[i];
-				_request->setLocation(const_cast<Location *>(&_request->getServer().getLocation(i)));
+				_request->setLocation(const_cast<Location *>(&_request->getServer()->getLocation(i)));
 			}
 		}
  	}
@@ -138,10 +140,10 @@ std::string Client::findLocationPath() const
 		result.erase(0, length);
 		result = location._root + result;
 	}
-	else if (!server.getRoot().empty())	
+	else if (!server->getRoot().empty())	
 	{
 		result.erase(0, length);
-		result = server.getRoot() + result;
+		result = server->getRoot() + result;
 	}
 	if (result.size() > 1 && result[result.size() - 1] == '/')
 		result.erase(result.size() - 1, 1);
@@ -350,6 +352,9 @@ void Client::handleRequest(struct kevent* tevent, char* buffer)
 	}
 	if (_request->getState() == request::CREATE)
 	{	
+		// server 블록을 찾아줘야한다. - kyeonkim
+		Server* server = _request->findServer();
+		_request->setServer(server);
 		_convertRequestPath = findLocationPath();
 		checkLimitExcept();
 		if (_request->getMethod() == "POST" || _request->getMethod() == "PUT")

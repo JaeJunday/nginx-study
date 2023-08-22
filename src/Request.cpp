@@ -2,7 +2,7 @@
 #include "Client.hpp"
 #include <sys/errno.h>
 
-Request::Request(Server& server)
+Request::Request(Server* server)
 	: _server(server),
 	_location(NULL),
 	_port(0), 
@@ -16,6 +16,20 @@ Request::Request(Server& server)
 {
 // std::cerr << CYAN << "testcode overloding constructor" << RESET << std::endl;
 }
+
+Request::Request(std::vector<Server>& servers)
+	:_servers(servers),
+	_location(NULL),
+	_port(0), 
+	_state(request::READY),
+	_eventState(0), 
+	_bodyStartIndex(0), 
+	_bodyTotalSize(0),
+	_chunkedEnd(false),
+	_readIndex(0)
+{
+}
+
 
 Request::Request(const Request& request)
 	: _server(request._server)
@@ -33,7 +47,8 @@ Request& Request::operator=(const Request& rhs)
 // std::cerr << BLUE << "assign operator" << RESET << std::endl;
 	if (this != &rhs)
 	{
-		// _server = rhs._server;
+		_servers = rhs._servers;
+		_server = rhs._server;
 		_location = rhs._location;
 		_state = rhs._state;
 		_headerBuffer = rhs._headerBuffer;
@@ -41,7 +56,7 @@ Request& Request::operator=(const Request& rhs)
 		_method = rhs._method;
 		_requestPath = rhs._requestPath;
 		_version = rhs._version;
-		_ip = rhs._ip;
+		_host = rhs._host;
 		_port = rhs._port;
 		_connection = rhs._connection;
 		_contentType = rhs._contentType;
@@ -114,7 +129,7 @@ void Request::setFieldLine(std::string& fieldLine)
 			// std:: cerr << "ERROR : HOST ERROR" << std::endl;
 			// throw 404;
 		}
-		_ip = std::string(token[1], 0, mid);
+		_host = std::string(token[1], 0, mid);
 		_port = util::stoui(std::string(token[1], mid + 1, token[1].size() - (mid + 1)));
 	}
 	if (token[0] == "Content-Type")
@@ -162,6 +177,22 @@ std::cout << BLUE << "testcode "<< "fd : " << fd << "====headerbuff\n" << _heade
 		endLine = newEndLine + 2;
 	}
 	_bodyStartIndex = headerBoundary + 4;
+}
+
+
+
+Server*	Request::findServer()
+{
+	for (int i = 0; i < _servers.size(); ++i)
+	{
+		std::vector<std::string> serverName = _servers[i].getServerName();
+		for (int j = 0; j < serverName.size();++j)
+		{
+			if (serverName[j] == _host)
+				return &_servers[i];
+		}
+	}
+	return &_servers[0];
 }
 
 std::string removeSpecificCharacter(std::string str, char ch)
@@ -287,9 +318,9 @@ const std::string& Request::getContentLength() const
 	return _contentLength;
 }
 
-const std::string& Request::getIp() const
+const std::string& Request::getHost() const
 {
-	return _ip;
+	return _host;
 }
 
 const std::string& Request::getMethod() const
@@ -317,7 +348,7 @@ const std::string& Request::getBuffer() const
 	return _requestBuffer;
 }
 
-const Server& Request::getServer() const
+const Server* Request::getServer() const
 {
 	return _server;
 }
@@ -392,4 +423,9 @@ const std::string& Request::getSecretHeader() const
 void Request::setChunkedEnd(bool set)
 {
 	_chunkedEnd = set;
+}
+
+void Request::setServer(Server* server)
+{
+	_server = server;
 }

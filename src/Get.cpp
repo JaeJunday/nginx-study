@@ -55,9 +55,9 @@ void Client::openPath(const std::string& path)
 			relativePath += "/" + _request->getLocation()->_index;
 			fileProcess(relativePath, body);
 		}
-		else if (!_request->getServer().getRoot().empty())
+		else if (!_request->getServer()->getRoot().empty())
 		{
-			relativePath += "/" + _request->getServer().getRoot();
+			relativePath += "/" + _request->getServer()->getRoot();
 			fileProcess(relativePath, body);
 		}
 		else if (_request->getLocation()->_autoindex == "on")

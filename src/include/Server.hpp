@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enum.hpp"
+#include "Util.hpp"
 #include <iostream>
 #include <locale>
 #include <string>
@@ -40,12 +41,12 @@ class Server {
 	private:
 		std::vector<std::string>	_serverName;
 		std::vector<std::string>  	_errorPage;
-		std::string					_listen;
+		uint32_t					_listen;
 		std::string					_root;
 		std::string					_index;
 		std::string					_clientMaxBodySize;
 		std::vector<Location>		_location;
-    	int 						_socket;
+		uint32_t 					_socket;
 	public:
 		Server();
 		Server(const Server& other);
@@ -62,4 +63,6 @@ class Server {
 		const std::string& getIndex() const;
 		const std::vector<Location>& getLocations() const;
 		// const std::string& getCgiParam() const;
+		std::vector<std::string>& getServerName();
+		uint32_t getListen();
 };

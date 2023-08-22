@@ -21,17 +21,16 @@
 
 class Operation {
 private:
-    std::vector<Server> _servers;
+    std::map<uint32_t, std::vector<Server> > _servers;
     std::map<int, Client *> _clients;
 public:
     ~Operation();
-    void setServer(const Server& server);
-    const std::vector<Server>& getServers() const;
-    int createBoundSocket(std::string listen);
-    int findServer(uintptr_t ident) const;
+    void setServer(Server& server);
+    int createBoundSocket(uint32_t listen);
+    std::vector<Server>& findServer(uintptr_t ident);
     void start();
 
-    void acceptClient(int kq, int index);
+    void acceptClient(int kq, int fd, std::vector<Server>& servers);
     //void makeResponse(struct Kevent *tevent, int kq, Request* req);
     void sendData(struct kevent& tevent);
     void testPipe(std::string buffer);
@@ -39,6 +38,8 @@ public:
     // void handleResponse(Client* client, struct kevent *tevent);
     
     Client* selectMethod(Request* req, int kq) const;
+    void compareServer(std::vector<Server>& servers, Server& server);
+    void compareServerName(std::vector<std::string>& strs1, std::vector<std::string>& strs2);
 };
 
 // remove testcase function

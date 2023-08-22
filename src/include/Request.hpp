@@ -22,14 +22,15 @@ class Request
 {
 	// 현재 변수명이랑 함수명이랑 안맞는게 너무 많음 나중에 리네임 필요 - kyeonkim
 	private:
-		Server&				_server;
+		std::vector<Server>	_servers;
+		Server*				_server;
 		Location*			_location;
 		std::string			_headerBuffer;
 		std::string			_requestBuffer;
 		std::string			_method;
 		std::string			_requestPath;
 		std::string			_version;
-		std::string			_ip;
+		std::string			_host;
 		std::string			_connection;
 		std::string			_contentType;
 		std::string			_contentLength;
@@ -50,7 +51,8 @@ class Request
 		// bool				_writeEventFlag;
 
 	public:
-		Request(Server& server);
+		Request(Server* server);
+		Request(std::vector<Server>& servers);
 		Request(const Request& request);
 		Request& operator=(Request const& rhs);
 		~Request();
@@ -65,8 +67,8 @@ class Request
 
 		// get
 		int					getState() const;
-		const Server& 		getServer() const;
-		const std::string&	getIp() const;
+		const Server* 		getServer() const;
+		const std::string&	getHost() const;
 		const std::string&	getMethod() const;
 		const std::string&	getVersion() const;
 		const std::string&	getRequestUrl() const;
@@ -85,6 +87,7 @@ class Request
 		std::string&		getPerfectBody();
 		int 				getBodyStartIndex() const;
 		const std::string&	getSecretHeader() const;
+		Server*				findServer();
 
 		// set
 		void setState(int state);
@@ -97,7 +100,7 @@ class Request
 		void setBodyTotalSize(int bodyTotalSize);
 		void setPerfectBody(std::string& body);
 		void setChunkedEnd(bool set);
-
+		void setServer(Server* server);
 };
 //event process
 // delete

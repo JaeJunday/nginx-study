@@ -10,14 +10,34 @@ Operation::~Operation()
 	}
 }
 
-void Operation::setServer(const Server& server) 
+void Operation::compareServerName(std::vector<std::string>& strs1, std::vector<std::string>& strs2)
 {
-	_servers.push_back(server);
+	for (size_t i = 0; i < strs1.size(); ++i)
+	{
+		for (size_t j = 0; j < strs2.size(); ++j)
+		{
+			if (strs1[i] == strs2[j])
+				throw std::runtime_error("Error: duplication Server");
+		}
+	}
 }
 
-const std::vector<Server>& Operation::getServers() const
+void Operation::compareServer(std::vector<Server>& servers, Server& server)
 {
-	return _servers;
+	if (_servers[server.getListen()].size() > 1)
+	{
+		std::vector<Server>& servers = _servers[server.getListen()];
+		for (size_t i = 0; i < servers.size() - 1; ++i)
+			compareServerName(servers[i].getServerName(), server.getServerName());
+	}
+}
+
+
+void Operation::setServer(Server& server) 
+{
+	// server.splitListen();
+	_servers[server.getListen()].push_back(server);
+	compareServer(_servers[server.getListen()], server);
 }
 
 /*
@@ -27,7 +47,10 @@ const std::vector<Server>& Operation::getServers() const
 	- 클라이언트에서 요청이 들어올 때 묶은 변수를 한번 탐색해서 해당 서버 이름이 있는지 비교한다.
 	- 있으면 처리하고 없으면 서버들 중에 맨 위에 있는([0]) 서버의 이름으로 요청을 처리한다.
 */
-int Operation::createBoundSocket(std::string listen)
+
+
+
+int Operation::createBoundSocket(uint32_t port)
 {
 	int socketFd = socket(AF_INET, SOCK_STREAM, FALLOW);
 	if (socketFd == -1)
@@ -35,26 +58,10 @@ int Operation::createBoundSocket(std::string listen)
 	sockaddr_in serverAddr;
 	int optval = 1;
 	memset((char*)&serverAddr, 0, sizeof(sockaddr_in));
-	std::vector<std::string> ipPort = util::getToken(listen, ":");
-	uint32_t ip = 0x0000000; 
-	uint32_t port = 80;
-	if (ipPort.size() == 1)
-		port = util::stoui(ipPort[0]);
-	else if (ipPort.size() == 2)
-	{
-		ip = util::convertIp(ipPort[0]); 
-		port = util::stoui(ipPort[1]);
-	}
-	// default ip address
-		std::cerr << "http://";
-		if (ipPort.size() == 1)
-			std::cerr << "localhost" << ":" << ipPort[0];
-		else if (ipPort.size() == 2)
-			std::cerr << ipPort[0] << ":" << ipPort[1]; 
-		std::cerr << std::endl;
+	std::cerr << "http://0.0.0.0" << ":" << port << std::endl;
 	// ip address
 	serverAddr.sin_family = AF_INET; 
-	serverAddr.sin_addr.s_addr = htonl(ip);
+	serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serverAddr.sin_port = htons(port);
 	setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 	if (bind(socketFd, reinterpret_cast<struct sockaddr*>(&serverAddr), sizeof(serverAddr)) == -1)
@@ -65,33 +72,57 @@ int Operation::createBoundSocket(std::string listen)
 	@des 서버가 여러 개일 경우, 해당 서버가 몇 번째 인덱스에 있는지 찾아서 해당 인덱스 반환
 	@return serverIndex(int)
 */
-int Operation::findServer(uintptr_t ident) const
+std::vector<Server>& Operation::findServer(uintptr_t ident)
 {
-	for (size_t i = 0; i < _servers.size(); ++i)
-		if (static_cast<uintptr_t>(_servers[i].getSocket()) == ident)
-			return i;
-	return -1;
+	std::map<uint32_t, std::vector<Server> >::iterator it;
+
+ 	for (it = _servers.begin(); it != _servers.end(); ++it)
+	{
+		std::vector<Server>& serverList = it->second; // 맵의 값 (Server 벡터)
+		Server& server = serverList[0];
+		if (static_cast<uintptr_t>(server.getSocket()) == ident)
+			return serverList;
+	}
+	std::vector<Server> empty;
+	return empty;
 }
+
 
 void Operation::start() {
 	// 서버 시작 로직을 구현합니다.
 	/*
 		@des 서버마다 소켓을 하나 만들어서 Set, 그리고 서버는 Listen 상태로 만들어둠
 	*/
-	for(int i = 0; i < _servers.size(); ++i)
+	int kq, nev;
+	kq = kqueue();
+	struct kevent event, events[10];
+	struct kevent tevent;	 /* Event triggered */
+	std::map<uint32_t, std::vector<Server> >::iterator it;
+
+    for (it = _servers.begin(); it != _servers.end(); ++it)
 	{
+        uint32_t port = it->first; // 맵의 키
 		try {
-			std::string number = _servers[i].getValue(server::LISTEN);
-			int socketFd = createBoundSocket(number);
-			_servers[i].setSocket(socketFd);
-			fcntl(_servers[i].getSocket(), F_SETFL, O_NONBLOCK);
-			if (listen(_servers[i].getSocket(), 1024) == -1) // SOMAXCONN == 128
-				throw std::logic_error("Error: Listen failed");
+			int socketFd = createBoundSocket(port);
+        	std::vector<Server>& serverList = it->second; // 맵의 값 (Server 벡터)
+        	std::vector<Server>::iterator serverIt;
+			for (serverIt = serverList.begin(); serverIt != serverList.end(); ++serverIt)
+			{
+				Server& server = *serverIt;
+				server.setSocket(socketFd);
+				fcntl(server.getSocket(), F_SETFL, O_NONBLOCK);
+				if (listen(server.getSocket(), 1024) == -1) // SOMAXCONN == 128
+					throw std::logic_error("Error: Listen failed");
+				// 각 서버에 READ Event 를 검 - kyeonkim
+				EV_SET(&event, server.getSocket(), EVFILT_READ, EV_ADD, 0, 0, NULL);
+				kevent(kq, &event, 1, NULL, 0, NULL);
+			}
 		} catch (std::exception &e) {
 			std::cerr << e.what() << std::endl;
 			continue;
 		}
 	}
+	
 	/*
 		[feat] - kyeonkim
 		- 평가표에 The select() (or equivalent) should be in the main loop and should check file descriptors for read and write AT THE SAME TIME.
@@ -101,26 +132,16 @@ void Operation::start() {
 		설정한 공간만큼 받는다.
 		- 그러면 nev 변수에 받은 이벤트 수가 들어오게되고 해당 nev를 loop 시켜서 events[nev].filter 이런식으로 이벤트를 처리해야한다.
 	*/
-	int kq, nev;
-	kq = kqueue();
-	struct kevent event, events[10];
-	struct kevent tevent;	 /* Event triggered */
-
-	for(size_t i = 0; i < _servers.size(); ++i)
-	{
-		EV_SET(&event, _servers[i].getSocket(), EVFILT_READ, EV_ADD, 0, 0, NULL);
-		kevent(kq, &event, 1, NULL, 0, NULL);
-	}
-
 	while (true)
 	{
 		nev = kevent(kq, NULL, 0, &tevent, 1, NULL); // EVFILT_READ, EVFILT_WRITE 이벤트가 감지되면 이벤트 감지 개수를 반환
 		if (nev == -1)
 			throw std::runtime_error("Error: kevent error");
-		int serverIndex = findServer(tevent.ident);
-		if (serverIndex >= 0) // 서버일 경우
+		if (tevent.udata == NULL)
 		{
-			acceptClient(kq, serverIndex);
+			std::vector<Server>& servers = findServer(tevent.ident);
+			if (!servers.empty())
+				acceptClient(kq, tevent.ident, servers);
 		}
 		else // 클라이언트일 경우
 		{
@@ -215,14 +236,14 @@ void Operation::start() {
 	}
 }
 
-void Operation::acceptClient(int kq, int index)
+void Operation::acceptClient(int kq, int fd, std::vector<Server>& servers)
 {
 	int				socketFd;
 	sockaddr_in		socketAddr;
 	socklen_t		socketLen;
 	
 std::cerr << GREEN << "testcode" << "================ ACCEPT =========================" << RESET << std::endl;
-	socketFd = accept(_servers[index].getSocket(), reinterpret_cast<struct sockaddr*>(&socketAddr), &socketLen);
+	socketFd = accept(fd, reinterpret_cast<struct sockaddr*>(&socketAddr), &socketLen);
 	if (socketFd == -1)
 		throw std::runtime_error("Error: Accept failed");
 	struct linger linger_opt;
@@ -233,7 +254,7 @@ std::cerr << GREEN << "testcode" << "================ ACCEPT ===================
 	setsockopt(socketFd, SOL_SOCKET, SO_NOSIGPIPE, &socket_option, sizeof(socket_option));
 // std::cerr << YELLOW << "socketFd: " << socketFd <<  RESET << std::endl;
 	fcntl(socketFd, F_SETFL, O_NONBLOCK);
-	Request *request = new Request(_servers[index]);
+	Request *request = new Request(servers); // server vector 가 들어가야한다.
 	Client* client = new Client(request, kq, socketFd);
 	_clients.insert(std::make_pair(socketFd, client));
 	client->addEvent(socketFd, EVFILT_READ);
