@@ -104,6 +104,14 @@ namespace event
     };
 }
 
+namespace timer
+{
+    enum TIMER
+    {
+        TIMEOUT = 30
+    };
+}
+
 // namespace chunk
 // {
 //     enum VAR

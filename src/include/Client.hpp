@@ -89,8 +89,9 @@ class Client
 		void addEvent(int fd, int filter);
 		void deleteReadEvent();
 		void deleteWriteEvent();
-		
 		void deletePidEvent();
+		void deleteTimerEvent();
+		void resetTimerEvent();
 
 	// get
 		int getWriteFd() const;

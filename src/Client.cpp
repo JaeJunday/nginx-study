@@ -54,13 +54,14 @@ Client& Client::operator=(Client const& rhs)
 // Request 제거해야함
 Client::~Client()
 {
-	if (_pid != -2)
+	if (_pid != -2) // 클라이언트가 recv 도중에 끊어질 경우 서버 처리
 	{
 		closePipeFd();
 		deletePidEvent();
 		kill(_pid, SIGKILL); // 파이프에 쓰다가 에러 throw하는 상황으로 잘 죽나 체크하기 jaejkim
 		_pid = -2;
 	}
+	deleteTimerEvent(); // Client 종료 시 타이머 제거
 	delete _request;
     /* Destructor Implementation */
 }
@@ -200,7 +201,7 @@ int Client::getSocket() const
 {
 	return _socketFd;
 }
-
+// 한 함수 한 기능만을 위해서 동작하도록 한다(한함한기) - kyeonkim
 void Client::deleteReadEvent()
 {
     struct kevent event;
@@ -227,7 +228,6 @@ void Client::deleteWriteEvent()
 	}
 }
 
-
 void Client::deletePidEvent()
 {
     struct kevent event;
@@ -238,6 +238,28 @@ void Client::deletePidEvent()
 		std::cerr << "invalid Pid event delete" << std::endl;
 }
 
+// 보내는 중간에 에러가 날 경우, 해당 fd에 걸린 이벤트를 지워줘야한다? -> fd 에 걸려있으니 해당 fd를 지우면 해당 이벤트도 사라지지 않을까?
+void Client::deleteTimerEvent()
+{
+	struct kevent event;
+
+	std::cerr << B_BG_BLUE << "testcode deleteTimerEvent()===" << RESET << std::endl;
+	EV_SET(&event, _socketFd, EVFILT_TIMER, EV_DELETE, NOTE_EXIT, 0, this);
+	if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
+		std::cerr << "invalid Timer event delete" << std::endl;
+}
+
+void Client::resetTimerEvent()
+{
+    struct kevent event;
+
+	std::cerr << GREEN << "Timer event Reset" << RESET << std::endl;
+	EV_SET(&event, _socketFd, EVFILT_TIMER, EV_ADD | EV_ENABLE, NOTE_SECONDS, timer::TIMEOUT, this);
+	if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
+		std::cerr << "invalid Timer event Reset" << std::endl;
+}
+
+
 // 소켓 전용 event setter
 void Client::addEvent(int fd, int filter)
 {
@@ -245,24 +267,31 @@ void Client::addEvent(int fd, int filter)
 
     if (filter == EVFILT_READ)
     {
-		std::cerr << GREEN << "Read eventSet" << RESET << std::endl;
+		std::cerr << GREEN << "Read event Set" << RESET << std::endl;
         EV_SET(&event, fd, EVFILT_READ, EV_ADD, 0, 0, this);
         if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
             std::cerr << "invalid Read event set" << std::endl;
     }
     else if (filter == EVFILT_WRITE)
     {
-		std::cerr << GREEN << "Write eventSet" << RESET << std::endl;
+		std::cerr << GREEN << "Write event Set" << RESET << std::endl;
         EV_SET(&event, fd, EVFILT_WRITE, EV_ADD, 0, 0, this);
         if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
             std::cerr << "invalid Write event set" << std::endl;
     }
 	else if (filter == EVFILT_PROC)
 	{
-		std::cerr << GREEN << "Pid eventSet" << RESET << std::endl;
+		std::cerr << GREEN << "Pid event Set" << RESET << std::endl;
 		EV_SET(&event, fd, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, this);
         if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
             std::cerr << "invalid Pid event set" << std::endl;
+	}
+	else if (filter == EVFILT_TIMER) // 타이머 이벤트 추가 - kyeonkim
+	{
+		std::cerr << GREEN << "Timer event Set" << RESET << std::endl;
+		EV_SET(&event, fd, EVFILT_TIMER, EV_ADD | EV_ENABLE, NOTE_SECONDS, timer::TIMEOUT, this);
+        if (kevent(_kq, &event, 1, NULL, 0, NULL) == -1)
+            std::cerr << "invalid Timer event set" << std::endl;
 	}
 }
 
@@ -392,7 +421,7 @@ std::cerr << B_CYAN << "testcode ===" << "tevent.data : " << tevent.data << RESE
 	// 에러코드일때는 소켓은 안닫고 프로세스 종료
 	if (_stateCode >= 400) // 에러도 소켓은 살려놓는다. 
 	{
-		if (_pid != -2)
+		if (_pid != -2) // send 도중에 끊어질 경우 error 처리 - kyeonkim
 		{
 			closePipeFd();
 			deletePidEvent();

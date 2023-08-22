@@ -121,7 +121,8 @@ void Operation::start() {
 					// std::cerr << std::endl;
 
 					if (tevent.ident == client->getSocket())
-					{	
+					{
+						client->resetTimerEvent(); // READ 이벤트가 소켓으로 날라올 경우 해당 fd의 타이머 이벤트를 리셋 - kyeonkim
 						char* buffer = new char[tevent.data];
 						ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 						// std::cerr << B_BLUE << "testcode fd :"<< client->getSocket() << "access client" << RESET << std::endl;
@@ -132,7 +133,6 @@ void Operation::start() {
 							close(tevent.ident);
 							_clients.erase(tevent.ident);
 							delete client; // 소멸자 부를 때 request 제거
-							client = NULL;
 						}
 						else
 						{
@@ -150,6 +150,7 @@ void Operation::start() {
 				{
 					if (tevent.ident == client->getSocket())
 					{
+						client->resetTimerEvent(); // WRITE 이벤트가 소켓으로 날라올 경우 해당 fd의 타이머 이벤트를 리셋 - kyeonkim
 						if (client->sendData(tevent) == false)
 							_clients.erase(tevent.ident);
 					}
@@ -167,8 +168,14 @@ void Operation::start() {
 						client->endChildProcess();
 					}
 				}
-				// 타이머 -> 타임에러 
-				// if ()
+				else if (tevent.filter == EVFILT_TIMER) // 타이머 완료 시 클라이언트 제거 - kyeonkim
+				{
+					std::cerr << B_BG_YELLOW << "testcode FILTER == TIMER EVENT > DELETE CLIENT" << RESET << std::endl;
+					client->clearClient();
+					close(tevent.ident);
+					_clients.erase(tevent.ident);
+					delete client;
+				}
 			}
 			catch (const int errnum)
 			{	
@@ -209,5 +216,6 @@ std::cerr << GREEN << "testcode" << "================ ACCEPT ===================
 	Client* client = new Client(request, kq, socketFd);
 	_clients.insert(std::make_pair(socketFd, client));
 	client->addEvent(socketFd, EVFILT_READ);
+	client->addEvent(socketFd, EVFILT_TIMER); // 타이머 이벤트 추가 - kyeonkim
 	client->getReq().setEventState(EVFILT_READ);
 }
