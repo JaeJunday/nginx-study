@@ -120,12 +120,6 @@ void Operation::start() {
 					// write(1, buffer, bytesRead);
 					// std::cerr << std::endl;
 
-					// 바이이트  리리드  먼먼저  읽읽고  그그다다음음에  클클라라이이언언트  확확인인하하기기
-					// if (bytesRead == -1)
-					// {
-					// 	std::cerr << B_RED << "testcode bytesRead error : " << strerror(errno) << RESET << std::endl;
-					// }
-					// std::cerr << B_RED << "testcode bytesRead : " << bytesRead << RESET << std::endl;
 					if (tevent.ident == client->getSocket())
 					{	
 						char* buffer = new char[tevent.data];
@@ -209,7 +203,7 @@ std::cerr << GREEN << "testcode" << "================ ACCEPT ===================
     setsockopt(socketFd, SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
 	int socket_option = 1;
 	setsockopt(socketFd, SOL_SOCKET, SO_NOSIGPIPE, &socket_option, sizeof(socket_option));
-std::cerr << YELLOW << "socketFd: " << socketFd <<  RESET << std::endl;
+// std::cerr << YELLOW << "socketFd: " << socketFd <<  RESET << std::endl;
 	fcntl(socketFd, F_SETFL, O_NONBLOCK);
 	Request *request = new Request(_servers[index]);
 	Client* client = new Client(request, kq, socketFd);

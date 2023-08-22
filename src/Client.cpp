@@ -54,6 +54,13 @@ Client& Client::operator=(Client const& rhs)
 // Request 제거해야함
 Client::~Client()
 {
+	if (_pid != -2)
+	{
+		closePipeFd();
+		deletePidEvent();
+		kill(_pid, SIGKILL); // 파이프에 쓰다가 에러 throw하는 상황으로 잘 죽나 체크하기 jaejkim
+		_pid = -2;
+	}
 	delete _request;
     /* Destructor Implementation */
 }
