@@ -19,6 +19,14 @@
 //     return *this;
 // }
 
+/*
+	[Feat] - kyeonkim
+	- 평가표에 You have to test the CGI with the "GET" and "POST" methods. 가 있으므로
+	~.py 로 GET 요청이 들어올 경우에도 ~.py를 실행한 결과값을 send 해줘야한다.
+	- You can use a script containing an infinite loop or an error. 이런 항목도 있으므로
+	while.py 하나 만들어서 무한루프 시키는 파일을 하나 만들어둬야한다.
+*/
+
 void Client::getProcess()
 {
     std::string path = findLocationPath();

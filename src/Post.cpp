@@ -143,6 +143,7 @@ void Client::postProcess()
 			throw 413;
 	}
 	addEvent(_writeFd[1], EVFILT_WRITE);
+	_request->setChunkedEnd(true);
 }
 
 //secret header set env해줘야함

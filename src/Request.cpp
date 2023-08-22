@@ -84,8 +84,8 @@ void Request::setRequestLine(std::string& requestLine)
 		std::cerr << "Error: Request Line size error" << std::endl;
 		throw 400;
 	}
-	if (token[0] == "HEAD")
-		_method = token[0];
+	// if (token[0] == "HEAD")
+	// 	_method = token[0];
 	if (!(token[0] == "GET" || token[0] == "DELETE" || token[0] == "POST" || token[0] == "PUT"))
 		throw 405;
 	if (token[2] != "HTTP/1.1")
@@ -147,7 +147,7 @@ void Request::headerParsing(char* buf, intptr_t size, int fd)
 	int headerBoundary = _headerBuffer.find("\r\n\r\n");
 	if (headerBoundary == std::string::npos)
 		return ;
-// std::cout << BLUE << "testcode "<< "fd : " << fd << "====headerbuff\n" << _headerBuffer.substr(0, _headerBuffer.find("\r\n\r\n")) << RESET << std::endl;
+std::cout << BLUE << "testcode "<< "fd : " << fd << "====headerbuff\n" << _headerBuffer.substr(0, _headerBuffer.find("\r\n\r\n")) << RESET << std::endl;
 	_state = request::CREATE;
 	int endLine = _headerBuffer.find("\r\n");
 	std::string requestLine(_headerBuffer, 0, endLine);
@@ -387,4 +387,9 @@ int Request::getBodyStartIndex() const
 const std::string& Request::getSecretHeader() const
 {
 	return _secretHeader;
+}
+
+void Request::setChunkedEnd(bool set)
+{
+	_chunkedEnd = set;
 }

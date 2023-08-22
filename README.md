@@ -56,3 +56,11 @@
  EV_SET(&event, fd, EVFILT_TIMER, EV_ADD | EV_ENABLE, NOTE_SECONDS, 10, NULL); 
 
  EV_SET(&event, fd, EVFILT_TIMER, EV_ADD | EV_ENABLE, NOTE_SECONDS, 10, NULL);
+
+
+// [Feat]autoindex 동작 안함. 왜? - kyeonkim
+// [Feat] server name과 server listen이 같으면 동작하면 안된다.- kyeonkim
+	- In the configuration, try to setup the same port multiple times. It should not work.
+	 - Launch multiple servers at the same time with different configurations but with common ports. Does it work? If it does, ask why the server should work if one of the configurations isn't functional. Keep going.
+	 	같은 포트로도 bind 시킬 수 있는 소켓 옵션이 있다(REUSEPORT). 해당 옵션을 주면 같은 포트로도 서버를 동작시킬 수 있지만 요청을 보내면 먼저 열은 서버만 반응을 한다. 이때 첫번째 서버를 중단하고 다시 요청을 보내면 두번째 서버가 동작을 하다. 이런 결과를 봤을 때 두번째 서버의 용도는 첫번째 서버가 중단되었을 경우, 백업의 용도로 쓰이지 않을까?하고 생각이 든다.
+// [Test] Siege 테스트 시에 memory leak 이 나면 안된다.- kyeonkim 

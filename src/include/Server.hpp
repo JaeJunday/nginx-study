@@ -9,6 +9,17 @@
 
 class Operation;
 
+/*
+	[feat] - kyeonkim
+	- conf server에 root 키워드를 추가해야한다.
+	- root 에 따라 서로 다른 파일을 호출해서 보여줘야한다.
+	- 예를 들어, conf에서 server root 를 pages로 설정할 경우 
+	  루트로 요청을 보낸다면 pages에 있는 hello.html을 보여주는데
+	  conf에서 server root 를 pages2로 설정할 경우에 루트로 요청을 보내면 
+	  pages2 폴더 안에 있는 파일을 보여줘야한다.
+	- 추가해도 되고 안해도 되는 부분. 근데 코드 상으로는 추가할려고 했음.
+*/
+
 struct Location
 {
 	std::string					_path;

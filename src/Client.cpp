@@ -42,6 +42,14 @@ Client::Client(const Client& src)
     /* Copy Constructor Implementation */
 }
 
+/*
+	[delete] - kyeonkim
+	- 현재 클라이언트 대입 쓰고 있음.
+	- 쓰고 있는데 request 대입하고 있음.
+	- 다른 것도 넣어줘야함. 근데 신기하게 왜 잘 동작함?
+	- 심지어 리턴도 없음 ㅋㅋㅋ
+	- 근데 잘보니 안씀 ㅋㅋㅋ 삭제해도됨 ㅋㅋㅋ
+*/
 Client& Client::operator=(Client const& rhs)
 {
 	if (this != &rhs)

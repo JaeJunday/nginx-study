@@ -26,7 +26,7 @@ def parse_data(output_directory):
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
     if content_length:
-        if content_type == 'text/plain':
+        if content_type == 'text/plain' or content_type == 'plain/text':
             filename = get_filename()
             output_path = os.path.join(output_directory, filename)
             with open(output_path, 'wb') as file:

@@ -20,6 +20,13 @@ const std::vector<Server>& Operation::getServers() const
 	return _servers;
 }
 
+/*
+	[Feat] - kyeonkim
+	- conf 에서 listen 이 같고 server_name 이 다를 경우 다음과 같이 처리해야한다.
+	- server socket 에 bind 하기 전에 port가 같은 서버끼리 묶어둔다.
+	- 클라이언트에서 요청이 들어올 때 묶은 변수를 한번 탐색해서 해당 서버 이름이 있는지 비교한다.
+	- 있으면 처리하고 없으면 서버들 중에 맨 위에 있는([0]) 서버의 이름으로 요청을 처리한다.
+*/
 int Operation::createBoundSocket(std::string listen)
 {
 	int socketFd = socket(AF_INET, SOCK_STREAM, FALLOW);
@@ -85,6 +92,15 @@ void Operation::start() {
 			continue;
 		}
 	}
+	/*
+		[feat] - kyeonkim
+		- 평가표에 The select() (or equivalent) should be in the main loop and should check file descriptors for read and write AT THE SAME TIME.
+		  란 항목이 있는데 항목의 처리는 다음과 같다.
+		- conf 에 max_event 라는 키워드가 있으면 해당 키워드 value 값으로 이벤트 공간을 설정해야한다.
+		- 이벤트 공간을 설정했으면 nev = kevent(kq, NULL, 0, &tevent, 1, NULL); 이렇게 1개씩 받는 것이 아니라
+		설정한 공간만큼 받는다.
+		- 그러면 nev 변수에 받은 이벤트 수가 들어오게되고 해당 nev를 loop 시켜서 events[nev].filter 이런식으로 이벤트를 처리해야한다.
+	*/
 	int kq, nev;
 	kq = kqueue();
 	struct kevent event, events[10];
@@ -124,6 +140,11 @@ void Operation::start() {
 					{
 						client->resetTimerEvent(); // READ 이벤트가 소켓으로 날라올 경우 해당 fd의 타이머 이벤트를 리셋 - kyeonkim
 						char* buffer = new char[tevent.data];
+						/*
+							[Feat] - kyeonkim
+							- read/recv/write/send 의 반환값인 0, -1 을 모두 처리해야한다.
+							- errno 쓰지말라
+						*/
 						ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 						// std::cerr << B_BLUE << "testcode fd :"<< client->getSocket() << "access client" << RESET << std::endl;
 						if (bytesRead == false || client->getReq().getConnection() == "close")
