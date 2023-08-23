@@ -184,10 +184,10 @@ void Operation::processEvent(int kq, struct kevent *tevents, int nev)
 			catch (const int errnum)
 			{	
 				Client* client = static_cast<Client*>(tevents[i].udata);
-			std::cerr << RED <<  "fd: " << client->getSocket() <<  "in trycatch error delete read event" << RESET << std::endl;
+			std::cerr << RED <<  "fd: " << client->getSocket() <<  "in trycatch error delete read event : " << errnum << RESET << std::endl;
 				client->deleteReadEvent();
 				client->errorProcess(errnum);
-				client->addEvent(tevents[i].ident, EVFILT_WRITE);
+				client->addEvent(client->getSocket(), EVFILT_WRITE); // process 에서 에러가 나면 fd값이 아니라 pid 값이다.
 				client->getReq().setEventState(EVFILT_WRITE);
 			}
 			catch(const std::exception& e)

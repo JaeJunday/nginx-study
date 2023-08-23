@@ -59,13 +59,18 @@ void Client::writePipe(size_t pipeSize)
 	std::string& perfectBody = _request->getPerfectBody();
 	size_t currentWriteSize = std::min(perfectBody.size() - _writeIndex, pipeSize);
 	ssize_t writeSize = write(_writeFd[1], perfectBody.c_str() + _writeIndex, currentWriteSize);
-	if (writeSize <= 0)
+	if (writeSize < 0)
 	{
 		// std::cerr << B_RED << "testcode " << "writeSize error" << RESET << std::endl;
 		// std::cerr << B_RED << "testcode " << strerror(errno) << RESET << std::endl;
 		// return;
 		throw 500;
 	}
+	// if (writeSize == 0) // 처리를 안해줘야 다시 이벤트를 받는다. man에도 그렇게 나와있다. 오히려 처리하면 안된다.
+	// {
+	// 	std::cerr << B_BG_RED << "testcode " << "writeSize 0" << RESET << std::endl;
+	// 	return;
+	// }
 	_writeIndex += writeSize;
 std::cerr << B_BG_CYAN <<  "fd: " << _socketFd << " : " << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << RESET << std::endl;
 // std::cerr << B_BG_CYAN <<  "_request->getChunkedEnd() : " << _request->getChunkedEnd() << RESET << std::endl;
@@ -82,7 +87,7 @@ void Client::readPipe(size_t pipeSize)
 	memset(tempBuffer, 0, pipeSize);
 
 	ssize_t readSize = read(_readFd[0], tempBuffer, pipeSize);
-	if (readSize <= 0)
+	if (readSize < 0)
 	{
 		// std::cerr << B_RED << "testcode " << "readSize error" << RESET << std::endl;
 		// std::cerr << B_RED << "testcode " << strerror(errno) << RESET << std::endl;
@@ -109,12 +114,18 @@ void Client::readPipe(size_t pipeSize)
 void Client::endChildProcess()
 {
 std::cerr << RED << "endchild process()" << RESET << std::endl;
-	waitpid(_pid, NULL, 0);
+	int status;
+	waitpid(_pid, &status, 0);
+	_pid = -2;
+	if (WEXITSTATUS(status) == 1) // status 값이 1. 즉, execve 가 실패했다면 잘못된 요청이므로 400을 던진다. - kyeonkim
+	{
+		_responseBuffer.str(""); // readPipe 함수에서 _responseBuffer에 값을 넣으므로 초기화한다 - kyeonkim
+		throw 400;
+	}
 	// 반환값 받아서 확인 
 	deleteReadEvent();
 	addEvent(_socketFd, EVFILT_WRITE); // socket
 	_request->setEventState(EVFILT_WRITE);	
-	_pid = -2;
 }
 
 pid_t Client::getPid() const
