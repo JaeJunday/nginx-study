@@ -22,7 +22,7 @@ namespace location
         INDEX,
         AUTOINDEX,
         UPLOAD,
-        CGI_PARAM,
+        // CGI_PARAM,
         PY,
         BLA,
         PHP,
@@ -101,6 +101,11 @@ namespace event
     {
         READ = -1,
         WRITE = -2
+    };
+
+    enum KEVENT
+    {
+        MAX_EVENT = 1024
     };
 }
 

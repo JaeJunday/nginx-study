@@ -277,7 +277,7 @@ int Configuration::findServerKey(const std::string& key) const
 int Configuration::findLocationKey(const std::string& key) const
 {
 	std::string locationDirective[] =
-	{"root", "index", "autoindex", "upload", "cgi_param", ".py", ".bla", ".php", "client_max_body_size", "limit_except","try_files"};
+	{"root", "index", "autoindex", "upload", ".py", ".bla", ".php", "client_max_body_size", "limit_except","try_files"};
 	int res = -1;
 	size_t i;
 	size_t length = sizeof(locationDirective) / sizeof(std::string);
@@ -297,8 +297,8 @@ int Configuration::findLocationKey(const std::string& key) const
 			return (location::AUTOINDEX);
 		case location::UPLOAD:
 			return (location::UPLOAD);
-		case location::CGI_PARAM:
-			return (location::CGI_PARAM);
+		// case location::CGI_PARAM:
+		// 	return (location::CGI_PARAM);
 		case location::PY:
 			return (location::PY);
 		case location::BLA:
@@ -328,8 +328,8 @@ void Configuration::setLocationValue(Location& location, int index, std::string&
 			location._autoindex = value; break;
 		case location::UPLOAD:
 			location._upload = value; break;
-		case location::CGI_PARAM:
-			location._cgiParam = value; break;
+		// case location::CGI_PARAM:
+		// 	location._cgiParam = value; break;
 		case location::PY:
 			location._py = value; break;
         case location::BLA:
