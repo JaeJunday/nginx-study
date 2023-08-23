@@ -47,6 +47,8 @@ public:
 	// compare
 	void compareServer(std::vector<Server>& servers, Server& server);
 	void compareServerName(std::vector<std::string>& strs1, std::vector<std::string>& strs2);
+
+	void processEvent(int kq, struct kevent *tevents, int nev);
 };
 
 // remove testcase function

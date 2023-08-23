@@ -38,7 +38,7 @@ void Operation::setServer(Server& server)
 	_servers[server.getListen()].push_back(server);
 }
 /*
-	[Feat] - kyeonkim
+	[Done] - kyeonkim
 	- conf 에서 listen 이 같고 server_name 이 다를 경우 다음과 같이 처리해야한다.
 	- server socket 에 bind 하기 전에 port가 같은 서버끼리 묶어둔다.
 	- 클라이언트에서 요청이 들어올 때 묶은 변수를 한번 탐색해서 해당 서버 이름이 있는지 비교한다.
@@ -83,15 +83,124 @@ std::vector<Server>& Operation::findServers(uintptr_t ident)
 	return empty;
 }
 
+/*	kyeonkim
+	@des 이벤트가 동시에 날라올 때, 해당 이벤트를 1개씩 받는게 아니라 다 받고 저장한 뒤에 하나씩 처리한다.
+	이벤트를 하나씩 받으면서 하나씩 처리할 경우, 이벤트가 날라온 순서대로 처리되지 않을 가능성이 존재한다.
+	이를 방지하기 위해 동시에 날라오는 이벤트를 MAX_EVENT 만큼 받아준다.
+	(이벤트 처리를 제외한 모든 로직들은 함수로 뺴야한다. - 리펙토링)
+*/
+void Operation::processEvent(int kq, struct kevent *tevents, int nev)
+{
+	for (int i = 0; i < nev; ++i)
+	{
+		if (tevents[i].udata == NULL) // server block
+		{
+			std::vector<Server>& servers = findServers(tevents[i].ident);
+			if (!servers.empty())
+				acceptClient(kq, tevents[i].ident, servers);
+		}
+		else // client block
+		{
+			try
+			{
+				Client* client = reinterpret_cast<Client*>(tevents[i].udata);
+				// std::cerr << B_BG_RED << "testcode " << client->getSocket() << RESET << std::endl;
+				// std::cerr << B_BG_RED << "testcode " << client << RESET << std::endl;
+				if (tevents[i].filter == EVFILT_READ)
+				{
 
+					// std::cerr << RED << "recv : " << tevents[i].ident << ":"<< RESET << std::endl;
+					// write(1, buffer, bytesRead);
+					// std::cerr << std::endl;
+
+					if (tevents[i].ident == client->getSocket())
+					{
+						client->resetTimerEvent(); // READ 이벤트가 소켓으로 날라올 경우 해당 fd의 타이머 이벤트를 리셋 - kyeonkim
+						char* buffer = new char[tevents[i].data];
+						/*
+							[Feat] - kyeonkim
+							- read/recv/write/send 의 반환값인 0, -1 을 모두 처리해야한다.
+							- errno 쓰지말라
+						*/
+						ssize_t bytesRead = recv(tevents[i].ident, buffer, tevents[i].data, 0);
+						// std::cerr << B_BLUE << "testcode fd :"<< client->getSocket() << "access client" << RESET << std::endl;
+						if (bytesRead == false || client->getReq().getConnection() == "close")
+						{
+							std::cerr << B_RED << "testcode fd :"<< client->getSocket() << " close client" << RESET << std::endl;
+							client->clearClient();
+							close(tevents[i].ident);
+							_clients.erase(tevents[i].ident);
+							delete client; // 소멸자 부를 때 request 제거
+						}
+						else
+						{
+							client->handleRequest(&tevents[i], buffer);
+						}
+						delete[] buffer;
+					}
+					else if(tevents[i].ident == client->getReadFd())
+					{
+						// std::cerr << YELLOW << "readfd" << RESET << std::endl;
+						client->printResult(static_cast<size_t>(tevents[i].data));
+					}	
+				}
+				else if (tevents[i].filter == EVFILT_WRITE)
+				{
+					if (tevents[i].ident == client->getSocket())
+					{
+						client->resetTimerEvent(); // WRITE 이벤트가 소켓으로 날라올 경우 해당 fd의 타이머 이벤트를 리셋 - kyeonkim
+						if (client->sendData(tevents[i]) == false)
+							_clients.erase(tevents[i].ident);
+					}
+					else if (tevents[i].ident == client->getWriteFd())
+					{
+						// std::cerr << YELLOW << "writefd" << RESET << std::endl;
+						client->uploadFile(tevents[i].data);
+					} 
+				}
+				else if (tevents[i].filter == EVFILT_PROC)
+				{
+					if (tevents[i].fflags & NOTE_EXIT)
+					{
+						std::cerr << B_RED << "testcode " << "EVFILT_PROC" << "fd: " << client->getSocket() << RESET << std::endl;
+						client->endChildProcess();
+					}
+				}
+				else if (tevents[i].filter == EVFILT_TIMER) // 타이머 완료 시 클라이언트 제거 - kyeonkim
+				{
+					std::cerr << B_BG_YELLOW << "testcode FILTER == TIMER EVENT > DELETE CLIENT" << RESET << std::endl;
+					client->clearClient();
+					close(tevents[i].ident);
+					_clients.erase(tevents[i].ident);
+					delete client;
+				}
+			}
+			catch (const int errnum)
+			{	
+				Client* client = static_cast<Client*>(tevents[i].udata);
+			std::cerr << RED <<  "fd: " << client->getSocket() <<  "in trycatch error delete read event" << RESET << std::endl;
+				client->deleteReadEvent();
+				client->errorProcess(errnum);
+				client->addEvent(tevents[i].ident, EVFILT_WRITE);
+				client->getReq().setEventState(EVFILT_WRITE);
+			}
+			catch(const std::exception& e)
+			{
+				std::cerr << "exception error : " << e.what() << std::endl;
+			}
+		}
+	}
+}
+
+// Server Start
 void Operation::start() {
-	// 서버 시작 로직을 구현합니다.
-	int kq, nev;
-	kq = kqueue();
-	struct kevent event, events[10];
-	struct kevent tevent;	 /* Event triggered */
+	int kq;
+	int nev;
+	struct kevent event;
+	struct kevent tevents[event::MAX_EVENT];	 /* Event triggered */
 	std::map<uint32_t, std::vector<Server> >::iterator it;
 
+	kq = kqueue();
     for (it = _servers.begin(); it != _servers.end(); ++it)
 	{
         uint32_t port = it->first; // 맵의 키
@@ -119,122 +228,21 @@ void Operation::start() {
 			continue;
 		}
 	}
-	
 	/*
-		[feat] - kyeonkim
+		[Done] - kyeonkim
 		- 평가표에 The select() (or equivalent) should be in the main loop and should check file descriptors for read and write AT THE SAME TIME.
 		  란 항목이 있는데 항목의 처리는 다음과 같다.
-		- conf 에 max_event 라는 키워드가 있으면 해당 키워드 value 값으로 이벤트 공간을 설정해야한다.
+		- conf 에 max_event 라는 키워드가 있으면 해당 키워드 value 값으로 이벤트 공간을 설정해야한다. > 굳이 conf에 해당 키워드를 넣을 필요는 없다. 그냥 define 1024 해서 사용
 		- 이벤트 공간을 설정했으면 nev = kevent(kq, NULL, 0, &tevent, 1, NULL); 이렇게 1개씩 받는 것이 아니라
 		설정한 공간만큼 받는다.
 		- 그러면 nev 변수에 받은 이벤트 수가 들어오게되고 해당 nev를 loop 시켜서 events[nev].filter 이런식으로 이벤트를 처리해야한다.
-
-		int kq, nev;
-		kq = kqueue();
-		struct kevent event, events[10];
-		struct kevent tevent;
 	*/
 	while (true)
 	{
-		nev = kevent(kq, NULL, 0, &tevent, 1, NULL); // EVFILT_READ, EVFILT_WRITE 이벤트가 감지되면 이벤트 감지 개수를 반환
+		nev = kevent(kq, NULL, 0, tevents, event::MAX_EVENT, NULL);
 		if (nev == -1)
 			throw std::runtime_error("Error: kevent error");
-		if (tevent.udata == NULL)
-		{
-			std::vector<Server>& servers = findServers(tevent.ident);
-			if (!servers.empty())
-				acceptClient(kq, tevent.ident, servers);
-		}
-		else // 클라이언트일 경우
-		{
-			try
-			{
-				Client* client = reinterpret_cast<Client*>(tevent.udata);
-				// std::cerr << B_BG_RED << "testcode " << client->getSocket() << RESET << std::endl;
-				// std::cerr << B_BG_RED << "testcode " << client << RESET << std::endl;
-				if (tevent.filter == EVFILT_READ)
-				{
-
-					// std::cerr << RED << "recv : " << tevent.ident << ":"<< RESET << std::endl;
-					// write(1, buffer, bytesRead);
-					// std::cerr << std::endl;
-
-					if (tevent.ident == client->getSocket())
-					{
-						client->resetTimerEvent(); // READ 이벤트가 소켓으로 날라올 경우 해당 fd의 타이머 이벤트를 리셋 - kyeonkim
-						char* buffer = new char[tevent.data];
-						/*
-							[Feat] - kyeonkim
-							- read/recv/write/send 의 반환값인 0, -1 을 모두 처리해야한다.
-							- errno 쓰지말라
-						*/
-						ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
-						// std::cerr << B_BLUE << "testcode fd :"<< client->getSocket() << "access client" << RESET << std::endl;
-						if (bytesRead == false || client->getReq().getConnection() == "close")
-						{
-							std::cerr << B_RED << "testcode fd :"<< client->getSocket() << " close client" << RESET << std::endl;
-							client->clearClient();
-							close(tevent.ident);
-							_clients.erase(tevent.ident);
-							delete client; // 소멸자 부를 때 request 제거
-						}
-						else
-						{
-							client->handleRequest(&tevent, buffer);
-						}
-						delete[] buffer;
-					}
-					else if(tevent.ident == client->getReadFd())
-					{
-						// std::cerr << YELLOW << "readfd" << RESET << std::endl;
-						client->printResult(static_cast<size_t>(tevent.data));
-					}	
-				}
-				else if (tevent.filter == EVFILT_WRITE)
-				{
-					if (tevent.ident == client->getSocket())
-					{
-						client->resetTimerEvent(); // WRITE 이벤트가 소켓으로 날라올 경우 해당 fd의 타이머 이벤트를 리셋 - kyeonkim
-						if (client->sendData(tevent) == false)
-							_clients.erase(tevent.ident);
-					}
-					else if (tevent.ident == client->getWriteFd())
-					{
-						// std::cerr << YELLOW << "writefd" << RESET << std::endl;
-						client->uploadFile(tevent.data);
-					} 
-				}
-				else if (tevent.filter == EVFILT_PROC)
-				{
-					if (tevent.fflags & NOTE_EXIT)
-					{
-						std::cerr << B_RED << "testcode " << "EVFILT_PROC" << "fd: " << client->getSocket() << RESET << std::endl;
-						client->endChildProcess();
-					}
-				}
-				else if (tevent.filter == EVFILT_TIMER) // 타이머 완료 시 클라이언트 제거 - kyeonkim
-				{
-					std::cerr << B_BG_YELLOW << "testcode FILTER == TIMER EVENT > DELETE CLIENT" << RESET << std::endl;
-					client->clearClient();
-					close(tevent.ident);
-					_clients.erase(tevent.ident);
-					delete client;
-				}
-			}
-			catch (const int errnum)
-			{	
-				Client* client = static_cast<Client*>(tevent.udata);
-			std::cerr << RED <<  "fd: " << client->getSocket() <<  "in trycatch error delete read event" << RESET << std::endl;
-				client->deleteReadEvent();
-				client->errorProcess(errnum);
-				client->addEvent(tevent.ident, EVFILT_WRITE);
-				client->getReq().setEventState(EVFILT_WRITE);
-			}
-			catch(const std::exception& e)
-			{
-				std::cerr << "exception error : " << e.what() << std::endl;
-			}
-		}
+		processEvent(kq, tevents, nev); // 이벤트 loop 처리 - kyeonkim
 	}
 }
 
