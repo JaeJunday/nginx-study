@@ -57,7 +57,7 @@
 
  EV_SET(&event, fd, EVFILT_TIMER, EV_ADD | EV_ENABLE, NOTE_SECONDS, 10, NULL);
 
-// [feat]배열 앞쪽에 타이머이벤트가 발생하거나 클라이언트가 종료해서 해당 클라이언트를 삭제할 경우 뒤에있는 배열에 삭제된 클라이언트의 이벤트가 담겨있으면 heapuse-after-free seagfault가 발생할 수 있어서 break를 걸어서 kevent를 다시 받아와야합니다..!
+// [Done]배열 앞쪽에 타이머이벤트가 발생하거나 클라이언트가 종료해서 해당 클라이언트를 삭제할 경우 뒤에있는 배열에 삭제된 클라이언트의 이벤트가 담겨있으면 heapuse-after-free seagfault가 발생할 수 있어서 break를 걸어서 kevent를 다시 받아와야합니다..!
 // [Feat] 자식 프로세스에서 요청한 python 파일이 없을 경우, execve 에서 에러를 띄우는데 해당 위치에서는 throw가 불가능하다. 따라서, 에러코드를 받아서 waitpid에서 throw 400을 해줘야한다.
 // [Done]autoindex 동작 안함. 왜? - kyeonkim
 // [Done] server name과 server listen이 같으면 동작하면 안된다.- kyeonkim

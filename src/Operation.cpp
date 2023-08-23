@@ -118,25 +118,27 @@ void Operation::processEvent(int kq, struct kevent *tevents, int nev)
 						client->resetTimerEvent(); // READ 이벤트가 소켓으로 날라올 경우 해당 fd의 타이머 이벤트를 리셋 - kyeonkim
 						char* buffer = new char[tevents[i].data];
 						/*
-							[Feat] - kyeonkim
+							[Done] - kyeonkim
 							- read/recv/write/send 의 반환값인 0, -1 을 모두 처리해야한다.
 							- errno 쓰지말라
 						*/
 						ssize_t bytesRead = recv(tevents[i].ident, buffer, tevents[i].data, 0);
 						// std::cerr << B_BLUE << "testcode fd :"<< client->getSocket() << "access client" << RESET << std::endl;
-						if (bytesRead == false || client->getReq().getConnection() == "close")
+						if (bytesRead <= 0 || client->getReq().getConnection() == "close")
 						{
 							std::cerr << B_RED << "testcode fd :"<< client->getSocket() << " close client" << RESET << std::endl;
 							client->clearClient();
 							close(tevents[i].ident);
 							_clients.erase(tevents[i].ident);
 							delete client; // 소멸자 부를 때 request 제거
+							delete[] buffer;
+							break; // 배열 앞쪽에 타이머이벤트가 발생하거나 클라이언트가 종료해서 해당 클라이언트를 삭제할 경우 뒤에있는 배열에 삭제된 클라이언트의 이벤트가 담겨있으면 heapuse-after-free seagfault가 발생할 수 있어서 break를 걸어서 kevent를 다시 받아와야합니다..!
 						}
 						else
 						{
 							client->handleRequest(&tevents[i], buffer);
+							delete[] buffer;
 						}
-						delete[] buffer;
 					}
 					else if(tevents[i].ident == client->getReadFd())
 					{
@@ -150,7 +152,10 @@ void Operation::processEvent(int kq, struct kevent *tevents, int nev)
 					{
 						client->resetTimerEvent(); // WRITE 이벤트가 소켓으로 날라올 경우 해당 fd의 타이머 이벤트를 리셋 - kyeonkim
 						if (client->sendData(tevents[i]) == false)
+						{
 							_clients.erase(tevents[i].ident);
+							break;
+						}
 					}
 					else if (tevents[i].ident == client->getWriteFd())
 					{
@@ -173,6 +178,7 @@ void Operation::processEvent(int kq, struct kevent *tevents, int nev)
 					close(tevents[i].ident);
 					_clients.erase(tevents[i].ident);
 					delete client;
+					break;
 				}
 			}
 			catch (const int errnum)

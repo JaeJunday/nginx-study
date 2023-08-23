@@ -59,7 +59,7 @@ void Client::writePipe(size_t pipeSize)
 	std::string& perfectBody = _request->getPerfectBody();
 	size_t currentWriteSize = std::min(perfectBody.size() - _writeIndex, pipeSize);
 	ssize_t writeSize = write(_writeFd[1], perfectBody.c_str() + _writeIndex, currentWriteSize);
-	if (writeSize < 0)
+	if (writeSize <= 0)
 	{
 		// std::cerr << B_RED << "testcode " << "writeSize error" << RESET << std::endl;
 		// std::cerr << B_RED << "testcode " << strerror(errno) << RESET << std::endl;
@@ -82,7 +82,7 @@ void Client::readPipe(size_t pipeSize)
 	memset(tempBuffer, 0, pipeSize);
 
 	ssize_t readSize = read(_readFd[0], tempBuffer, pipeSize);
-	if (readSize < 0)
+	if (readSize <= 0)
 	{
 		// std::cerr << B_RED << "testcode " << "readSize error" << RESET << std::endl;
 		// std::cerr << B_RED << "testcode " << strerror(errno) << RESET << std::endl;

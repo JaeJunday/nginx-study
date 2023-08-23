@@ -431,7 +431,7 @@ std::cerr << B_CYAN << "testcode ===" << "tevent.data : " << tevent.data << RESE
 			_pid = -2;
 		}
 	}
-	if (byteWrite == -1 || _stateCode == 405) // send fail
+	if (byteWrite <= 0 || _stateCode == 405) // send fail
 	{
 		std::cerr << B_RED << strerror(errno) << RESET << std::endl;
 		std::cerr << RED << "event ident: " <<  tevent.ident << RESET << std::endl;
