@@ -116,7 +116,7 @@ std::string Client::findLocationPath() const
 			result.erase(0, length);
 		result = location._root + result;
 	}
-	else if (!server->getRoot().empty())	
+	else if (!server->getRoot().empty())
 	{
 		if (length != 1)
 			result.erase(0, length);

@@ -11,7 +11,7 @@
 class Operation;
 
 /*
-	[feat] - kyeonkim
+	[Done] - kyeonkim > 처리해놨음 > 우선 순위가 location root가 먼저임
 	- conf server에 root 키워드를 추가해야한다.
 	- root 에 따라 서로 다른 파일을 호출해서 보여줘야한다.
 	- 예를 들어, conf에서 server root 를 pages로 설정할 경우 
