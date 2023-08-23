@@ -1,9 +1,5 @@
 #include "Client.hpp"
 
-// Error::Error(Request* request, int kq) : AResponse(kq)
-// {
-// 	_request = request;
-// }
 void Client::pushErrorBuffer(std::string body, int _stateCode)
 {
 	std::stringstream responseData;
@@ -30,7 +26,6 @@ void Client::errorProcess(int errnum)
 	std::string         filePath;
 	std::stringstream   body;
 
-	// 400 403 404 405 413
 	_stateCode = errnum;
 	switch (errnum) {
 		case 400:

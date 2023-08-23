@@ -20,7 +20,6 @@ class Operation;
 	  pages2 폴더 안에 있는 파일을 보여줘야한다.
 	- 추가해도 되고 안해도 되는 부분. 근데 코드 상으로는 추가할려고 했음.
 */
-
 struct Location
 {
 	std::string					_path;
@@ -29,7 +28,6 @@ struct Location
 	std::string					_autoindex;
 	std::string					_upload;
 	std::string					_py;
-	std::string 				_cgiParam;
 	std::string 				_bla;
 	std::string					_php;
 	std::string					_clientMaxBodySize; // 본문 사이즈 제한
@@ -62,7 +60,6 @@ class Server {
 		const std::string& getRoot() const;
 		const std::string& getIndex() const;
 		const std::vector<Location>& getLocations() const;
-		// const std::string& getCgiParam() const;
 		std::vector<std::string>& getServerName();
 		uint32_t getListen();
 };

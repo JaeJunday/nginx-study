@@ -18,28 +18,35 @@
 #include <sys/event.h>  // kqueue
 
 #define FALLOW 0
-
+/*
+kyeonkim
+[현재 Operation _servers 데이터 구조] - port는 conf의 server 블록 안에 있는 listen
+==============================================
+			port1		, port2 , ...
+			|			  |
+			-server		  -server
+			-server		  -server
+			-...		  -...
+==============================================
+*/
 class Operation {
 private:
-    std::map<uint32_t, std::vector<Server> > _servers;
-    std::map<int, Client *> _clients;
+	std::map<uint32_t, std::vector<Server> >	_servers;
+	std::map<int, Client *>						_clients;
 public:
-    ~Operation();
-    void setServer(Server& server);
-    int createBoundSocket(uint32_t listen);
-    std::vector<Server>& findServer(uintptr_t ident);
-    void start();
+	~Operation();
+	void setServer(Server& server);
+	int createBoundSocket(uint32_t listen);
+	std::vector<Server>& findServers(uintptr_t ident);
+	void start();
 
-    void acceptClient(int kq, int fd, std::vector<Server>& servers);
-    //void makeResponse(struct Kevent *tevent, int kq, Request* req);
-    void sendData(struct kevent& tevent);
-    void testPipe(std::string buffer);
-    
-    // void handleResponse(Client* client, struct kevent *tevent);
-    
-    Client* selectMethod(Request* req, int kq) const;
-    void compareServer(std::vector<Server>& servers, Server& server);
-    void compareServerName(std::vector<std::string>& strs1, std::vector<std::string>& strs2);
+	void acceptClient(int kq, int fd, std::vector<Server>& servers);
+	void sendData(struct kevent& tevent);
+	void testPipe(std::string buffer);
+	Client* selectMethod(Request* req, int kq) const;
+	// compare
+	void compareServer(std::vector<Server>& servers, Server& server);
+	void compareServerName(std::vector<std::string>& strs1, std::vector<std::string>& strs2);
 };
 
 // remove testcase function

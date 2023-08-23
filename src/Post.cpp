@@ -2,11 +2,8 @@
 
 void Client::initCgi()
 {
-	std::cerr << RED << "func: initCgi()" << RESET << std::endl;
-
 	if (pipe(_writeFd) < 0 || pipe(_readFd) < 0)
 		throw 500;
-
 	_pid = fork();
 	if (_pid < 0)
 		throw 500;
@@ -24,7 +21,6 @@ void Client::initCgi()
 
 void Client::childProcess()
 {
-// std::cerr << PURPLE << "child process()" << RESET << std::endl;
 	dup2(_writeFd[0], STDIN_FILENO);
 	close(_writeFd[0]);
 	close(_writeFd[1]);
@@ -76,7 +72,6 @@ std::cerr << B_BG_CYAN <<  "fd: " << _socketFd << " : " << _request->getBodyTota
 	if (_request->getBodyTotalSize() == _writeIndex && _request->getChunkedEnd() == true)
 	{
 		close(_writeFd[1]);
-		// _writeFd[1] = -2;
 	}
 }
 
@@ -94,10 +89,9 @@ void Client::printResult(size_t pipeSize)
 		// return;
 		throw 500;
 	}
-std::cerr << B_BG_PURPLE <<"fd: " << _socketFd << " : " << _request->getBodyTotalSize() <<" ♡ "<< readSize << RESET<< std::endl;
+// std::cerr << B_BG_PURPLE <<"fd: " << _socketFd << " : " << _request->getBodyTotalSize() <<" ♡ "<< readSize << RESET<< std::endl;
 	if (readSize == 0)
 	{
-		std::cerr << RED << "fd: " << _socketFd << " read pipe end" << RESET << std::endl;
 		std::string msg = _responseBuffer.str();
 		size_t cgiHeaderSize = msg.find("\r\n") + 2;
 		size_t cgiBodySize = msg.size() - (msg.find("\r\n\r\n") + 4);
@@ -107,7 +101,6 @@ std::cerr << B_BG_PURPLE <<"fd: " << _socketFd << " : " << _request->getBodyTota
 		_responseBuffer << msg.substr(cgiHeaderSize, msg.size() - cgiHeaderSize);
 		_responseStr = _responseBuffer.str();
 		close(_readFd[0]);
-		// _readFd[0] = -2;
 	}
 	readBuffer.append(tempBuffer, readSize);
 	_responseBuffer << readBuffer;
@@ -145,6 +138,3 @@ void Client::postProcess()
 	addEvent(_writeFd[1], EVFILT_WRITE);
 	_request->setChunkedEnd(true);
 }
-
-//secret header set env해줘야함
-// 0은 가능 100까지만 가능하게 제한 pos

@@ -123,10 +123,6 @@ std::vector<std::string>& Server::getServerName()
 {
     return _serverName;
 }
-// const std::string& Server::getCgiParam() const
-// {
-//     return _cgiParam;
-// }
 
 uint32_t Server::getListen()
 {

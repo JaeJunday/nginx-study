@@ -24,22 +24,19 @@ void Operation::compareServerName(std::vector<std::string>& strs1, std::vector<s
 
 void Operation::compareServer(std::vector<Server>& servers, Server& server)
 {
-	if (_servers[server.getListen()].size() > 1)
+	if (_servers[server.getListen()].size() > 0)
 	{
 		std::vector<Server>& servers = _servers[server.getListen()];
-		for (size_t i = 0; i < servers.size() - 1; ++i)
+		for (size_t i = 0; i < servers.size(); ++i)
 			compareServerName(servers[i].getServerName(), server.getServerName());
 	}
 }
 
-
 void Operation::setServer(Server& server) 
 {
-	// server.splitListen();
+	compareServer(_servers[server.getListen()], server); // set 전에 동일한 서버가 있는지 검사 - kyeonkim
 	_servers[server.getListen()].push_back(server);
-	compareServer(_servers[server.getListen()], server);
 }
-
 /*
 	[Feat] - kyeonkim
 	- conf 에서 listen 이 같고 server_name 이 다를 경우 다음과 같이 처리해야한다.
@@ -47,9 +44,9 @@ void Operation::setServer(Server& server)
 	- 클라이언트에서 요청이 들어올 때 묶은 변수를 한번 탐색해서 해당 서버 이름이 있는지 비교한다.
 	- 있으면 처리하고 없으면 서버들 중에 맨 위에 있는([0]) 서버의 이름으로 요청을 처리한다.
 */
-
-
-
+/*	kyeonkim
+	@des 각 port 해당하는 서버들은 같은 fd 를 가진다. 그러므로 port의 개수만큼 fd가 만들어진다.
+*/
 int Operation::createBoundSocket(uint32_t port)
 {
 	int socketFd = socket(AF_INET, SOCK_STREAM, FALLOW);
@@ -58,8 +55,7 @@ int Operation::createBoundSocket(uint32_t port)
 	sockaddr_in serverAddr;
 	int optval = 1;
 	memset((char*)&serverAddr, 0, sizeof(sockaddr_in));
-	std::cerr << "http://0.0.0.0" << ":" << port << std::endl;
-	// ip address
+	std::cerr << "http://0.0.0.0" << ":" << port << std::endl; // print server ip:port
 	serverAddr.sin_family = AF_INET; 
 	serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serverAddr.sin_port = htons(port);
@@ -68,11 +64,11 @@ int Operation::createBoundSocket(uint32_t port)
 		throw std::logic_error("Error: Socket bind failed");
 	return socketFd;
 }
-/*
-	@des 서버가 여러 개일 경우, 해당 서버가 몇 번째 인덱스에 있는지 찾아서 해당 인덱스 반환
-	@return serverIndex(int)
+/*	kyeonkim
+	@des 하나의 포트에 여러 개의 서버가 있는데 어떤 포트에 있는 서버인지 찾아서 여러 개의 서버 vector 을 넘김
+	@return std::vector<Server>
 */
-std::vector<Server>& Operation::findServer(uintptr_t ident)
+std::vector<Server>& Operation::findServers(uintptr_t ident)
 {
 	std::map<uint32_t, std::vector<Server> >::iterator it;
 
@@ -90,9 +86,6 @@ std::vector<Server>& Operation::findServer(uintptr_t ident)
 
 void Operation::start() {
 	// 서버 시작 로직을 구현합니다.
-	/*
-		@des 서버마다 소켓을 하나 만들어서 Set, 그리고 서버는 Listen 상태로 만들어둠
-	*/
 	int kq, nev;
 	kq = kqueue();
 	struct kevent event, events[10];
@@ -106,6 +99,10 @@ void Operation::start() {
 			int socketFd = createBoundSocket(port);
         	std::vector<Server>& serverList = it->second; // 맵의 값 (Server 벡터)
         	std::vector<Server>::iterator serverIt;
+			/*	kyeonkim
+				@des 각 port에 해당하는 서버들은 같은 fd를 사용하므로 해당 port에 속하는 서버들을 돌며
+				fd 값을 setting 해준다.
+			*/
 			for (serverIt = serverList.begin(); serverIt != serverList.end(); ++serverIt)
 			{
 				Server& server = *serverIt;
@@ -131,6 +128,11 @@ void Operation::start() {
 		- 이벤트 공간을 설정했으면 nev = kevent(kq, NULL, 0, &tevent, 1, NULL); 이렇게 1개씩 받는 것이 아니라
 		설정한 공간만큼 받는다.
 		- 그러면 nev 변수에 받은 이벤트 수가 들어오게되고 해당 nev를 loop 시켜서 events[nev].filter 이런식으로 이벤트를 처리해야한다.
+
+		int kq, nev;
+		kq = kqueue();
+		struct kevent event, events[10];
+		struct kevent tevent;
 	*/
 	while (true)
 	{
@@ -139,7 +141,7 @@ void Operation::start() {
 			throw std::runtime_error("Error: kevent error");
 		if (tevent.udata == NULL)
 		{
-			std::vector<Server>& servers = findServer(tevent.ident);
+			std::vector<Server>& servers = findServers(tevent.ident);
 			if (!servers.empty())
 				acceptClient(kq, tevent.ident, servers);
 		}
@@ -254,7 +256,7 @@ std::cerr << GREEN << "testcode" << "================ ACCEPT ===================
 	setsockopt(socketFd, SOL_SOCKET, SO_NOSIGPIPE, &socket_option, sizeof(socket_option));
 // std::cerr << YELLOW << "socketFd: " << socketFd <<  RESET << std::endl;
 	fcntl(socketFd, F_SETFL, O_NONBLOCK);
-	Request *request = new Request(servers); // server vector 가 들어가야한다.
+	Request *request = new Request(servers); // server vector 가 들어가야한다. - kyeonkim
 	Client* client = new Client(request, kq, socketFd);
 	_clients.insert(std::make_pair(socketFd, client));
 	client->addEvent(socketFd, EVFILT_READ);

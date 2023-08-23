@@ -1,6 +1,6 @@
 #include "Client.hpp"
 
-void Client::deleteProcess() //override
+void Client::deleteProcess()
 {
     _responseBuffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
 	_responseBuffer << "Date: " << getDate() << "\r\n";
@@ -10,7 +10,6 @@ void Client::deleteProcess() //override
     std::string filePath = findLocationPath();
     checkLimitExcept();
     removeFile(filePath.c_str());
-    // checkLimitExcept();
 }
 
 void Client::removeFile(std::string file) const

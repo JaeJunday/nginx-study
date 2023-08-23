@@ -1,21 +1,5 @@
 #include "Client.hpp"
 #include "Request.hpp"
- 
-// extern int gcount; // -- delete
-
-// Client::Client(int kq)
-// : _version("HTTP/1.1"), 
-//   _stateCode("200"), 
-//   _reasonPhrase("OK"),
-//   _serverName("My Server"),
-//   _contentType("text/html"),
-//   _contentLength(0),
-//   _kq(kq),
-//   _request(NULL)
-// {
-//     /* Constructor Implementation */
-// }
-
 
 Client::Client(Request* request, int kq, int socketFd) 
 : _request(request),
@@ -59,7 +43,6 @@ Client& Client::operator=(Client const& rhs)
 	}
 }
 
-// Request 제거해야함
 Client::~Client()
 {
 	if (_pid != -2) // 클라이언트가 recv 도중에 끊어질 경우 서버 처리
@@ -69,21 +52,10 @@ Client::~Client()
 		kill(_pid, SIGKILL); // 파이프에 쓰다가 에러 throw하는 상황으로 잘 죽나 체크하기 jaejkim
 		_pid = -2;
 	}
-	deleteTimerEvent(); // Client 종료 시 타이머 제거
+	// Client 종료 시 타이머, request 제거
+	deleteTimerEvent(); 
 	delete _request;
-    /* Destructor Implementation */
 }
-
-/*
-Client& Client::operator=(Client const& rhs)
-{
-    if (this != &rhs)
-    {
-         Assignment Operator Implementation
-    }
-    return *this;
-}
-*/
 
 std::string Client::getDate()
 {
@@ -225,7 +197,6 @@ void Client::deleteReadEvent()
 	}
 }
 
-// void Client::deleteReadEvent()
 void Client::deleteWriteEvent()
 {
     struct kevent event;
@@ -248,7 +219,6 @@ void Client::deletePidEvent()
 		std::cerr << "invalid Pid event delete" << std::endl;
 }
 
-// 보내는 중간에 에러가 날 경우, 해당 fd에 걸린 이벤트를 지워줘야한다? -> fd 에 걸려있으니 해당 fd를 지우면 해당 이벤트도 사라지지 않을까?
 void Client::deleteTimerEvent()
 {
 	struct kevent event;
@@ -348,11 +318,17 @@ void Client::handleRequest(struct kevent* tevent, char* buffer)
 	_request->setBuffer(buffer, tevent->data);
 	if (_request->getState() == request::READY) // header 생성
 	{
-		_request->headerParsing(buffer, tevent->data, tevent->ident);
+		// _request->headerParsing(buffer, tevent->data, tevent->ident);
+		_request->headerParsing(tevent->ident);
 	}
 	if (_request->getState() == request::CREATE)
 	{	
-		// server 블록을 찾아줘야한다. - kyeonkim
+		/*  kyeonkim
+			@des acceptClient 함수를 보면 request에 server가 아니라 std::vector<server>가 먼저 들어가있다.
+			왜냐하면 request가 오기전에 이벤트로 날라온 요청이 port 안에 어떤 서버를 가르키는지 알 수 없기 때문이다.(즉, request가 날라오기전에 Host 값을 비교할 수가 없다.)
+			따라서, reqeust 요청의 헤더가 완성되고나서 Host 값을 보고 알맞은 서버를 찾아서 기존처럼 request에 넣어준다.
+			(request가 만들어지고 나서 server를 설정해주기 때문에 request의 _server의 자료형이 & -> * 로 변경되었다.)
+		*/
 		Server* server = _request->findServer();
 		_request->setServer(server);
 		_convertRequestPath = findLocationPath();

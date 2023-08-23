@@ -43,7 +43,6 @@
 // color reset
 #define RESET          "\033[0m"
 
-
 // font
 #define BOLD         "\033[1m"
 #define NORMAL       "\033[22m"

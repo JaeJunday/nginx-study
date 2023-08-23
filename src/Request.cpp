@@ -12,7 +12,6 @@ Request::Request(Server* server)
 	_bodyTotalSize(0),
 	_chunkedEnd(false),
 	_readIndex(0)
-	// _writeEventFlag(false)
 {
 // std::cerr << CYAN << "testcode overloding constructor" << RESET << std::endl;
 }
@@ -70,7 +69,6 @@ Request& Request::operator=(const Request& rhs)
 		_chunkedEnd = rhs._chunkedEnd;
 		_perfectBody = rhs._perfectBody;
 		_readIndex = rhs._readIndex;
-		// _writeEventFlag = rhs._writeEventFlag;
 	}
 	return *this;	
 }
@@ -89,18 +87,13 @@ void Request::setRequestLine(std::string& requestLine)
 {
 	checkMultipleSpaces(requestLine);
 	std::vector<std::string> token = util::getToken(requestLine, " ");
-// testcode 
 	int         bodySize;
-	// std::cerr << "========================requestLine========================" << std::endl;
-	// std::cerr << requestLine << std::endl;
 
 	if (token.size() != 3)
 	{
 		std::cerr << "Error: Request Line size error" << std::endl;
 		throw 400;
 	}
-	// if (token[0] == "HEAD")
-	// 	_method = token[0];
 	if (!(token[0] == "GET" || token[0] == "DELETE" || token[0] == "POST" || token[0] == "PUT"))
 		throw 405;
 	if (token[2] != "HTTP/1.1")
@@ -123,12 +116,8 @@ void Request::setFieldLine(std::string& fieldLine)
 		throw 403; // Header Key have space
 	if (token[0] == "Host") {
 		size_t mid = token[1].find(":");
-		if (mid == std::string::npos)
-		{
+		if (mid == std::string::npos) // Host에 포트정보가 없을 경우, 80을 붙여준다? 이건 고민해봐야함 - kyeonkim
 			token[1] += ":80";
-			// std:: cerr << "ERROR : HOST ERROR" << std::endl;
-			// throw 404;
-		}
 		_host = std::string(token[1], 0, mid);
 		_port = util::stoui(std::string(token[1], mid + 1, token[1].size() - (mid + 1)));
 	}
@@ -150,37 +139,38 @@ void Request::setFieldLine(std::string& fieldLine)
 		_secretHeader = token[1];
 }
 
-// 헤더 + 본문 길이 = buffersize
-// 본문길이  = contentLength
-// 본문 스타트 길이 = bodyindex
-
-// buffersize - bodyindx == contesntLength : ok
-void Request::headerParsing(char* buf, intptr_t size, int fd)
+void Request::headerParsing(int fd)
 {
-	// 헤더 끝줄 찾기
-	_headerBuffer.append(buf, size); // 나중에 삭제해도 될 거 같음 - kyeonkim
-	int headerBoundary = _headerBuffer.find("\r\n\r\n");
-	if (headerBoundary == std::string::npos)
+	// fd 변수는 디버그 용 나중에 리펙토링할 때는 삭제해도 됨 - kyeonkim
+	// _headerBuffer.append(buf, size); // 나중에 삭제해도 될 거 같음 - kyeonkim
+	// int headerEnd = _headerBuffer.find("\r\n\r\n");
+	int headerEnd = _requestBuffer.find("\r\n\r\n"); // 헤더 끝줄 찾기
+	if (headerEnd == std::string::npos)
 		return ;
-std::cout << BLUE << "testcode "<< "fd : " << fd << "====headerbuff\n" << _headerBuffer.substr(0, _headerBuffer.find("\r\n\r\n")) << RESET << std::endl;
-	_state = request::CREATE;
-	int endLine = _headerBuffer.find("\r\n");
-	std::string requestLine(_headerBuffer, 0, endLine);
+// std::cout << BLUE << "testcode "<< "fd : " << fd << "====headerbuff\n" << _headerBuffer.substr(0, _headerBuffer.find("\r\n\r\n")) << RESET << std::endl;
+std::cout << BLUE << "testcode "<< "fd : " << fd << "====headerbuff\n" << _requestBuffer.substr(0, _requestBuffer.find("\r\n\r\n")) << RESET << std::endl;
+	int endLine = _requestBuffer.find("\r\n");
+	std::string requestLine(_requestBuffer, 0, endLine);
 	setRequestLine(requestLine);
 
 	int newEndLine;
 	endLine += 2;
-	while (endLine < headerBoundary) { 
-		newEndLine = _headerBuffer.find("\r\n", endLine);
-		std::string fieldLine(_headerBuffer, endLine, newEndLine - endLine);
+	while (endLine < headerEnd) { 
+		newEndLine = _requestBuffer.find("\r\n", endLine);
+		std::string fieldLine(_requestBuffer, endLine, newEndLine - endLine);
 		setFieldLine(fieldLine);
 		endLine = newEndLine + 2;
 	}
-	_bodyStartIndex = headerBoundary + 4;
+	_bodyStartIndex = headerEnd + 4;
+	_state = request::CREATE;
 }
 
 
-
+/*	kyeonkim
+	@des 각 서버들의 이름이 여러 개로 들어올 수도 있으므로 loop문을 통해 해당서버를 찾아넘긴다.
+		알맞은 서버를 못찾을 경우, 서버들 중에 제일 위쪽([0])에 있는 서버를 넘긴다.
+	@return Server*
+*/
 Server*	Request::findServer()
 {
 	for (int i = 0; i < _servers.size(); ++i)
@@ -272,7 +262,6 @@ void Request::clearRequest()
 	_bodyStartIndex = 0;
 	_readIndex = 0;
 	_chunkedEnd = false;
-	// _writeEventFlag = false;
 	_bodyTotalSize = 0;
 	_perfectBody.clear();
 	_secretHeader.clear();

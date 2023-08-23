@@ -1,4 +1,5 @@
 #include "Configuration.hpp"
+
 Configuration::Configuration(Operation& operation) 
 : _operation(operation), _tokenState(state::SERVER), _stackState(0), _blockCount(0){}
 
@@ -14,6 +15,7 @@ void Configuration::parsing(const std::string& filePath)
 	checkSameKey(token, checkList);
 	setValue(token, checkList);
 }
+
 std::vector<std::string> Configuration::getVectorLine(const std::string& filePath) const
 {
 	std::ifstream	file;

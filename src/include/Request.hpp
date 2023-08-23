@@ -48,7 +48,6 @@ class Request
 		// chunked
 		bool				_chunkedEnd;
 		int					_readIndex;
-		// bool				_writeEventFlag;
 
 	public:
 		Request(Server* server);
@@ -56,7 +55,7 @@ class Request
 		Request(const Request& request);
 		Request& operator=(Request const& rhs);
 		~Request();
-		void headerParsing(char* buf, intptr_t size, int fd);
+		void headerParsing(int fd);
 		void				checkMultipleSpaces(const std::string& str);
 		void				clearRequest();
 		void				makeResponse(int kq);
