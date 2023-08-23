@@ -404,7 +404,10 @@ std::cerr << "fd: " << tevent.ident <<  "==============================Send data
 std::cerr << B_CYAN << "testcode ===" << "tevent.data : " << tevent.data << RESET << std::endl;
 	size_t responseBufferSize = _responseStr.size();
 	size_t sendBufferSize = std::min(responseBufferSize - _sendIndex, (size_t)tevent.data);
-// std::cerr << BLUE << "_sendIndex before:" << _sendIndex << RESET << std::endl;
+	// std::cerr << B_BG_RED << "testcode _responseStr\n" << _responseStr << RESET << std::endl;
+	// std::cerr << B_BG_BLUE << "testcode responseBufferSize\n" << responseBufferSize << RESET << std::endl;
+	// std::cerr << BLUE << "_sendIndex before:" << _sendIndex << RESET << std::endl;
+	// std::cerr << B_BG_YELLOW << "testcode sendBufferSize : " << sendBufferSize << RESET << std::endl;
 	ssize_t byteWrite = send(tevent.ident, _responseStr.c_str() + _sendIndex, sendBufferSize, 0);
 	// send실패에는 소켓도 닫아야됨, 프로세스 종료
 	// 에러코드일때는 소켓은 안닫고 프로세스 종료

@@ -40,7 +40,7 @@ void Client::openPath(const std::string& path)
 			fileProcess(relativePath, body);
 		}
 		else if (_request->getLocation()->_autoindex == "on")
-			autoIndexProcess(dirStream, body);	
+			autoIndexProcess(dirStream, body);
 		else
 		{
 			std::cerr << "no file" << std::endl;
@@ -79,8 +79,8 @@ void Client::autoIndexProcess(DIR* dirStream, std::stringstream& body)
 		if (entry == NULL)
 			break;
 		body << std::string(entry->d_name) << "\n";
-		_contentLength += body.str().length();
 	}
+	_contentLength = body.str().length();
 	_contentType = "text/plain";
 }
 

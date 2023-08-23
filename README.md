@@ -58,7 +58,7 @@
  EV_SET(&event, fd, EVFILT_TIMER, EV_ADD | EV_ENABLE, NOTE_SECONDS, 10, NULL);
 
 
-// [Feat]autoindex 동작 안함. 왜? - kyeonkim
+// [Done]autoindex 동작 안함. 왜? - kyeonkim
 // [Done] server name과 server listen이 같으면 동작하면 안된다.- kyeonkim
 	- In the configuration, try to setup the same port multiple times. It should not work. -> 완료
 	 - Launch multiple servers at the same time with different configurations but with common ports. Does it work? If it does, ask why the server should work if one of the configurations isn't functional. Keep going.
