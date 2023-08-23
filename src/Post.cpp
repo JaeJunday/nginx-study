@@ -54,7 +54,7 @@ void Client::execveCgi() const
 	}
 }
 
-void Client::uploadFile(size_t pipeSize)
+void Client::writePipe(size_t pipeSize)
 {
 	std::string& perfectBody = _request->getPerfectBody();
 	size_t currentWriteSize = std::min(perfectBody.size() - _writeIndex, pipeSize);
@@ -75,7 +75,7 @@ std::cerr << B_BG_CYAN <<  "fd: " << _socketFd << " : " << _request->getBodyTota
 	}
 }
 
-void Client::printResult(size_t pipeSize)
+void Client::readPipe(size_t pipeSize)
 {
 	char tempBuffer[pipeSize];
 	std::string readBuffer;

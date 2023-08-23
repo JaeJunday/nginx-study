@@ -141,7 +141,7 @@ void Operation::processEvent(int kq, struct kevent *tevents, int nev)
 					else if(tevents[i].ident == client->getReadFd())
 					{
 						// std::cerr << YELLOW << "readfd" << RESET << std::endl;
-						client->printResult(static_cast<size_t>(tevents[i].data));
+						client->readPipe(static_cast<size_t>(tevents[i].data));
 					}	
 				}
 				else if (tevents[i].filter == EVFILT_WRITE)
@@ -155,7 +155,7 @@ void Operation::processEvent(int kq, struct kevent *tevents, int nev)
 					else if (tevents[i].ident == client->getWriteFd())
 					{
 						// std::cerr << YELLOW << "writefd" << RESET << std::endl;
-						client->uploadFile(tevents[i].data);
+						client->writePipe(tevents[i].data);
 					} 
 				}
 				else if (tevents[i].filter == EVFILT_PROC)

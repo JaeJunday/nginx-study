@@ -94,7 +94,6 @@ std::string Client::findLocationPath() const
 	{
 		// 경로가 없는 경우 errorcode
 	}
-	std::cerr << B_BG_RED << "testcode locations.size() : " << locations.size() << RESET << std::endl;
 	for (int i = 0; i < locations.size(); ++i) {
 		int pathLength = locations[i]._path.length();
 		if (_request->getRequestUrl().compare(0, pathLength, locations[i]._path) == 0)
@@ -109,16 +108,22 @@ std::string Client::findLocationPath() const
  	}
 	if (!location._root.empty())
 	{
-		result.erase(0, length);
+		/*	kyeonkim
+			@des 요청이 /read.py 로 들어올 경우와 /abc/read.py 로 들어오는 경우
+			첫번째 요청에서 '/' 문자를 지우면 안된다. 즉, 루트로 들어올 경우에는 지워주지 않는다.
+		*/
+		if (length != 1) 
+			result.erase(0, length);
 		result = location._root + result;
 	}
 	else if (!server->getRoot().empty())	
 	{
-		result.erase(0, length);
+		if (length != 1)
+			result.erase(0, length);
 		result = server->getRoot() + result;
 	}
-	if (result.size() > 1 && result[result.size() - 1] == '/')
-		result.erase(result.size() - 1, 1);
+	// if (result.size() > 1 && result[result.size() - 1] == '/') // 왜 마지막을 지웠지? 우선 지워도 tester는 잘 돌아감 - kyeonkim
+	// 	result.erase(result.size() - 1, 1);
 	return result;
 }
 
@@ -343,6 +348,7 @@ void Client::handleRequest(struct kevent* tevent, char* buffer)
 	}
 }
 
+// [Refectoring required] - semikim
 void Client::handleResponse(struct kevent *tevent)
 {
 	if (_request->getTransferEncoding() == "chunked")
@@ -351,16 +357,20 @@ void Client::handleResponse(struct kevent *tevent)
 	}
 	else if (_request->getBuffer().size() - _request->getBodyIndex()  == util::stoui(_request->getContentLength()))
 	{
-		// if (_request->getMethod() == "POST" && (_request->getContentLength() == 0 || _request->getBuffer().size() == 0))
-		// 	throw 405;
-		if (_request->getMethod() == "GET")
-		{
-			getProcess();
-		}
-		else if (_request->getMethod() == "POST" || _request->getMethod() == "PUT")
+		if (_request->getMethod() == "POST" || _request->getMethod() == "PUT")
 		{
 			postProcess();
 			return;
+		}
+		if (_request->getMethod() == "GET")
+		{
+			if (isFilePy(_convertRequestPath))
+			{
+				getCgi();
+				return;
+			}
+			else
+				getProcess();
 		}
 		else if (_request->getMethod() == "DELETE")
 		{

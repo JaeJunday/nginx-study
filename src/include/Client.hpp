@@ -74,8 +74,8 @@ class Client
 	// delete.cpp
 		void removeFile(std::string file) const;
 	// post.cpp
-		void uploadFile(size_t pipeSize);
-		void printResult(size_t pipeSize);
+		void writePipe(size_t pipeSize);
+		void readPipe(size_t pipeSize);
 		void childProcess();
 		void execveCgi() const;
 		void initCgi();
@@ -99,6 +99,10 @@ class Client
 		int getSocket() const;
 		int getStateCode() const;
 		const std::stringstream& getBuffer() const;
+	//getcgi
+		bool isFilePy(const std::string& filePath);
+		void getCgi();
+		void getChildProcess();
 	// clear
 		void clearClient();
 		void handleRequest(struct kevent* tevent, char* buffer);
