@@ -20,7 +20,7 @@ Request& Client::getReq() const
 	return *_request;
 }
 
-const std::stringstream& Client::getBuffer() const
+const std::stringstream& Client::getResponseBuffer() const
 {
     return _responseBuffer;
 }

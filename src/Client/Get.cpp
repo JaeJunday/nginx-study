@@ -20,6 +20,44 @@ void Client::handleGet()
 	addSocketWriteEvent();
 }
 
+bool Client::isFilePy(const std::string& filePath)
+{
+	std::vector<std::string> files = util::getToken(filePath, "/");
+	
+	if (files[files.size() - 1].find(".py") != std::string::npos)
+		return 1;
+	else
+		return 0;
+}
+
+void Client::handleGetCgi()
+{
+	if (pipe(_readFd) < 0)
+		throw 500;
+	_pid = fork();
+	if (_pid < 0)
+		throw 500;
+	if (_pid == 0)
+		handleGetChild();
+	if (_pid > 0)
+		addProcessEvent();
+	fcntl(_readFd[0], F_SETFL, O_NONBLOCK);
+	addPipeReadEvent();
+	close(_readFd[1]);
+}
+
+void Client::handleGetChild()
+{
+	dup2(_readFd[1], STDOUT_FILENO);
+	close(_readFd[0]);
+	close(_readFd[1]);
+	std::string engine = "." + _request->getConvertRequestPath();
+
+	char* const args[] = {const_cast<char*>(engine.c_str()), NULL};
+	if (execve(engine.c_str(), args, NULL) == -1)
+		std::exit(EXIT_ERROR);
+}
+
 void Client::handleFile(const std::string& filePath, std::stringstream& body)
 {
     std::ifstream		file;
@@ -65,44 +103,6 @@ void Client::handleAutoIndex(DIR* dirStream, std::stringstream& body)
 	}
 	_contentLength = body.str().length();
 	_contentType = "text/plain";
-}
-
-void Client::handleGetCgi()
-{
-	if (pipe(_readFd) < 0)
-		throw 500;
-	_pid = fork();
-	if (_pid < 0)
-		throw 500;
-	if (_pid == 0)
-		handleGetChild();
-	if (_pid > 0)
-		addProcessEvent();
-	fcntl(_readFd[0], F_SETFL, O_NONBLOCK);
-	addPipeReadEvent();
-	close(_readFd[1]);
-}
-
-void Client::handleGetChild()
-{
-	dup2(_readFd[1], STDOUT_FILENO);
-	close(_readFd[0]);
-	close(_readFd[1]);
-	std::string engine = "." + _request->getConvertRequestPath();
-
-	char* const args[] = {const_cast<char*>(engine.c_str()), NULL};
-	if (execve(engine.c_str(), args, NULL) == -1)
-		std::exit(EXIT_ERROR);
-}
-
-bool Client::isFilePy(const std::string& filePath)
-{
-	std::vector<std::string> files = util::getToken(filePath, "/");
-	
-	if (files[files.size() - 1].find(".py") != std::string::npos)
-		return 1;
-	else
-		return 0;
 }
 
 void Client::pushBuffer(std::stringstream& body)

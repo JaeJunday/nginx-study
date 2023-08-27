@@ -12,6 +12,8 @@
 #define PIPESIZE 42000
 #define INIT_PIPE -2
 #define INIT_PID -2
+// request.cpp
+#define HEX 16
 
 namespace server
 {

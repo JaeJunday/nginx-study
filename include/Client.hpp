@@ -16,10 +16,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstdlib>
-#include <algorithm> // min
+#include <algorithm>
 #include <signal.h>
 #include <sys/wait.h>
-#include <sys/event.h>  // kqueue
+#include <sys/event.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -57,23 +57,23 @@ class Client
 		void stamp() const;
 	// Get.cpp
 		void handleGet();
-        void handleFile(const std::string& filePath, std::stringstream& body);
-		void handleDir(std::string& filePath, std::stringstream& body, DIR *dirStream);
-		void handleAutoIndex(DIR* dirStream, std::stringstream& body);
-		void handleGetCgi();
-		void handleGetChild();
-		bool isFilePy(const std::string& filePath);
-        void pushBuffer(std::stringstream& body);
+			bool isFilePy(const std::string& filePath);
+			void handleGetCgi();
+				void handleGetChild();
+			void handleFile(const std::string& filePath, std::stringstream& body);
+			void handleDir(std::string& filePath, std::stringstream& body, DIR *dirStream);
+				void handleAutoIndex(DIR* dirStream, std::stringstream& body);
+        	void pushBuffer(std::stringstream& body);
 	// Delete.cpp
 		void handleDelete();
 		void removeFile(std::string file) const;
 	// Post.cpp
 		void handlePost();
-		void writePipe(size_t pipeSize);
-		void readPipe(size_t pipeSize);
+		void handlePostCgi();
 		void handlePostDup2();
 		void handleExeCgi() const;
-		void handlePostCgi();
+		void writePipe(size_t pipeSize);
+		void readPipe(size_t pipeSize);
 	// Error.cpp
 		void handleError(int errnum);
 		void pushErrorBuffer(std::string body, int errnum);
@@ -91,9 +91,9 @@ class Client
 		void deleteTimerEvent();
 		void resetTimerEvent();
 	// ClientGetterAndSetter.cpp
-		int							getWriteFd() 	const;
-		int							getReadFd() 	const;
-		int							getSocket() 	const;
-		Request&					getReq() 		const;
-		const std::stringstream&	getBuffer() 	const;
+		int							getWriteFd()		const;
+		int							getReadFd() 		const;
+		int							getSocket() 		const;
+		Request&					getReq() 			const;
+		const std::stringstream& 	getResponseBuffer() const;
 };

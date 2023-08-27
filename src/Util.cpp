@@ -54,3 +54,13 @@ std::string util::findContentType(const std::string& filePath)
 	}
 	return "";
 }
+
+void util::checkMultipleSpaces(const std::string& str)
+{
+	char prev = '\0';
+	for (size_t i = 0; i < str.size(); ++i) {
+		if ((prev == ' ' || prev == '\n') && prev == str[i])
+			throw 400;
+		prev = str[i];
+	}
+}

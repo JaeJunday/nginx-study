@@ -47,7 +47,10 @@ void Client::handleError(int errnum)
 		case 505:
 			_reasonPhrase = "HTTP Version Not Supported"; break;
 	}
-	filePath = "./src/pages/error/404.html";
+	if (errnum < 500)
+		filePath = "./src/pages/error/4XX.html";
+	else
+		filePath = "./src/pages/error/5XX.html";
 	file.open(filePath.c_str());
 	if (file.is_open())
 	{

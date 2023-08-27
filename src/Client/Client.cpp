@@ -39,14 +39,15 @@ Client::~Client()
 void Client::handleResponse(const struct kevent &tevent)
 {
 	if (_request->getTransferEncoding() == "chunked")
-		_request->parseChunkedData(this);
-	else if (_request->getBuffer().size() - _request->getBodyIndex()  == util::stoui(_request->getContentLength()))
+		_request->parsingChunkedData(this);
+	else if (_request->getRequestBuffer().size() - _request->getBodyIndex()  == util::stoui(_request->getContentLength()))
 	{
-		if (_request->getMethod() == "GET")
+		const std::string method = _request->getMethod();
+		if (method == "GET")
 			handleGet();
-		else if (_request->getMethod() == "POST" || _request->getMethod() == "PUT")
+		else if (method == "POST" || method == "PUT")
 			handlePost();
-		else if (_request->getMethod() == "DELETE")
+		else if (method == "DELETE")
 			handleDelete();
 	}
 }

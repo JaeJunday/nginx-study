@@ -1,5 +1,18 @@
 #include "Client.hpp"
 
+void Client::handlePost()
+{
+	std::string requestBody = _request->getRequestBuffer().substr(_request->getBodyStartIndex(), util::stoui(_request->getContentLength()));
+
+	_request->setRequestBody(requestBody);
+	_request->setBodyTotalSize(requestBody.size());
+	if (_request->getLocation()->_clientMaxBodySize.empty() == false &&
+		_request->getBodyTotalSize() > util::stoui(_request->getLocation()->_clientMaxBodySize))
+		throw 413;
+	addPipeWriteEvent();
+	_request->setChunkedEnd(true);
+}
+
 void Client::handlePostCgi()
 {
 	if (pipe(_writeFd) < 0 || pipe(_readFd) < 0)
@@ -91,17 +104,4 @@ void Client::readPipe(size_t pipeSize)
 	}
 	readBuffer.append(tempBuffer, readSize);
 	_responseBuffer << readBuffer;
-}
-
-void Client::handlePost()
-{
-	std::string requestBody = _request->getBuffer().substr(_request->getBodyStartIndex(), util::stoui(_request->getContentLength()));
-
-	_request->setRequestBody(requestBody);
-	_request->setBodyTotalSize(requestBody.size());
-	if (_request->getLocation()->_clientMaxBodySize.empty() == false &&
-		_request->getBodyTotalSize() > util::stoui(_request->getLocation()->_clientMaxBodySize))
-		throw 413;
-	addPipeWriteEvent();
-	_request->setChunkedEnd(true);
 }

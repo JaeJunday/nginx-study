@@ -2,8 +2,7 @@
 
 Server::Server()
 	: _socket(-1)
-{
-}
+{}
 
 Server::Server(const Server& other)
 	: _serverName(other._serverName),
@@ -14,8 +13,7 @@ Server::Server(const Server& other)
 	  _clientMaxBodySize(other._clientMaxBodySize),
 	  _location(other._location),
 	  _socket(other._socket)
-{
-}
+{}
 
 Server& Server::operator=(const Server& other)
 {
@@ -55,25 +53,6 @@ void Server::setValue(int index, std::string& value)
 		case server::MAXBODYSIZE:
 			_clientMaxBodySize = value; break;
 	}
-}
-
-// 안쓰임 - kyeonkim
-std::string Server::getValue(int index) const
-{
-	switch (index)
-	{
-		case server::NAME:
-			return (_serverName[index]);
-		case server::ROOT:
-			return (_root);
-		case server::ERROR:
-			return (_errorPage[index]);
-		case server::INDEX:
-			return (_index);
-		case server::MAXBODYSIZE:
-			return (_clientMaxBodySize);
-	}
-	return NULL;
 }
 
 void Server::setLocation(const Location& location) {
