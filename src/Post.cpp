@@ -60,23 +60,14 @@ void Client::writePipe(size_t pipeSize)
 	size_t currentWriteSize = std::min(perfectBody.size() - _writeIndex, pipeSize);
 	ssize_t writeSize = write(_writeFd[1], perfectBody.c_str() + _writeIndex, currentWriteSize);
 	if (writeSize < 0)
-	{
-		// std::cerr << B_RED << "testcode " << "writeSize error" << RESET << std::endl;
-		// std::cerr << B_RED << "testcode " << strerror(errno) << RESET << std::endl;
-		// return;
 		throw 500;
-	}
-	// if (writeSize == 0) // 처리를 안해줘야 다시 이벤트를 받는다. man에도 그렇게 나와있다. 오히려 처리하면 안된다.
-	// {
-	// 	std::cerr << B_BG_RED << "testcode " << "writeSize 0" << RESET << std::endl;
-	// 	return;
-	// }
 	_writeIndex += writeSize;
 std::cerr << B_BG_CYAN <<  "fd: " << _socketFd << " : " << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << RESET << std::endl;
 // std::cerr << B_BG_CYAN <<  "_request->getChunkedEnd() : " << _request->getChunkedEnd() << RESET << std::endl;
-	if (_request->getBodyTotalSize() == _writeIndex && _request->getChunkedEnd() == true)
+	if (writeSize == 0)
 	{
-		close(_writeFd[1]);
+		if (_request->getBodyTotalSize() == _writeIndex && _request->getChunkedEnd() == true)
+			close(_writeFd[1]);
 	}
 }
 
