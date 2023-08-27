@@ -43,56 +43,40 @@ class Client
 		std::string			_responseStr;
 		int					_kq;
 		int					_writeIndex;
-		// std::string			_convertRequestPath;
 		size_t				_sendIndex;
 	
-		// Client(const Client& src); 
-		// Client& operator=(const Client& rhs);
 	public:
+	// Client.cpp
 		Client(Request* request, int kq, int socketFd);
 		virtual ~Client();
-		void stamp() const;
-
-// req
-		// std::string findLocationPath() const;
-		// void checkLimitExcept() const;
-
-		void postProcess();
-		void deleteProcess();
-		void errorProcess(int errnum);
+		void handleResponse(const struct kevent &tevent);
 		bool sendData(const struct kevent& tevent);
-
-	// get.cpp
+		void clearClient();
+		void closePipeFd();
+		void stamp() const;
+	// Get.cpp
 		void getProcess();
-        // void openPath(const std::string& path);
         void fileProcess(const std::string& filePath, std::stringstream& body);
         void pushBuffer(std::stringstream& body);
 		void autoIndexProcess(DIR* dirStream, std::stringstream& body);
-	// delete.cpp
+		bool isFilePy(const std::string& filePath);
+		void getCgi();
+		void getChildProcess();
+	// Delete.cpp
+		void deleteProcess();
 		void removeFile(std::string file) const;
-	// post.cpp
+	// Post.cpp
+		void postProcess();
 		void writePipe(size_t pipeSize);
 		void readPipe(size_t pipeSize);
 		void childProcess();
 		void execveCgi() const;
 		void initCgi();
-		//get.cpp
-	// error.cpp
-		void pushErrorBuffer(std::string body, int errnum);
-
-
-	//getcgi
-		bool isFilePy(const std::string& filePath);
-		void getCgi();
-		void getChildProcess();
-	// clear
-		void clearClient();
-		void handleResponse(const struct kevent &tevent);
 		void endChildProcess();
-		void closePipeFd();
-
+	// Error.cpp
+		void errorProcess(int errnum);
+		void pushErrorBuffer(std::string body, int errnum);
 	// AddEvent.cpp
-		// void addEvent(int fd, int filter);
 		void addSocketReadEvent();
 		void addSocketWriteEvent();
 		void addPipeReadEvent();
@@ -111,6 +95,4 @@ class Client
 		int							getSocket() 	const;
 		Request&					getReq() 		const;
 		const std::stringstream&	getBuffer() 	const;
-
-		void 						setConvertRequestPath();
 };

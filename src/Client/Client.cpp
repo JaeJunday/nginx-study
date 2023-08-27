@@ -20,31 +20,9 @@ _sendIndex(0)
 	_writeFd[0] = INIT_PIPE;
 	_writeFd[1] = INIT_PIPE;
 
-	// client->addEvent(socketFd, EVFILT_READ);
 	addSocketReadEvent();
-	// client->addEvent(socketFd, EVFILT_TIMER); // 타이머 이벤트 추가 - kyeonkim
 	addTimerEvent();
-	// _request->setEventState(EVFILT_READ);
 }
-
-// Client::Client(const Client& src)
-// {}
-/*
-	[delete] - kyeonkim
-	- 현재 클라이언트 대입 쓰고 있음.
-	- 쓰고 있는데 request 대입하고 있음.
-	- 다른 것도 넣어줘야함. 근데 신기하게 왜 잘 동작함?
-	- 심지어 리턴도 없음 ㅋㅋㅋ
-	- 근데 잘보니 안씀 ㅋㅋㅋ 삭제해도됨 ㅋㅋㅋ
-*/
-// Client& Client::operator=(Client const& rhs)
-// {
-// 	if (this != &rhs)
-// 	{
-// 		delete _request;
-// 		_request = new Request(rhs.getReq());
-// 	}
-// }
 
 Client::~Client()
 {
@@ -59,32 +37,6 @@ Client::~Client()
 	delete _request;
 }
 
-void Client::stamp() const
-{
-	std::string color;
-
-	if (_stateCode >= 400)
-		color = RED;
-	else 
-		color = GREEN;
-    std::cerr << color << util::getDate() << " : "<< _request->getHost() << " " << _request->getMethod() << " " << _request->getVersion() << " "<< _stateCode << " " << _reasonPhrase << RESET << std::endl;
-}
-
-void Client::clearClient()
-{
-	_request->clearRequest();
-	_chunkedFilename.clear();
-	_stateCode = 200;
-	_reasonPhrase.clear();
-	_contentType.clear();
-	_contentLength = 0;
-	_responseBuffer.str("");
-	_writeIndex = 0;
-	_sendIndex = 0;
-	_responseStr.clear();
-}
-
-// [Refectoring required] - semikim
 void Client::handleResponse(const struct kevent &tevent)
 {
 	if (_request->getTransferEncoding() == "chunked")
@@ -112,20 +64,9 @@ void Client::handleResponse(const struct kevent &tevent)
 		{
 			deleteProcess();
 		}
-		// deleteEvent();
 		deleteReadEvent();
-		// addEvent(tevent->ident, EVFILT_WRITE);
 		addSocketWriteEvent();
-		// _request->setEventState(EVFILT_WRITE);
 	}
-}
-
-void Client::closePipeFd()
-{
-	if (_writeFd[1] != INIT_PIPE)
-		close(_writeFd[1]);
-	if (_readFd[0] != INIT_PIPE)
-		close(_readFd[0]);
 }
 
 bool Client::sendData(const struct kevent& tevent)
@@ -150,9 +91,40 @@ bool Client::sendData(const struct kevent& tevent)
 	{
 		deleteWriteEvent();
 		clearClient();
-		// addEvent(tevent.ident, EVFILT_READ);
 		addSocketReadEvent();
-		// _request->setEventState(EVFILT_READ);
 	}
 	return true;
+}
+
+void Client::clearClient()
+{
+	_request->clearRequest();
+	_chunkedFilename.clear();
+	_stateCode = 200;
+	_reasonPhrase.clear();
+	_contentType.clear();
+	_contentLength = 0;
+	_responseBuffer.str("");
+	_writeIndex = 0;
+	_sendIndex = 0;
+	_responseStr.clear();
+}
+
+void Client::closePipeFd()
+{
+	if (_writeFd[1] != INIT_PIPE)
+		close(_writeFd[1]);
+	if (_readFd[0] != INIT_PIPE)
+		close(_readFd[0]);
+}
+
+void Client::stamp() const
+{
+	std::string color;
+
+	if (_stateCode >= 400)
+		color = RED;
+	else 
+		color = GREEN;
+    std::cerr << color << util::getDate() << " : "<< _request->getHost() << " " << _request->getMethod() << " " << _request->getVersion() << " "<< _stateCode << " " << _reasonPhrase << RESET << std::endl;
 }
