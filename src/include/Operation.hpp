@@ -17,18 +17,6 @@
 #include <sys/socket.h> // socket
 #include <sys/event.h>  // kqueue
 
-#define FALLOW 0
-/*
-kyeonkim
-[현재 Operation _servers 데이터 구조] - port는 conf의 server 블록 안에 있는 listen
-==============================================
-			port1		, port2 , ...
-			|			  |
-			-server		  -server
-			-server		  -server
-			-...		  -...
-==============================================
-*/
 class Operation {
 private:
 	std::map<uint32_t, std::vector<Server> >	_servers;
@@ -36,22 +24,18 @@ private:
 public:
 	~Operation();
 	void setServer(Server& server);
-	int createBoundSocket(uint32_t listen);
-	std::vector<Server>& findServers(uintptr_t ident);
+		void compareServer(Server& server);
+		void compareServerName(std::vector<std::string>& strs1, std::vector<std::string>& strs2);
 	void start();
-
-	void acceptClient(int kq, int fd, std::vector<Server>& servers);
-	void sendData(struct kevent& tevent);
-	void testPipe(std::string buffer);
-	Client* selectMethod(Request* req, int kq) const;
-	// compare
-	void compareServer(std::vector<Server>& servers, Server& server);
-	void compareServerName(std::vector<std::string>& strs1, std::vector<std::string>& strs2);
-
-	void processEvent(int kq, struct kevent *tevents, int nev);
+		void registerServers(int kq);
+			int createBoundSocket(uint32_t listen);
+		void handleTriggerEvent(int kq);
+			void handleEvent(int kq, const struct kevent* tevents, int nev);
+				std::vector<Server>* findServers(uintptr_t ident);
+				void acceptClient(int kq, int fd, std::vector<Server>& servers);
+					void setSocketOption(int socketFd);
+				bool handleReadEvent(const struct kevent& tevent);
+				bool handleWriteEvent(const struct kevent& tevent);
+				void handleError(const struct kevent& tevent, int errnum);
+	void CleanUpClientResources(const struct kevent& tevent, Client* client);
 };
-
-// remove testcase function
-void test_print_event(struct kevent event);
-
-

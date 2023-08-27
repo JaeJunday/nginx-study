@@ -318,7 +318,7 @@ int Client::getReadFd() const
 	return _readFd[0]; 
 }
 
-void Client::handleRequest(struct kevent* tevent, char* buffer)
+void Client::handleRequest(const struct kevent* tevent, char* buffer)
 {
 	_request->setBuffer(buffer, tevent->data);
 	if (_request->getState() == request::READY) // header 생성
@@ -349,7 +349,7 @@ void Client::handleRequest(struct kevent* tevent, char* buffer)
 }
 
 // [Refectoring required] - semikim
-void Client::handleResponse(struct kevent *tevent)
+void Client::handleResponse(const struct kevent *tevent)
 {
 	if (_request->getTransferEncoding() == "chunked")
 	{
@@ -408,7 +408,7 @@ void Client::closePipeFd()
 	// }
 }
 
-bool Client::sendData(struct kevent& tevent)
+bool Client::sendData(const struct kevent& tevent)
 {
 std::cerr << "fd: " << tevent.ident <<  "==============================Send data==============================" << std::endl;
 std::cerr << B_CYAN << "testcode ===" << "tevent.data : " << tevent.data << RESET << std::endl;
@@ -433,13 +433,13 @@ std::cerr << B_CYAN << "testcode ===" << "tevent.data : " << tevent.data << RESE
 	}
 	if (byteWrite <= 0 || _stateCode == 405) // send fail
 	{
-		std::cerr << B_RED << strerror(errno) << RESET << std::endl;
-		std::cerr << RED << "event ident: " <<  tevent.ident << RESET << std::endl;
-		clearClient();
-		std::cerr << B_BG_CYAN << "끊겼어용" << RESET << std::endl;
-		close(tevent.ident);
-		delete this;
+		std::cerr << B_BG_CYAN << "Close send func" << RESET << std::endl;
 		return false;
+		// std::cerr << B_RED << strerror(errno) << RESET << std::endl;
+		// std::cerr << RED << "event ident: " <<  tevent.ident << RESET << std::endl;
+		// clearClient();
+		// close(tevent.ident);
+		// delete this;
 	}
 // std::cerr << GREEN << "testcode : " << "send code: " << _stateCode << RESET << std::endl;
 	_sendIndex += byteWrite;
@@ -449,7 +449,6 @@ std::cerr << B_CYAN << "testcode ===" << "tevent.data : " << tevent.data << RESE
 // std::cerr << RED << "_sendIndex after:" << _sendIndex << RESET << std::endl;
 	if (_sendIndex == responseBufferSize)
 	{
-		// deleteEvent();
 		deleteWriteEvent();
 		clearClient();
 		addEvent(tevent.ident, EVFILT_READ);

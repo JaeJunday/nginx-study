@@ -65,7 +65,8 @@ class Client
 		void errorProcess(int errnum);
 
 
-		bool sendData(struct kevent& tevent);
+		bool sendData(const struct kevent& tevent);
+
 	// get.cpp
         void openPath(const std::string& path);
         void fileProcess(const std::string& filePath, std::stringstream& body);
@@ -105,8 +106,8 @@ class Client
 		void getChildProcess();
 	// clear
 		void clearClient();
-		void handleRequest(struct kevent* tevent, char* buffer);
-		void handleResponse(struct kevent *tevent);
+		void handleRequest(const struct kevent* tevent, char* buffer);
+		void handleResponse(const struct kevent *tevent);
 		void endChildProcess();
 		void closePipeFd();
 };

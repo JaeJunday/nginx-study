@@ -3,10 +3,25 @@
 Operation::~Operation()
 {
 	std::map<int, Client*>::iterator it;
+
 	if (!_clients.empty())
-	{
 		for (it = _clients.begin(); it != _clients.end(); ++it)
-			delete it->second; // 소멸자 호출됨
+			delete it->second;
+}
+
+void Operation::setServer(Server& server) 
+{
+	compareServer(server);
+	_servers[server.getListen()].push_back(server);
+}
+
+void Operation::compareServer(Server& server)
+{
+	if (_servers[server.getListen()].size() > 0)
+	{
+		std::vector<Server>& servers = _servers[server.getListen()];
+		for (size_t i = 0; i < servers.size(); ++i)
+			compareServerName(servers[i].getServerName(), server.getServerName());
 	}
 }
 
@@ -22,40 +37,54 @@ void Operation::compareServerName(std::vector<std::string>& strs1, std::vector<s
 	}
 }
 
-void Operation::compareServer(std::vector<Server>& servers, Server& server)
+void Operation::start()
 {
-	if (_servers[server.getListen()].size() > 0)
+	int kq = kqueue();
+
+	registerServers(kq);
+	handleTriggerEvent(kq);
+}
+
+void Operation::registerServers(int kq)
+{
+	struct kevent event;
+	std::map<uint32_t, std::vector<Server> >::iterator it;
+	
+    for (it = _servers.begin(); it != _servers.end(); ++it)
 	{
-		std::vector<Server>& servers = _servers[server.getListen()];
-		for (size_t i = 0; i < servers.size(); ++i)
-			compareServerName(servers[i].getServerName(), server.getServerName());
+        uint32_t port = it->first;
+		try 
+		{
+			int socketFd = createBoundSocket(port);
+        	std::vector<Server>& serverList = it->second;
+        	std::vector<Server>::iterator serverIt;
+			for (serverIt = serverList.begin(); serverIt != serverList.end(); ++serverIt)
+			{
+				Server& server = *serverIt;
+				server.setSocket(socketFd);
+				fcntl(server.getSocket(), F_SETFL, O_NONBLOCK);
+				if (listen(server.getSocket(), MAX_LISTEN) == -1)
+					throw std::logic_error("Error: Listen failed");
+				EV_SET(&event, server.getSocket(), EVFILT_READ, EV_ADD, 0, 0, NULL);
+				kevent(kq, &event, 1, NULL, 0, NULL);
+			}
+		}
+		catch (std::exception &e) 
+		{
+			std::cerr << e.what() << std::endl;
+		}
 	}
 }
 
-void Operation::setServer(Server& server) 
-{
-	compareServer(_servers[server.getListen()], server); // set 전에 동일한 서버가 있는지 검사 - kyeonkim
-	_servers[server.getListen()].push_back(server);
-}
-/*
-	[Done] - kyeonkim
-	- conf 에서 listen 이 같고 server_name 이 다를 경우 다음과 같이 처리해야한다.
-	- server socket 에 bind 하기 전에 port가 같은 서버끼리 묶어둔다.
-	- 클라이언트에서 요청이 들어올 때 묶은 변수를 한번 탐색해서 해당 서버 이름이 있는지 비교한다.
-	- 있으면 처리하고 없으면 서버들 중에 맨 위에 있는([0]) 서버의 이름으로 요청을 처리한다.
-*/
-/*	kyeonkim
-	@des 각 port 해당하는 서버들은 같은 fd 를 가진다. 그러므로 port의 개수만큼 fd가 만들어진다.
-*/
 int Operation::createBoundSocket(uint32_t port)
 {
-	int socketFd = socket(AF_INET, SOCK_STREAM, FALLOW);
+	int socketFd = socket(AF_INET, SOCK_STREAM, SOCKET_TYPE);
 	if (socketFd == -1)
 		throw std::logic_error("Error: Socket creation failed");
 	sockaddr_in serverAddr;
 	int optval = 1;
 	memset((char*)&serverAddr, 0, sizeof(sockaddr_in));
-	std::cerr << "http://0.0.0.0" << ":" << port << std::endl; // print server ip:port
+	std::cerr << "http://0.0.0.0" << ":" << port << std::endl;
 	serverAddr.sin_family = AF_INET; 
 	serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serverAddr.sin_port = htons(port);
@@ -64,131 +93,57 @@ int Operation::createBoundSocket(uint32_t port)
 		throw std::logic_error("Error: Socket bind failed");
 	return socketFd;
 }
-/*	kyeonkim
-	@des 하나의 포트에 여러 개의 서버가 있는데 어떤 포트에 있는 서버인지 찾아서 여러 개의 서버 vector 을 넘김
-	@return std::vector<Server>
-*/
-std::vector<Server>& Operation::findServers(uintptr_t ident)
-{
-	std::map<uint32_t, std::vector<Server> >::iterator it;
 
- 	for (it = _servers.begin(); it != _servers.end(); ++it)
+void Operation::handleTriggerEvent(int kq)
+{
+	int nev;
+	struct kevent tevents[MAX_EVENT];
+
+	while (true)
 	{
-		std::vector<Server>& serverList = it->second; // 맵의 값 (Server 벡터)
-		Server& server = serverList[0];
-		if (static_cast<uintptr_t>(server.getSocket()) == ident)
-			return serverList;
+		nev = kevent(kq, NULL, 0, tevents, MAX_EVENT, NULL);
+		if (nev == -1)
+			throw std::runtime_error("Error: kevent error");
+		handleEvent(kq, tevents, nev);
 	}
-	std::vector<Server> empty;
-	return empty;
 }
 
-/*	kyeonkim
-	@des 이벤트가 동시에 날라올 때, 해당 이벤트를 1개씩 받는게 아니라 다 받고 저장한 뒤에 하나씩 처리한다.
-	이벤트를 하나씩 받으면서 하나씩 처리할 경우, 이벤트가 날라온 순서대로 처리되지 않을 가능성이 존재한다.
-	이를 방지하기 위해 동시에 날라오는 이벤트를 MAX_EVENT 만큼 받아준다.
-	(이벤트 처리를 제외한 모든 로직들은 함수로 뺴야한다. - 리펙토링)
-*/
-void Operation::processEvent(int kq, struct kevent *tevents, int nev)
+void Operation::handleEvent(int kq, const struct kevent *tevents, int nev)
 {
 	for (int i = 0; i < nev; ++i)
 	{
-		if (tevents[i].udata == NULL) // server block
+		if (tevents[i].udata == NULL)
 		{
-			std::vector<Server>& servers = findServers(tevents[i].ident);
-			if (!servers.empty())
-				acceptClient(kq, tevents[i].ident, servers);
+			std::vector<Server>* servers = findServers(tevents[i].ident);
+			if (servers != NULL)
+				acceptClient(kq, tevents[i].ident, *servers);
 		}
-		else // client block
+		else
 		{
 			try
 			{
 				Client* client = reinterpret_cast<Client*>(tevents[i].udata);
-				// std::cerr << B_BG_RED << "testcode " << client->getSocket() << RESET << std::endl;
-				// std::cerr << B_BG_RED << "testcode " << client << RESET << std::endl;
-				if (tevents[i].filter == EVFILT_READ)
+				switch (tevents[i].filter) 
 				{
-
-					// std::cerr << RED << "recv : " << tevents[i].ident << ":"<< RESET << std::endl;
-					// write(1, buffer, bytesRead);
-					// std::cerr << std::endl;
-
-					if (tevents[i].ident == client->getSocket())
-					{
-						client->resetTimerEvent(); // READ 이벤트가 소켓으로 날라올 경우 해당 fd의 타이머 이벤트를 리셋 - kyeonkim
-						char* buffer = new char[tevents[i].data];
-						/*
-							[Done] - kyeonkim
-							- read/recv/write/send 의 반환값인 0, -1 을 모두 처리해야한다.
-							- errno 쓰지말라
-						*/
-						ssize_t bytesRead = recv(tevents[i].ident, buffer, tevents[i].data, 0);
-						// std::cerr << B_BLUE << "testcode fd :"<< client->getSocket() << "access client" << RESET << std::endl;
-						if (bytesRead <= 0 || client->getReq().getConnection() == "close")
-						{
-							std::cerr << B_RED << "testcode fd :"<< client->getSocket() << " close client" << RESET << std::endl;
-							client->clearClient();
-							close(tevents[i].ident);
-							_clients.erase(tevents[i].ident);
-							delete client; // 소멸자 부를 때 request 제거
-							delete[] buffer;
-							break; // 배열 앞쪽에 타이머이벤트가 발생하거나 클라이언트가 종료해서 해당 클라이언트를 삭제할 경우 뒤에있는 배열에 삭제된 클라이언트의 이벤트가 담겨있으면 heapuse-after-free seagfault가 발생할 수 있어서 break를 걸어서 kevent를 다시 받아와야합니다..!
-						}
-						else
-						{
-							client->handleRequest(&tevents[i], buffer);
-							delete[] buffer;
-						}
-					}
-					else if(tevents[i].ident == client->getReadFd())
-					{
-						// std::cerr << YELLOW << "readfd" << RESET << std::endl;
-						client->readPipe(static_cast<size_t>(tevents[i].data));
-					}	
-				}
-				else if (tevents[i].filter == EVFILT_WRITE)
-				{
-					if (tevents[i].ident == client->getSocket())
-					{
-						client->resetTimerEvent(); // WRITE 이벤트가 소켓으로 날라올 경우 해당 fd의 타이머 이벤트를 리셋 - kyeonkim
-						if (client->sendData(tevents[i]) == false)
-						{
-							_clients.erase(tevents[i].ident);
-							break;
-						}
-					}
-					else if (tevents[i].ident == client->getWriteFd())
-					{
-						// std::cerr << YELLOW << "writefd" << RESET << std::endl;
-						client->writePipe(tevents[i].data);
-					} 
-				}
-				else if (tevents[i].filter == EVFILT_PROC)
-				{
-					if (tevents[i].fflags & NOTE_EXIT)
-					{
-						std::cerr << B_RED << "testcode " << "EVFILT_PROC" << "fd: " << client->getSocket() << RESET << std::endl;
-						client->endChildProcess();
-					}
-				}
-				else if (tevents[i].filter == EVFILT_TIMER) // 타이머 완료 시 클라이언트 제거 - kyeonkim
-				{
-					std::cerr << B_BG_YELLOW << "testcode FILTER == TIMER EVENT > DELETE CLIENT" << RESET << std::endl;
-					client->clearClient();
-					close(tevents[i].ident);
-					_clients.erase(tevents[i].ident);
-					delete client;
-					break;
+					case EVFILT_READ:
+						if (handleReadEvent(tevents[i]) == false)
+							return;	
+						break;
+					case EVFILT_WRITE:
+						if (handleWriteEvent(tevents[i]) == false)
+							return;
+						break;
+					case EVFILT_PROC:
+						client->endChildProcess(); 
+						break;
+					case EVFILT_TIMER:
+						CleanUpClientResources(tevents[i], client);
+						return;
 				}
 			}
-			catch (const int errnum)
-			{	
-				Client* client = static_cast<Client*>(tevents[i].udata);
-			std::cerr << RED <<  "fd: " << client->getSocket() <<  "in trycatch error delete read event : " << errnum << RESET << std::endl;
-				client->deleteReadEvent();
-				client->errorProcess(errnum);
-				client->addEvent(client->getSocket(), EVFILT_WRITE); // process 에서 에러가 나면 fd값이 아니라 pid 값이다.
-				client->getReq().setEventState(EVFILT_WRITE);
+			catch (const int errnum) 
+			{
+				handleError(tevents[i], errnum);
 			}
 			catch(const std::exception& e)
 			{
@@ -198,58 +153,18 @@ void Operation::processEvent(int kq, struct kevent *tevents, int nev)
 	}
 }
 
-// Server Start
-void Operation::start() {
-	int kq;
-	int nev;
-	struct kevent event;
-	struct kevent tevents[event::MAX_EVENT];	 /* Event triggered */
+std::vector<Server>* Operation::findServers(uintptr_t ident)
+{
 	std::map<uint32_t, std::vector<Server> >::iterator it;
 
-	kq = kqueue();
-    for (it = _servers.begin(); it != _servers.end(); ++it)
+ 	for (it = _servers.begin(); it != _servers.end(); ++it)
 	{
-        uint32_t port = it->first; // 맵의 키
-		try {
-			int socketFd = createBoundSocket(port);
-        	std::vector<Server>& serverList = it->second; // 맵의 값 (Server 벡터)
-        	std::vector<Server>::iterator serverIt;
-			/*	kyeonkim
-				@des 각 port에 해당하는 서버들은 같은 fd를 사용하므로 해당 port에 속하는 서버들을 돌며
-				fd 값을 setting 해준다.
-			*/
-			for (serverIt = serverList.begin(); serverIt != serverList.end(); ++serverIt)
-			{
-				Server& server = *serverIt;
-				server.setSocket(socketFd);
-				fcntl(server.getSocket(), F_SETFL, O_NONBLOCK);
-				if (listen(server.getSocket(), 1024) == -1) // SOMAXCONN == 128
-					throw std::logic_error("Error: Listen failed");
-				// 각 서버에 READ Event 를 검 - kyeonkim
-				EV_SET(&event, server.getSocket(), EVFILT_READ, EV_ADD, 0, 0, NULL);
-				kevent(kq, &event, 1, NULL, 0, NULL);
-			}
-		} catch (std::exception &e) {
-			std::cerr << e.what() << std::endl;
-			continue;
-		}
+		std::vector<Server>* serverList = &(it->second);
+		Server& server = (*serverList)[0];
+		if (static_cast<uintptr_t>(server.getSocket()) == ident)
+			return serverList;
 	}
-	/*
-		[Done] - kyeonkim
-		- 평가표에 The select() (or equivalent) should be in the main loop and should check file descriptors for read and write AT THE SAME TIME.
-		  란 항목이 있는데 항목의 처리는 다음과 같다.
-		- conf 에 max_event 라는 키워드가 있으면 해당 키워드 value 값으로 이벤트 공간을 설정해야한다. > 굳이 conf에 해당 키워드를 넣을 필요는 없다. 그냥 define 1024 해서 사용
-		- 이벤트 공간을 설정했으면 nev = kevent(kq, NULL, 0, &tevent, 1, NULL); 이렇게 1개씩 받는 것이 아니라
-		설정한 공간만큼 받는다.
-		- 그러면 nev 변수에 받은 이벤트 수가 들어오게되고 해당 nev를 loop 시켜서 events[nev].filter 이런식으로 이벤트를 처리해야한다.
-	*/
-	while (true)
-	{
-		nev = kevent(kq, NULL, 0, tevents, event::MAX_EVENT, NULL);
-		if (nev == -1)
-			throw std::runtime_error("Error: kevent error");
-		processEvent(kq, tevents, nev); // 이벤트 loop 처리 - kyeonkim
-	}
+	return NULL;
 }
 
 void Operation::acceptClient(int kq, int fd, std::vector<Server>& servers)
@@ -258,22 +173,91 @@ void Operation::acceptClient(int kq, int fd, std::vector<Server>& servers)
 	sockaddr_in		socketAddr;
 	socklen_t		socketLen;
 	
-std::cerr << GREEN << "testcode" << "================ ACCEPT =========================" << RESET << std::endl;
 	socketFd = accept(fd, reinterpret_cast<struct sockaddr*>(&socketAddr), &socketLen);
 	if (socketFd == -1)
 		throw std::runtime_error("Error: Accept failed");
-	struct linger linger_opt;
-    linger_opt.l_onoff = 1; // Linger 활성화
-    linger_opt.l_linger = 0; // Linger 시간 (0은 즉시 소켓 버퍼를 비우도록 설정)
-    setsockopt(socketFd, SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
-	int socket_option = 1;
-	setsockopt(socketFd, SOL_SOCKET, SO_NOSIGPIPE, &socket_option, sizeof(socket_option));
-// std::cerr << YELLOW << "socketFd: " << socketFd <<  RESET << std::endl;
-	fcntl(socketFd, F_SETFL, O_NONBLOCK);
-	Request *request = new Request(servers); // server vector 가 들어가야한다. - kyeonkim
+	setSocketOption(socketFd);
+	Request *request = new Request(servers);
 	Client* client = new Client(request, kq, socketFd);
 	_clients.insert(std::make_pair(socketFd, client));
+	/*
+		@refec 클라이언트 생성자에서 진행
+			client->addEvent(socketFd, EVFILT_READ);
+			client->addEvent(socketFd, EVFILT_TIMER); // 타이머 이벤트 추가 - kyeonkim
+			client->getReq().setEventState(EVFILT_READ);
+	*/
 	client->addEvent(socketFd, EVFILT_READ);
-	client->addEvent(socketFd, EVFILT_TIMER); // 타이머 이벤트 추가 - kyeonkim
+	client->addEvent(socketFd, EVFILT_TIMER);
 	client->getReq().setEventState(EVFILT_READ);
+}
+
+void Operation::setSocketOption(int socketFd)
+{
+	struct linger linger_opt;
+	int socket_option = 1;
+
+    linger_opt.l_onoff = 1;
+    linger_opt.l_linger = 0;
+    setsockopt(socketFd, SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
+	setsockopt(socketFd, SOL_SOCKET, SO_NOSIGPIPE, &socket_option, sizeof(socket_option));
+	fcntl(socketFd, F_SETFL, O_NONBLOCK);
+}
+
+bool Operation::handleReadEvent(const struct kevent &tevent)
+{
+	Client* client = reinterpret_cast<Client*>(tevent.udata);
+
+	if (tevent.ident == static_cast<uintptr_t>(client->getSocket()))
+	{
+		client->resetTimerEvent();
+		char* buffer = new char[tevent.data];
+		ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
+		if (bytesRead > 0)
+			client->handleRequest(&tevent, buffer);
+		else if (bytesRead <= 0 || client->getReq().getConnection() == "close")
+		{
+			CleanUpClientResources(tevent, client);
+			delete[] buffer;
+			return false;
+		}
+		delete[] buffer;
+	}
+	else if(tevent.ident == static_cast<uintptr_t>(client->getReadFd()))
+		client->readPipe(static_cast<size_t>(tevent.data));
+	return true;
+}
+
+bool Operation::handleWriteEvent(const struct kevent& tevent)
+{
+	Client* client = reinterpret_cast<Client*>(tevent.udata);
+	
+	if (tevent.ident == static_cast<uintptr_t>(client->getSocket()))
+	{
+		client->resetTimerEvent();
+		if (client->sendData(tevent) == false)
+		{
+			CleanUpClientResources(tevent, client);
+			return false;
+		}
+	}
+	else if (tevent.ident == static_cast<uintptr_t>(client->getWriteFd()))
+		client->writePipe(tevent.data);
+	return true;
+}
+
+void Operation::handleError(const struct kevent& tevent, int errnum)
+{
+	Client* client = static_cast<Client*>(tevent.udata);
+	client->deleteReadEvent();
+	client->errorProcess(errnum);
+	client->addEvent(client->getSocket(), EVFILT_WRITE);
+	client->getReq().setEventState(EVFILT_WRITE);
+}
+
+void Operation::CleanUpClientResources(const struct kevent& tevent, Client* client)
+{
+	client->clearClient();
+	close(tevent.ident);
+	_clients.erase(tevent.ident);
+	delete client;
 }

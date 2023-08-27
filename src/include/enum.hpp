@@ -1,10 +1,16 @@
 #pragma once
 
+#define EXIT_DONE 0
+#define EXIT_ERROR 1
+#define SOCKET_TYPE 0
+#define MAX_LISTEN 1024
+#define MAX_EVENT 1024
+
 namespace server
 {
     enum SERVER
     {
-        NAME = 0,
+        NAME,
         ROOT,
         LISTEN,
         ERROR,
@@ -18,7 +24,7 @@ namespace location
 {
     enum LOCATION
     {
-        ROOT = 0,
+        ROOT,
         INDEX,
         AUTOINDEX,
         UPLOAD,
@@ -76,9 +82,9 @@ namespace request
 {
     enum REQUEST
     {
-		READY = 0,
-		CREATE = 1,
-        DONE = 2
+		READY,
+		CREATE,
+        DONE
     };
 }
 
@@ -86,11 +92,11 @@ namespace file
 {
     enum STATE
     {
-        HASH = 0,
-        HEADER = 1,
-        CONTENT = 2,
-        END = 3,
-        START = 4
+        HASH,
+        HEADER,
+        CONTENT,
+        END,
+        START
     };
 }
 
@@ -104,7 +110,6 @@ namespace event
 
     enum KEVENT
     {
-        MAX_EVENT = 1024
     };
 }
 
