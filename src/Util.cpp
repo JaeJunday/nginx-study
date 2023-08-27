@@ -1,5 +1,4 @@
 #include "Util.hpp"
-// #include "Request.hpp"
 
 std::vector<std::string> util::getToken(const std::string& str, const std::string& delimiters)
 {
@@ -27,19 +26,31 @@ uint32_t util::stoui(const std::string& str)
     return static_cast<uint32_t>(std::strtod(str.c_str(), NULL));
 }
 
-/*
-uint32_t util::convertIp(std::string& ipStr)
+std::string util::getDate()
 {
-    std::vector<std::string> tmp = util::getToken(ipStr, ".");
-    if (tmp.size() != OCTET_COUNT)
-        throw std::runtime_error("Error: Invalid Ip Address");
-    uint32_t ip = 0;
-    for (int i = 0, shift = 24; i < tmp.size(); ++i, shift -= 8) { 
-        uint32_t octet = util::stoui(tmp[i]);
-        if (octet > OCTET_MAX)
-            throw std::runtime_error("Error: Invalid Octet Range 0 ~ 255");
-        ip |= octet << shift;
-    }
-    return ip;
+    std::time_t now = std::time(NULL);
+    char timeStamp[TIME_SIZE];
+    std::strftime(timeStamp, sizeof(timeStamp), "%a, %d %b %Y %H:%M:%S GMT", std::localtime(&now));
+    return (timeStamp);
 }
-*/
+
+std::string util::findContentType(const std::string& filePath)
+{
+	std::vector<std::string> filename = util::getToken(filePath, ".");
+	std::string fileExtension;
+	size_t lastElement = filename.size();
+    if (lastElement >= 1)
+		fileExtension = filename[filename.size() - 1];
+	else
+		return "text/plain";
+
+	std::string fileType[] = {"html", "css", "js", "json", "jpeg", "jpg", "png", "gif", "bmp", "webp", "mpeg", "wav", "ogg", "mp4", "webm", "pdf", "zip", "csv"};
+    std::string inputType[] = {"text/html", "text/css", "text/javascript", "application/json", "image/jpeg", "image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp", "audio/mpeg", "audio/wav", "audio/ogg", "video/mp4", "video/webm", "application/pdf", "application/zip", "text/csv"};
+
+	for (int i = 0; i < fileType->size(); ++i)
+	{
+		if (fileExtension == fileType[i])
+			return inputType[i];
+	}
+	return "";
+}

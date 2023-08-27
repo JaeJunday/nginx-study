@@ -3,13 +3,13 @@
 void Client::deleteProcess()
 {
     _responseBuffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
-	_responseBuffer << "Date: " << getDate() << "\r\n";
+	_responseBuffer << "Date: " << util::getDate() << "\r\n";
 	_responseBuffer << "Server: " << _serverName << "\r\n";
 	_responseBuffer << "Content-Type: " << _contentType << "\r\n";
     _responseStr = _responseBuffer.str();
-    std::string filePath = findLocationPath();
-    checkLimitExcept();
-    removeFile(filePath.c_str());
+    // std::string filePath = findLocationPath();
+    // checkLimitExcept();
+    removeFile(_request->getConvertRequestPath());
 }
 
 void Client::removeFile(std::string file) const

@@ -6,16 +6,16 @@
 	- You can use a script containing an infinite loop or an error. 
 	이런 항목도 있으므로 while.py 하나 만들어서 무한루프 시키는 파일을 하나 만들어둬야한다.
 */
+// void Client::getProcess()
+// {
+//     // std::string path = findLocationPath();
+// 	// checkLmitExcept();
+// 	openPath(_request->getConvertRequestPath());
+// }
+
 void Client::getProcess()
 {
-    std::string path = findLocationPath();
-	checkLimitExcept();
-	openPath(path);
-}
-
-void Client::openPath(const std::string& path)
-{
-	std::string relativePath = "." + path;
+	std::string relativePath = "." + _request->getConvertRequestPath();
 	DIR *dirStream = opendir(relativePath.c_str());
 	std::stringstream body;
 	
@@ -41,11 +41,6 @@ void Client::openPath(const std::string& path)
 		}
 		else if (_request->getLocation()->_autoindex == "on")
 			autoIndexProcess(dirStream, body);
-		else
-		{
-			std::cerr << "no file" << std::endl;
-			// 보여줄게 없다는 메시지를 띄운다(state errorcode는 200으로 처리한다. 왜냐하면 폴더는 있기 때문에).
-		}
 		closedir(dirStream);
 	}
 	pushBuffer(body);
@@ -66,7 +61,7 @@ void Client::getChildProcess()
 	dup2(_readFd[1], STDOUT_FILENO);
 	close(_readFd[0]);
 	close(_readFd[1]);
-	std::string engine = "." + _convertRequestPath;
+	std::string engine = "." + _request->getConvertRequestPath();
 
 	char* const args[] = {const_cast<char*>(engine.c_str()), NULL};
 	// 실행시킬 모듈을 골라서 스크립트 실행 파일 이름으로 실행시킴 
@@ -76,7 +71,6 @@ void Client::getChildProcess()
 		exit(1);
 	}
 }
-
 
 /*	kyeonkim
 	@des get도 cgi 처리가 되어야한다. 현재 /src/pages 폴더에 read.py를 추가해놨다.
@@ -93,9 +87,9 @@ void Client::getCgi()
 	if (_pid == 0)
 		getChildProcess();
 	if (_pid > 0)
-		addEvent(_pid, EVFILT_PROC);
+		addProcessEvent();
 	fcntl(_readFd[0], F_SETFL, O_NONBLOCK);
-	addEvent(_readFd[0], EVFILT_READ);
+	addPipeReadEvent();
 	close(_readFd[1]);
 }
 
@@ -107,7 +101,7 @@ void Client::fileProcess(const std::string& filePath, std::stringstream& body)
 	if (file.is_open() == true)
 	{
 		body << file.rdbuf();
-		_contentType = findContentType(filePath);
+		_contentType = util::findContentType(filePath);
 		_contentLength += body.str().length();
 		file.close();
 	}
@@ -135,7 +129,7 @@ void Client::autoIndexProcess(DIR* dirStream, std::stringstream& body)
 void Client::pushBuffer(std::stringstream& body)
 {
 	_responseBuffer << _version << " " << _stateCode << " " << _reasonPhrase << "\r\n";
-	_responseBuffer << "Date: " << getDate() << "\r\n";
+	_responseBuffer << "Date: " << util::getDate() << "\r\n";
 	_responseBuffer << "Server: " << _serverName << "\r\n";
 	_responseBuffer << "Content-Type: " << _contentType << "\r\n";
 	_responseBuffer << "Content-Length: " << _contentLength << "\r\n\r\n";

@@ -15,23 +15,21 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/wait.h>
 #include <cstdlib>
-#include <sys/event.h>  // kqueue
 #include <algorithm> // min
 #include <signal.h>
+#include <sys/wait.h>
+#include <sys/event.h>  // kqueue
 #include <sys/types.h>
-
-#define TIME_SIZE 40
-#define PIPESIZE 42000
+#include <sys/socket.h>
 
 class Client
 {
 	private:
 		Request*			_request;
 		int					_socketFd;
-		int					_writeFd[2]; // parent(w) -> child(r)
-		int					_readFd[2]; // child(w) -> parent(r)
+		int					_writeFd[2];
+		int					_readFd[2];
 		pid_t				_pid;
 		std::string 		_chunkedFilename;
 		std::string			_version;
@@ -45,30 +43,28 @@ class Client
 		std::string			_responseStr;
 		int					_kq;
 		int					_writeIndex;
-		std::string			_convertRequestPath;
+		// std::string			_convertRequestPath;
 		size_t				_sendIndex;
 	
-		Client(const Client& src); 
-		Client& operator=(const Client& rhs);
+		// Client(const Client& src); 
+		// Client& operator=(const Client& rhs);
 	public:
-		virtual ~Client();
 		Client(Request* request, int kq, int socketFd);
-		static std::string getDate();
+		virtual ~Client();
 		void stamp() const;
-		std::string findLocationPath() const;
-		void checkLimitExcept() const;
-		std::string findContentType(const std::string& filePath);
 
-		void getProcess();
+// req
+		// std::string findLocationPath() const;
+		// void checkLimitExcept() const;
+
 		void postProcess();
 		void deleteProcess();
 		void errorProcess(int errnum);
-
-
 		bool sendData(const struct kevent& tevent);
 
 	// get.cpp
-        void openPath(const std::string& path);
+		void getProcess();
+        // void openPath(const std::string& path);
         void fileProcess(const std::string& filePath, std::stringstream& body);
         void pushBuffer(std::stringstream& body);
 		void autoIndexProcess(DIR* dirStream, std::stringstream& body);
@@ -81,33 +77,40 @@ class Client
 		void execveCgi() const;
 		void initCgi();
 		//get.cpp
-		pid_t getPid() const;
 	// error.cpp
 		void pushErrorBuffer(std::string body, int errnum);
-	// setevent
-		void addEvent(int fd, int filter);
-		void deleteReadEvent();
-		void deleteWriteEvent();
-		void deletePidEvent();
-		void deleteTimerEvent();
-		void resetTimerEvent();
 
-	// get
-		int getWriteFd() const;
-		int getReadFd() const;
-		int getKq() const;
-		Request& getReq() const;
-		int getSocket() const;
-		int getStateCode() const;
-		const std::stringstream& getBuffer() const;
+
 	//getcgi
 		bool isFilePy(const std::string& filePath);
 		void getCgi();
 		void getChildProcess();
 	// clear
 		void clearClient();
-		void handleRequest(const struct kevent* tevent, char* buffer);
-		void handleResponse(const struct kevent *tevent);
+		void handleResponse(const struct kevent &tevent);
 		void endChildProcess();
 		void closePipeFd();
+
+	// AddEvent.cpp
+		// void addEvent(int fd, int filter);
+		void addSocketReadEvent();
+		void addSocketWriteEvent();
+		void addPipeReadEvent();
+		void addPipeWriteEvent();
+		void addProcessEvent();
+		void addTimerEvent();
+	// DeleteEvent.cpp
+		void deleteReadEvent();
+		void deleteWriteEvent();
+		void deletePidEvent();
+		void deleteTimerEvent();
+		void resetTimerEvent();
+	// ClientGetterAndSetter.cpp
+		int							getWriteFd() 	const;
+		int							getReadFd() 	const;
+		int							getSocket() 	const;
+		Request&					getReq() 		const;
+		const std::stringstream&	getBuffer() 	const;
+
+		void 						setConvertRequestPath();
 };

@@ -182,13 +182,13 @@ void Operation::acceptClient(int kq, int fd, std::vector<Server>& servers)
 	_clients.insert(std::make_pair(socketFd, client));
 	/*
 		@refec 클라이언트 생성자에서 진행
-			client->addEvent(socketFd, EVFILT_READ);
-			client->addEvent(socketFd, EVFILT_TIMER); // 타이머 이벤트 추가 - kyeonkim
-			client->getReq().setEventState(EVFILT_READ);
+			// client->addEvent(socketFd, EVFILT_READ);
+			// client->addEvent(socketFd, EVFILT_TIMER); // 타이머 이벤트 추가 - kyeonkim
+			// client->getReq().setEventState(EVFILT_READ);
 	*/
-	client->addEvent(socketFd, EVFILT_READ);
-	client->addEvent(socketFd, EVFILT_TIMER);
-	client->getReq().setEventState(EVFILT_READ);
+	// client->addSocketReadEvent(socketFd, EVFILT_READ);
+	// client->addSocketWriteEvent(socketFd, EVFILT_TIMER);
+	// client->getReq().setEventState(EVFILT_READ);
 }
 
 void Operation::setSocketOption(int socketFd)
@@ -213,7 +213,7 @@ bool Operation::handleReadEvent(const struct kevent &tevent)
 		char* buffer = new char[tevent.data];
 		ssize_t bytesRead = recv(tevent.ident, buffer, tevent.data, 0);
 		if (bytesRead > 0)
-			client->handleRequest(&tevent, buffer);
+			client->getReq().handleRequest(tevent, buffer);
 		else if (bytesRead <= 0 || client->getReq().getConnection() == "close")
 		{
 			CleanUpClientResources(tevent, client);
@@ -250,8 +250,9 @@ void Operation::handleError(const struct kevent& tevent, int errnum)
 	Client* client = static_cast<Client*>(tevent.udata);
 	client->deleteReadEvent();
 	client->errorProcess(errnum);
-	client->addEvent(client->getSocket(), EVFILT_WRITE);
-	client->getReq().setEventState(EVFILT_WRITE);
+	// client->addEvent(client->getSocket(), EVFILT_WRITE);
+	client->addSocketWriteEvent();
+	// client->getReq().setEventState(EVFILT_WRITE);
 }
 
 void Operation::CleanUpClientResources(const struct kevent& tevent, Client* client)

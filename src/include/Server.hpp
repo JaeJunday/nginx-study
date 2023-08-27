@@ -59,7 +59,7 @@ class Server {
 		int getSocket() const;
 		const std::string& getRoot() const;
 		const std::string& getIndex() const;
-		const std::vector<Location>& getLocations() const;
+		const std::vector<Location>* getLocations() const;
 		std::vector<std::string>& getServerName();
 		uint32_t getListen();
 };

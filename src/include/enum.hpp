@@ -1,10 +1,17 @@
 #pragma once
 
+// main.cpp
 #define EXIT_DONE 0
 #define EXIT_ERROR 1
+// operation.cpp
 #define SOCKET_TYPE 0
 #define MAX_LISTEN 1024
 #define MAX_EVENT 1024
+// client.cpp
+#define TIME_SIZE 40
+#define PIPESIZE 42000
+#define INIT_PIPE -2
+#define INIT_PID -2
 
 namespace server
 {

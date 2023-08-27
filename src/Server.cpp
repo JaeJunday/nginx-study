@@ -90,9 +90,9 @@ const Location& Server::getLocation(int index) const {
 	return _location[index];
 }
 
-const std::vector<Location>& Server::getLocations() const 
+const std::vector<Location>* Server::getLocations() const 
 {
-	return _location;
+	return &_location;
 }
 
 int Server::getLocationSize() const {

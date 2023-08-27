@@ -4,10 +4,10 @@
 
 Request::Request(Server* server)
 	: _server(server),
-	_location(NULL),
+	// _location(NULL),
 	_port(0), 
 	_state(request::READY),
-	_eventState(0), 
+	// _eventState(0), 
 	_bodyStartIndex(0), 
 	_bodyTotalSize(0),
 	_chunkedEnd(false),
@@ -18,10 +18,10 @@ Request::Request(Server* server)
 
 Request::Request(std::vector<Server>& servers)
 	:_servers(servers),
-	_location(NULL),
+	// _location(NULL),
 	_port(0), 
 	_state(request::READY),
-	_eventState(0), 
+	// _eventState(0), 
 	_bodyStartIndex(0), 
 	_bodyTotalSize(0),
 	_chunkedEnd(false),
@@ -62,7 +62,7 @@ Request& Request::operator=(const Request& rhs)
 		_contentLength = rhs._contentLength;
 		_transferEncoding = rhs._transferEncoding;
 		_boundary = rhs._boundary;
-		_eventState = rhs._eventState;
+		// _eventState = rhs._eventState;
 		_bodyStartIndex = rhs._bodyStartIndex;	
 		_bodyTotalSize = rhs._bodyTotalSize;
 		_chunkedFilename = rhs._chunkedFilename;
@@ -216,11 +216,11 @@ void Request::parseChunkedData(Client* client)
 			{
 				if (_requestBuffer.find("\r\n", bodyStart) != std::string::npos)
 				{
-					if (_location->_clientMaxBodySize.empty() == false)
+					if (_location._clientMaxBodySize.empty() == false)
 					{
-						std::cerr << BLUE << "maxbodysize: " <<  util::stoui(_location->_clientMaxBodySize) << RESET << std::endl;
+						std::cerr << BLUE << "maxbodysize: " <<  util::stoui(_location._clientMaxBodySize) << RESET << std::endl;
 						std::cerr << BLUE << "bodySize: " << _perfectBody.size() << std::endl;
-						if (_perfectBody.size() > util::stoui(_location->_clientMaxBodySize))
+						if (_perfectBody.size() > util::stoui(_location._clientMaxBodySize))
 							throw 413;
 					}
 					_chunkedEnd = true;
@@ -245,7 +245,7 @@ void Request::parseChunkedData(Client* client)
 
 void Request::clearRequest()
 {
-	_location = NULL;
+	// _location = NULL;
 	_state = 0;
 	_headerBuffer.clear();
 	_requestBuffer.clear();
@@ -258,13 +258,14 @@ void Request::clearRequest()
 	_transferEncoding.clear();
 	_boundary.clear();
 	_chunkedFilename.clear();
-	_eventState = 0;
+	// _eventState = 0;
 	_bodyStartIndex = 0;
 	_readIndex = 0;
 	_chunkedEnd = false;
 	_bodyTotalSize = 0;
 	_perfectBody.clear();
 	_secretHeader.clear();
+	_convertRequestPath.clear();
 }
 
 void Request::setBuffer(char *buffer, int size)
@@ -272,10 +273,10 @@ void Request::setBuffer(char *buffer, int size)
 	_requestBuffer.append(buffer, size);
 }
 
-void Request::setEventState(int eventState)
-{
-	_eventState = eventState;
-}
+// void Request::setEventState(int eventState)
+// {
+// 	_eventState = eventState;
+// }
 
 void Request::setState(int state)
 {
@@ -322,10 +323,15 @@ const std::string& Request::getVersion() const
 	return _version;
 }
 
-const std::string& Request::getRequestUrl() const
+const std::string& Request::getConvertRequestPath() const
 {
-	return _requestPath;
+	return _convertRequestPath;
 }
+
+// const std::string& Request::getRequestUrl() const
+// {
+// 	return _requestPath;
+// }
 
 int Request::getState() const
 {
@@ -343,25 +349,25 @@ const Server* Request::getServer() const
 }
 
 
-Location* Request::getLocation() const
+const Location* Request::getLocation()
 {
-	return _location;
+	return &_location;
 }
 	 
-void Request::setLocation(Location* location)
-{
-	_location = location;
-}
+// void Request::setLocation(Location* location)
+// {
+// 	_location = location;
+// }
 
 const std::string& Request::getBoundary() const
 {
 	return _boundary;
 }
 
-int Request::getEventState() const
-{
-	return _eventState;
-}
+// int Request::getEventState() const
+// {
+// 	return _eventState;
+// }
 
 const std::string& Request::getContentType()
 {
@@ -417,4 +423,77 @@ void Request::setChunkedEnd(bool set)
 void Request::setServer(Server* server)
 {
 	_server = server;
+}
+
+std::string Request::findLocationPath()
+{
+	const std::vector<Location>* locations = _server->getLocations();
+	std::string path = _requestPath;
+	size_t length = 0;
+
+	for (int i = 0; i < locations->size(); ++i) 
+	{
+		size_t pathLength = (*locations)[i]._path.length();
+		if (path.compare(0, pathLength, (*locations)[i]._path) == 0 && length < pathLength)
+		{
+			length = pathLength;
+			_location = (*locations)[i];
+			// location = locations[i];
+			// _request->setLocation(const_cast<Location *>(&_request->getServer()->getLocation(i)));
+		}
+ 	}
+	if (length == 0)
+		throw 400;
+	if (!_location._root.empty())
+	{
+		if (length != 1) 
+			path.erase(0, length);
+		path = _location._root + path;
+	}
+	else if (!_server->getRoot().empty())
+	{
+		if (length != 1)
+			path.erase(0, length);
+		path = _server->getRoot() + path;
+	}
+	return path;
+}
+
+void Request::checkLimitExcept() const
+{
+	std::vector<std::string> limit = _location._limitExcept;
+	int limitSize = limit.size();
+
+	if (limitSize)
+	{	
+		int i = 0;
+		while(i < limitSize)
+		{
+			if (limit[i] == _method)
+				break;
+			++i;
+		}
+		if (i == limitSize)
+			throw 405;
+	}
+}
+
+void Request::handleRequest(const struct kevent& tevent, char* buffer)
+{
+	Client* client = reinterpret_cast<Client*>(tevent.udata);
+	
+	_requestBuffer.append(buffer, tevent.data);
+	if (_state == request::READY)
+		headerParsing(tevent.ident);
+	if (_state == request::CREATE)
+	{	
+		_server = findServer();
+		_convertRequestPath = findLocationPath();
+		checkLimitExcept();
+		if (_method == "POST" || _method == "PUT")
+			client->initCgi();
+		_state = request::DONE;
+	}	
+	if (_state == request::DONE)
+		client->handleResponse(tevent);
 }

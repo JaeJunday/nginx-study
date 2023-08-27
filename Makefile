@@ -4,17 +4,21 @@ SRCS = main.cpp \
 		Server.cpp \
 		Operation.cpp \
 		Request.cpp \
-		Client.cpp \
-		Get.cpp \
-		Post.cpp \
-		Delete.cpp \
-		Util.cpp \
-		Error.cpp
+		Client/Client.cpp \
+		Client/ClientGetter.cpp \
+		Client/AddEvent.cpp \
+		Client/DeleteEvent.cpp \
+		Client/Get.cpp \
+		Client/Post.cpp \
+		Client/Delete.cpp \
+		Client/Error.cpp\
+		Util.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 OBJ_DIR = build/
 SRC_DIR = src/
-SRCS_FILES = $(addprefix $(SRC_DIR),$(SRCS))
+SRC_CLIENT_DIR = src/client/
+# SRCS_FILES = $(addprefix $(SRC_DIR),$(SRCS))
 OBJS_FILES = $(addprefix $(OBJ_DIR),$(OBJS))
 
 CXX = c++
@@ -32,8 +36,12 @@ all: $(NAME)
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
+	mkdir -p $(OBJ_DIR)Client
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -I ./src/include
+
+$(OBJ_DIR)%.o: $(SRC_CLIENT_DIR)%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@ -I ./src/include
 
 $(NAME): $(OBJS_FILES)
@@ -49,25 +57,3 @@ re: fclean
 	make all
 
 .PHONY: all clean fclean re
-
-#color code 
-#use with $(Reset)
-# ===================
-Black  	= \033[0;30m
-Red    	= \033[0;31m
-Green   = \033[0;32m
-Yellow 	= \033[0;33m
-Blue   	= \033[0;34m
-Purple 	= \033[0;35m
-Cyan   	= \033[0;36m
-White  	= \033[0;37m
-B_Black =  \033[0;90m
-B_Red	= \033[0;91m
-B_Green	= \033[0;92m
-B_Yellow= \033[0;93m
-B_Blue	= \033[0;94m
-B_Purple= \033[0;95m
-B_Cyan	= \033[0;96m
-B_White	= \033[0;97m
-Reset	= \033[0m
-# ===================

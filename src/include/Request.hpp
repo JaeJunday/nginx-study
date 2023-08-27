@@ -24,7 +24,7 @@ class Request
 	private:
 		std::vector<Server>	_servers;
 		Server*				_server;
-		Location*			_location;
+		Location			_location;
 		std::string			_headerBuffer;
 		std::string			_requestBuffer;
 		std::string			_method;
@@ -39,10 +39,11 @@ class Request
 		std::string			_chunkedFilename;
 		std::string 		_perfectBody;
 		std::string			_secretHeader;
+		std::string			_convertRequestPath;
 
 		uint32_t			_port;
 		int					_state;
-		int					_eventState;
+		// int					_eventState;
 		int 				_bodyStartIndex;
 		int 				_bodyTotalSize;
 		// chunked
@@ -70,14 +71,14 @@ class Request
 		const std::string&	getHost() const;
 		const std::string&	getMethod() const;
 		const std::string&	getVersion() const;
-		const std::string&	getRequestUrl() const;
+		// const std::string&	getRequestUrl() const;
 		const std::string&	getTransferEncoding() const;
 		const std::string&	getConnection() const;
 		const std::string&	getContentLength() const;
 		const std::string&	getBoundary() const;
-		Location*			getLocation() const;
+		const Location*		getLocation();
 		const std::string&	getContentType();
-		int					getEventState() const;
+		// int					getEventState() const;
 		const std::string& 	getBuffer() const;
 		const std::string& 	getChunkedFilename();
 		int 				getBodyIndex() const;
@@ -86,22 +87,23 @@ class Request
 		std::string&		getPerfectBody();
 		int 				getBodyStartIndex() const;
 		const std::string&	getSecretHeader() const;
+		const std::string&	getConvertRequestPath() const;
 		Server*				findServer();
+
+		std::string findLocationPath();
+		void checkLimitExcept() const;
+		void handleRequest(const struct kevent& tevent, char* buffer);
 
 		// set
 		void setState(int state);
 		void setRequestLine(std::string& requestLine);
 		void setFieldLine(std::string& fieldLine);
 		void setBuffer(char *buffer, int size);
-		void setLocation(Location* location);
-		void setEventState(int eventState);
+		// void setLocation(Location* location);
+		// void setEventState(int eventState);
 		void setChunkedFilename(std::string& chunkedFilename);
 		void setBodyTotalSize(int bodyTotalSize);
 		void setPerfectBody(std::string& body);
 		void setChunkedEnd(bool set);
 		void setServer(Server* server);
 };
-//event process
-// delete
-//	add
-// state set
