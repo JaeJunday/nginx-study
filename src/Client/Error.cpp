@@ -4,8 +4,6 @@ void Client::pushErrorBuffer(std::string body, int _stateCode)
 {
 	std::stringstream responseData;
 
-	std::cerr << RED << "_request->getMethod() : " << _request->getMethod() << RESET << std::endl;
-
 	responseData << "HTTP/1.1" << " " << _stateCode << " " << _reasonPhrase << "\r\n";
 	responseData << "Content-Type: text/html; charset=UTF-8" << "\r\n";
 	responseData << "Server: My Server" << "\r\n";
@@ -20,7 +18,7 @@ void Client::pushErrorBuffer(std::string body, int _stateCode)
 	_responseStr = _responseBuffer.str();
 }
 
-void Client::errorProcess(int errnum)
+void Client::handleError(int errnum)
 {
 	std::ifstream       file;
 	std::string         filePath;
@@ -44,6 +42,8 @@ void Client::errorProcess(int errnum)
 			_reasonPhrase = "Length Required"; break;
 		case 413:
 			_reasonPhrase = "Content Too Large"; break;
+		case 500:
+			_reasonPhrase = "Internal Server Error"; break;
 		case 505:
 			_reasonPhrase = "HTTP Version Not Supported"; break;
 	}

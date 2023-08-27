@@ -134,7 +134,7 @@ void Operation::handleEvent(int kq, const struct kevent *tevents, int nev)
 							return;
 						break;
 					case EVFILT_PROC:
-						client->endChildProcess(); 
+						client->handleEndProcess();
 						break;
 					case EVFILT_TIMER:
 						CleanUpClientResources(tevents[i], client);
@@ -180,15 +180,6 @@ void Operation::acceptClient(int kq, int fd, std::vector<Server>& servers)
 	Request *request = new Request(servers);
 	Client* client = new Client(request, kq, socketFd);
 	_clients.insert(std::make_pair(socketFd, client));
-	/*
-		@refec 클라이언트 생성자에서 진행
-			// client->addEvent(socketFd, EVFILT_READ);
-			// client->addEvent(socketFd, EVFILT_TIMER); // 타이머 이벤트 추가 - kyeonkim
-			// client->getReq().setEventState(EVFILT_READ);
-	*/
-	// client->addSocketReadEvent(socketFd, EVFILT_READ);
-	// client->addSocketWriteEvent(socketFd, EVFILT_TIMER);
-	// client->getReq().setEventState(EVFILT_READ);
 }
 
 void Operation::setSocketOption(int socketFd)
@@ -248,11 +239,10 @@ bool Operation::handleWriteEvent(const struct kevent& tevent)
 void Operation::handleError(const struct kevent& tevent, int errnum)
 {
 	Client* client = static_cast<Client*>(tevent.udata);
-	client->deleteReadEvent();
-	client->errorProcess(errnum);
-	// client->addEvent(client->getSocket(), EVFILT_WRITE);
+	
+	client->deleteSocketReadEvent();
+	client->handleError(errnum);
 	client->addSocketWriteEvent();
-	// client->getReq().setEventState(EVFILT_WRITE);
 }
 
 void Operation::CleanUpClientResources(const struct kevent& tevent, Client* client)

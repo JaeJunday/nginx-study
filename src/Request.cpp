@@ -67,7 +67,7 @@ Request& Request::operator=(const Request& rhs)
 		_bodyTotalSize = rhs._bodyTotalSize;
 		_chunkedFilename = rhs._chunkedFilename;
 		_chunkedEnd = rhs._chunkedEnd;
-		_perfectBody = rhs._perfectBody;
+		_requestBody = rhs._requestBody;
 		_readIndex = rhs._readIndex;
 	}
 	return *this;	
@@ -219,8 +219,8 @@ void Request::parseChunkedData(Client* client)
 					if (_location._clientMaxBodySize.empty() == false)
 					{
 						std::cerr << BLUE << "maxbodysize: " <<  util::stoui(_location._clientMaxBodySize) << RESET << std::endl;
-						std::cerr << BLUE << "bodySize: " << _perfectBody.size() << std::endl;
-						if (_perfectBody.size() > util::stoui(_location._clientMaxBodySize))
+						std::cerr << BLUE << "bodySize: " << _requestBody.size() << std::endl;
+						if (_requestBody.size() > util::stoui(_location._clientMaxBodySize))
 							throw 413;
 					}
 					_chunkedEnd = true;
@@ -231,8 +231,8 @@ void Request::parseChunkedData(Client* client)
 			{	
 				if (_requestBuffer.find("\r\n", bodyStart + bodySize) != bodyStart + bodySize)
 					throw 400;
-				_perfectBody.append(requestBuffer + bodyStart, bodySize);
-				_bodyTotalSize = _perfectBody.size();
+				_requestBody.append(requestBuffer + bodyStart, bodySize);
+				_bodyTotalSize = _requestBody.size();
 				_readIndex = bodyStart + bodySize + 2;//body뒤의 \r\n고려
 			}
 			else
@@ -263,7 +263,7 @@ void Request::clearRequest()
 	_readIndex = 0;
 	_chunkedEnd = false;
 	_bodyTotalSize = 0;
-	_perfectBody.clear();
+	_requestBody.clear();
 	_secretHeader.clear();
 	_convertRequestPath.clear();
 }
@@ -283,9 +283,9 @@ void Request::setState(int state)
 	_state = state;
 }
 
-void Request::setPerfectBody(std::string& body)
+void Request::setRequestBody(std::string& body)
 {
-	_perfectBody = body;
+	_requestBody = body;
 }
 
 void Request::setBodyTotalSize(int bodyTotalSize)
@@ -394,9 +394,9 @@ int Request::getBodyTotalSize() const
 	return _bodyTotalSize;
 }
 
-std::string& Request::getPerfectBody()
+std::string& Request::getRequestBody()
 {
-	return _perfectBody;
+	return _requestBody;
 }
 
 void Request::setChunkedFilename(std::string& chunkedFilename)
@@ -491,7 +491,7 @@ void Request::handleRequest(const struct kevent& tevent, char* buffer)
 		_convertRequestPath = findLocationPath();
 		checkLimitExcept();
 		if (_method == "POST" || _method == "PUT")
-			client->initCgi();
+			client->handlePostCgi();
 		_state = request::DONE;
 	}	
 	if (_state == request::DONE)

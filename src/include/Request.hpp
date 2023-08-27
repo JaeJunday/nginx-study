@@ -37,7 +37,7 @@ class Request
 		std::string			_transferEncoding;
 		std::string			_boundary;
 		std::string			_chunkedFilename;
-		std::string 		_perfectBody;
+		std::string 		_requestBody;
 		std::string			_secretHeader;
 		std::string			_convertRequestPath;
 
@@ -62,7 +62,7 @@ class Request
 		void				makeResponse(int kq);
 		// post, chunked
 		void 				parseChunkedData(Client* client);
-		void				initCgi();
+		void				handlePostCgi();
 		void				childProcess();
 
 		// get
@@ -84,7 +84,7 @@ class Request
 		int 				getBodyIndex() const;
 		int 				getChunkedEnd() const;
 		int 				getBodyTotalSize() const;
-		std::string&		getPerfectBody();
+		std::string&		getRequestBody();
 		int 				getBodyStartIndex() const;
 		const std::string&	getSecretHeader() const;
 		const std::string&	getConvertRequestPath() const;
@@ -103,7 +103,7 @@ class Request
 		// void setEventState(int eventState);
 		void setChunkedFilename(std::string& chunkedFilename);
 		void setBodyTotalSize(int bodyTotalSize);
-		void setPerfectBody(std::string& body);
+		void setRequestBody(std::string& body);
 		void setChunkedEnd(bool set);
 		void setServer(Server* server);
 };

@@ -51,30 +51,31 @@ class Client
 		virtual ~Client();
 		void handleResponse(const struct kevent &tevent);
 		bool sendData(const struct kevent& tevent);
+		void handleEndProcess();
 		void clearClient();
 		void closePipeFd();
 		void stamp() const;
 	// Get.cpp
-		void getProcess();
-        void fileProcess(const std::string& filePath, std::stringstream& body);
-        void pushBuffer(std::stringstream& body);
-		void autoIndexProcess(DIR* dirStream, std::stringstream& body);
+		void handleGet();
+        void handleFile(const std::string& filePath, std::stringstream& body);
+		void handleDir(std::string& filePath, std::stringstream& body, DIR *dirStream);
+		void handleAutoIndex(DIR* dirStream, std::stringstream& body);
+		void handleGetCgi();
+		void handleGetChild();
 		bool isFilePy(const std::string& filePath);
-		void getCgi();
-		void getChildProcess();
+        void pushBuffer(std::stringstream& body);
 	// Delete.cpp
-		void deleteProcess();
+		void handleDelete();
 		void removeFile(std::string file) const;
 	// Post.cpp
-		void postProcess();
+		void handlePost();
 		void writePipe(size_t pipeSize);
 		void readPipe(size_t pipeSize);
-		void childProcess();
-		void execveCgi() const;
-		void initCgi();
-		void endChildProcess();
+		void handlePostDup2();
+		void handleExeCgi() const;
+		void handlePostCgi();
 	// Error.cpp
-		void errorProcess(int errnum);
+		void handleError(int errnum);
 		void pushErrorBuffer(std::string body, int errnum);
 	// AddEvent.cpp
 		void addSocketReadEvent();
@@ -84,8 +85,8 @@ class Client
 		void addProcessEvent();
 		void addTimerEvent();
 	// DeleteEvent.cpp
-		void deleteReadEvent();
-		void deleteWriteEvent();
+		void deleteSocketReadEvent();
+		void deleteSocketWriteEvent();
 		void deletePidEvent();
 		void deleteTimerEvent();
 		void resetTimerEvent();

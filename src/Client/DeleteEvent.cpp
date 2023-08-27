@@ -1,6 +1,6 @@
 #include "Client.hpp"
 
-void Client::deleteReadEvent()
+void Client::deleteSocketReadEvent()
 {
     struct kevent event;
 
@@ -9,7 +9,7 @@ void Client::deleteReadEvent()
 		throw 500;
 }
 
-void Client::deleteWriteEvent()
+void Client::deleteSocketWriteEvent()
 {
     struct kevent event;
 

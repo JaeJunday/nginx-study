@@ -1,6 +1,6 @@
 #include "Client.hpp"
 
-void Client::initCgi()
+void Client::handlePostCgi()
 {
 	if (pipe(_writeFd) < 0 || pipe(_readFd) < 0)
 		throw 500;
@@ -8,21 +8,21 @@ void Client::initCgi()
 	if (_pid < 0)
 		throw 500;
 	if (_pid == 0)
-		childProcess();
+	{
+		handlePostDup2();
+		handleExeCgi();
+	}
 	if (_pid > 0)
-		// addEvent(_pid, EVFILT_PROC);
 		addProcessEvent();
 	fcntl(_writeFd[1], F_SETFL, O_NONBLOCK);
 	fcntl(_readFd[0], F_SETFL, O_NONBLOCK);
-	// addEvent(_readFd[0], EVFILT_READ);
-	// addEvent(_writeFd[1], EVFILT_WRITE);
 	addPipeReadEvent();
 	addPipeWriteEvent();
 	close(_writeFd[0]);
 	close(_readFd[1]);
 }
 
-void Client::childProcess()
+void Client::handlePostDup2()
 {
 	dup2(_writeFd[0], STDIN_FILENO);
 	close(_writeFd[0]);
@@ -30,17 +30,15 @@ void Client::childProcess()
 	dup2(_readFd[1], STDOUT_FILENO);
 	close(_readFd[0]);
 	close(_readFd[1]);
-	// 실행시킬 모듈을 골라서 스크립트 실행 파일 이름으로 실행시킴 
-	execveCgi();
 }
 
-void Client::execveCgi() const
+void Client::handleExeCgi() const
 {
 	std::string engine = "." + _request->getLocation()->_py;
-
 	if (_request->getConvertRequestPath().find(".bla") != std::string::npos)
 		engine = "." + _request->getLocation()->_bla;
 	char* const args[] = {const_cast<char*>(engine.c_str()), NULL};
+	
 	setenv("BOUNDARY", _request->getBoundary().c_str(), true);
 	setenv("DOCUMENT_ROOT", _request->getConvertRequestPath().c_str(), true);
 	setenv("REQUEST_METHOD", _request->getMethod().c_str(), true);
@@ -51,22 +49,18 @@ void Client::execveCgi() const
 	setenv("HTTP_TRANSFER_ENCODING", _request->getTransferEncoding().c_str(), true);
 	setenv("HTTP_X_SECRET_HEADER_FOR_TEST", _request->getSecretHeader().c_str(), true);
 	extern char** environ;
-	if (execve(engine.c_str(), args, environ) == -1) {
-		perror("execve");  // 오류 처리
-		exit(1);
-	}
+	if (execve(engine.c_str(), args, environ) == -1) 
+		std::exit(EXIT_ERROR);
 }
 
 void Client::writePipe(size_t pipeSize)
 {
-	std::string& perfectBody = _request->getPerfectBody();
-	size_t currentWriteSize = std::min(perfectBody.size() - _writeIndex, pipeSize);
-	ssize_t writeSize = write(_writeFd[1], perfectBody.c_str() + _writeIndex, currentWriteSize);
+	std::string& requestBody = _request->getRequestBody();
+	size_t currentWriteSize = std::min(requestBody.size() - _writeIndex, pipeSize);
+	ssize_t writeSize = write(_writeFd[1], requestBody.c_str() + _writeIndex, currentWriteSize);
 	if (writeSize < 0)
 		throw 500;
 	_writeIndex += writeSize;
-std::cerr << B_BG_CYAN <<  "fd: " << _socketFd << " : " << _request->getBodyTotalSize() <<" ♡ "<< _writeIndex << RESET << std::endl;
-// std::cerr << B_BG_CYAN <<  "_request->getChunkedEnd() : " << _request->getChunkedEnd() << RESET << std::endl;
 	if (writeSize == 0)
 	{
 		if (_request->getBodyTotalSize() == _writeIndex && _request->getChunkedEnd() == true)
@@ -82,13 +76,7 @@ void Client::readPipe(size_t pipeSize)
 
 	ssize_t readSize = read(_readFd[0], tempBuffer, pipeSize);
 	if (readSize < 0)
-	{
-		// std::cerr << B_RED << "testcode " << "readSize error" << RESET << std::endl;
-		// std::cerr << B_RED << "testcode " << strerror(errno) << RESET << std::endl;
-		// return;
 		throw 500;
-	}
-// std::cerr << B_BG_PURPLE <<"fd: " << _socketFd << " : " << _request->getBodyTotalSize() <<" ♡ "<< readSize << RESET<< std::endl;
 	if (readSize == 0)
 	{
 		std::string msg = _responseBuffer.str();
@@ -105,37 +93,15 @@ void Client::readPipe(size_t pipeSize)
 	_responseBuffer << readBuffer;
 }
 
-void Client::endChildProcess()
+void Client::handlePost()
 {
-std::cerr << RED << "endchild process()" << RESET << std::endl;
-	int status;
-	waitpid(_pid, &status, 0);
-	_pid = INIT_PID;
-	if (WEXITSTATUS(status) == 1) // status 값이 1. 즉, execve 가 실패했다면 잘못된 요청이므로 400을 던진다. - kyeonkim
-	{
-		_responseBuffer.str(""); // readPipe 함수에서 _responseBuffer에 값을 넣으므로 초기화한다 - kyeonkim
-		throw 400;
-	}
-	// 반환값 받아서 확인 
-	deleteReadEvent();
-	addSocketWriteEvent(); // socket
-	// _request->setEventState(EVFILT_WRITE);	
-}
+	std::string requestBody = _request->getBuffer().substr(_request->getBodyStartIndex(), util::stoui(_request->getContentLength()));
 
-void Client::postProcess()
-{
-	std::string body = _request->getBuffer().substr(_request->getBodyStartIndex(), util::stoui(_request->getContentLength()));
-	_request->setPerfectBody(body); // _perfectbody > _requestBody 로 바꾸고 싶음 - kyeonkim
-	_request->setBodyTotalSize(body.size());
-
-	if (_request->getLocation()->_clientMaxBodySize.empty() == false)
-	{
-		std::cerr << BLUE << "maxbodysize: " <<  util::stoui(_request->getLocation()->_clientMaxBodySize) << RESET << std::endl;
-		std::cerr << BLUE << "bodySize: " << _request->getBodyTotalSize() << std::endl;
-		if (_request->getBodyTotalSize() > util::stoui(_request->getLocation()->_clientMaxBodySize))
-			throw 413;
-	}
-	// addEvent(_writeFd[1], EVFILT_WRITE);
+	_request->setRequestBody(requestBody);
+	_request->setBodyTotalSize(requestBody.size());
+	if (_request->getLocation()->_clientMaxBodySize.empty() == false &&
+		_request->getBodyTotalSize() > util::stoui(_request->getLocation()->_clientMaxBodySize))
+		throw 413;
 	addPipeWriteEvent();
 	_request->setChunkedEnd(true);
 }

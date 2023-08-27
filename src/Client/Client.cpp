@@ -19,7 +19,6 @@ _sendIndex(0)
 	_readFd[1] = INIT_PIPE;
 	_writeFd[0] = INIT_PIPE;
 	_writeFd[1] = INIT_PIPE;
-
 	addSocketReadEvent();
 	addTimerEvent();
 }
@@ -40,32 +39,15 @@ Client::~Client()
 void Client::handleResponse(const struct kevent &tevent)
 {
 	if (_request->getTransferEncoding() == "chunked")
-	{
 		_request->parseChunkedData(this);
-	}
 	else if (_request->getBuffer().size() - _request->getBodyIndex()  == util::stoui(_request->getContentLength()))
 	{
-		if (_request->getMethod() == "POST" || _request->getMethod() == "PUT")
-		{
-			postProcess();
-			return;
-		}
 		if (_request->getMethod() == "GET")
-		{
-			if (isFilePy(_request->getConvertRequestPath()))
-			{
-				getCgi();
-				return;
-			}
-			else
-				getProcess();
-		}
+			handleGet();
+		else if (_request->getMethod() == "POST" || _request->getMethod() == "PUT")
+			handlePost();
 		else if (_request->getMethod() == "DELETE")
-		{
-			deleteProcess();
-		}
-		deleteReadEvent();
-		addSocketWriteEvent();
+			handleDelete();
 	}
 }
 
@@ -74,14 +56,15 @@ bool Client::sendData(const struct kevent& tevent)
 	size_t responseBufferSize = _responseStr.size();;
 	size_t sendBufferSize = std::min(responseBufferSize - _sendIndex, (size_t)tevent.data);
 	ssize_t byteWrite = send(tevent.ident, _responseStr.c_str() + _sendIndex, sendBufferSize, 0);
+
 	if (_stateCode >= 400)
 	{
-		if (_pid != -2)
+		if (_pid != INIT_PID)
 		{
 			closePipeFd();
 			deletePidEvent();
 			kill(_pid, SIGKILL);
-			_pid = -2;
+			_pid = INIT_PID;
 		}
 	}
 	if (byteWrite <= 0 || _stateCode == 405)
@@ -89,11 +72,26 @@ bool Client::sendData(const struct kevent& tevent)
 	_sendIndex += byteWrite;
 	if (_sendIndex == responseBufferSize)
 	{
-		deleteWriteEvent();
+		deleteSocketWriteEvent();
 		clearClient();
 		addSocketReadEvent();
 	}
 	return true;
+}
+
+void Client::handleEndProcess()
+{
+	int status;
+	
+	waitpid(_pid, &status, 0);
+	_pid = INIT_PID;
+	if (WEXITSTATUS(status) == 1)
+	{
+		_responseBuffer.str("");
+		throw 400;
+	}
+	deleteSocketReadEvent();
+	addSocketWriteEvent();
 }
 
 void Client::clearClient()
