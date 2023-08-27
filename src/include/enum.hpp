@@ -22,7 +22,6 @@ namespace location
         INDEX,
         AUTOINDEX,
         UPLOAD,
-        // CGI_PARAM,
         PY,
         BLA,
         PHP,
@@ -116,19 +115,3 @@ namespace timer
         TIMEOUT = 30
     };
 }
-
-// namespace chunk
-// {
-//     enum VAR
-//     {
-//         FIRST = -2,
-//     };
-//     enum STATE
-//     {
-//         READY = 0,
-//         END = 1,
-//         WAIT = 2,
-//         INCOMPLETE_DATA = 3,
-//         CONTINUE = 4
-//     };
-// }

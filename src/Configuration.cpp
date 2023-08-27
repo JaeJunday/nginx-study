@@ -273,7 +273,6 @@ int Configuration::findServerKey(const std::string& key) const
 	return (res);
 }
 
-// 순서 중요함
 int Configuration::findLocationKey(const std::string& key) const
 {
 	std::string locationDirective[] =
@@ -297,8 +296,6 @@ int Configuration::findLocationKey(const std::string& key) const
 			return (location::AUTOINDEX);
 		case location::UPLOAD:
 			return (location::UPLOAD);
-		// case location::CGI_PARAM:
-		// 	return (location::CGI_PARAM);
 		case location::PY:
 			return (location::PY);
 		case location::BLA:
@@ -315,7 +312,6 @@ int Configuration::findLocationKey(const std::string& key) const
 	return (res);
 }
 
-// 순서 안중요함
 void Configuration::setLocationValue(Location& location, int index, std::string& value)
 {
 	switch (index)
@@ -328,8 +324,6 @@ void Configuration::setLocationValue(Location& location, int index, std::string&
 			location._autoindex = value; break;
 		case location::UPLOAD:
 			location._upload = value; break;
-		// case location::CGI_PARAM:
-		// 	location._cgiParam = value; break;
 		case location::PY:
 			location._py = value; break;
         case location::BLA:
