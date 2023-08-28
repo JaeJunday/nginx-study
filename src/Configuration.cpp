@@ -211,7 +211,8 @@ void Configuration::setValue(std::vector<std::string> &token, int *checklist)
 		else if (checklist[i] == token::LOCATION)
 		{
 			state = state::LOCATION;
-			memset(&location, 0, sizeof(Location));
+			Location newlocation;
+			location = newlocation;
 		}
 		else if (checklist[i] == token::KEY)
 		{

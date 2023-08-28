@@ -30,7 +30,7 @@ std::string util::getDate()
 {
     std::time_t now = std::time(NULL);
     char timeStamp[TIME_SIZE];
-    std::strftime(timeStamp, sizeof(timeStamp), "%a, %d %b %Y %H:%M:%S GMT", std::localtime(&now));
+    std::strftime(timeStamp, sizeof(timeStamp), "%H:%M:%S GMT", std::localtime(&now));
     return (timeStamp);
 }
 
@@ -47,7 +47,7 @@ std::string util::findContentType(const std::string& filePath)
 	std::string fileType[] = {"html", "css", "js", "json", "jpeg", "jpg", "png", "gif", "bmp", "webp", "mpeg", "wav", "ogg", "mp4", "webm", "pdf", "zip", "csv"};
     std::string inputType[] = {"text/html", "text/css", "text/javascript", "application/json", "image/jpeg", "image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp", "audio/mpeg", "audio/wav", "audio/ogg", "video/mp4", "video/webm", "application/pdf", "application/zip", "text/csv"};
 
-	for (int i = 0; i < fileType->size(); ++i)
+	for (size_t i = 0; i < sizeof(fileType) / sizeof(std::string); ++i)
 	{
 		if (fileExtension == fileType[i])
 			return inputType[i];

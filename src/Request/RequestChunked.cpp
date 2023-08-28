@@ -1,6 +1,6 @@
 #include "Request.hpp"
 
-void Request::parsingChunkedData(Client* client)
+void Request::parsingChunkedData()
 {
 	if (_readIndex == false)
 		_readIndex = _bodyStartIndex;

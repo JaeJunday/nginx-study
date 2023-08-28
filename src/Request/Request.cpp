@@ -65,20 +65,21 @@ void Request::handleRequest(const struct kevent& tevent, char* buffer)
 		_state = request::DONE;
 	}	
 	if (_state == request::DONE)
-		client->handleResponse(tevent);
+		client->handleResponse();
 }
 
 void Request::parsingHeader()
 {
-	int headerEnd = _requestBuffer.find("\r\n\r\n");
+	size_t headerEnd = _requestBuffer.find("\r\n\r\n");
 	if (headerEnd == std::string::npos)
 		return ;
-	int endLine = _requestBuffer.find("\r\n");
+	size_t endLine = _requestBuffer.find("\r\n");
 	std::string requestLine(_requestBuffer, 0, endLine);
 	setRequestLine(requestLine);
 	endLine += 2;
-	int newEndLine;
-	while (endLine < headerEnd) { 
+	size_t newEndLine;
+	while (endLine < headerEnd) 
+	{ 
 		newEndLine = _requestBuffer.find("\r\n", endLine);
 		std::string fieldLine(_requestBuffer, endLine, newEndLine - endLine);
 		setFieldLine(fieldLine);
@@ -90,10 +91,10 @@ void Request::parsingHeader()
 
 Server*	Request::findServer()
 {
-	for (int i = 0; i < _servers.size(); ++i)
+	for (size_t i = 0; i < _servers.size(); ++i)
 	{
 		std::vector<std::string> serverName = _servers[i].getServerName();
-		for (int j = 0; j < serverName.size();++j)
+		for (size_t j = 0; j < serverName.size();++j)
 		{
 			if (serverName[j] == _host)
 				return &_servers[i];
@@ -108,7 +109,7 @@ std::string Request::findLocationPath()
 	std::string path = _requestPath;
 	size_t length = 0;
 
-	for (int i = 0; i < locations->size(); ++i) 
+	for (size_t i = 0; i < locations->size(); ++i) 
 	{
 		size_t pathLength = (*locations)[i]._path.length();
 		if (path.compare(0, pathLength, (*locations)[i]._path) == 0 && length < pathLength)

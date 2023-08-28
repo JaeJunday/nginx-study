@@ -9,7 +9,6 @@ void Request::setRequestLine(std::string& requestLine)
 {
 	util::checkMultipleSpaces(requestLine);
 	std::vector<std::string> token = util::getToken(requestLine, " ");
-	int         bodySize;
 
 	if (token.size() != 3)
 	{

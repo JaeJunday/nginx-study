@@ -49,7 +49,7 @@ class Client
 	// Client.cpp
 		Client(Request* request, int kq, int socketFd);
 		virtual ~Client();
-		void handleResponse(const struct kevent &tevent);
+		void handleResponse();
 		bool sendData(const struct kevent& tevent);
 		void handleEndProcess();
 		void clearClient();

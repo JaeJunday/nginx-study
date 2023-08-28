@@ -26,13 +26,10 @@ OBJS_FILES = $(addprefix $(OBJ_DIR),$(OBJS))
 
 CXX = c++
 
-CXXFLAGS += -Wall -Wextra #-Werror 
+CXXFLAGS += -Wall -Wextra -Werror 
 CXXFLAGS += -std=c++98
-
-CXXFLAGS += -fsanitize=address -g3 
-
-
 CXXFLAGS += -O3 # -O2 -O1 -O -Os
+#CXXFLAGS += -fsanitize=address -g3 
 
 all: $(NAME)
 

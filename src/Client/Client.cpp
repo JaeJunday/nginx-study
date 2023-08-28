@@ -36,10 +36,10 @@ Client::~Client()
 	delete _request;
 }
 
-void Client::handleResponse(const struct kevent &tevent)
+void Client::handleResponse()
 {
 	if (_request->getTransferEncoding() == "chunked")
-		_request->parsingChunkedData(this);
+		_request->parsingChunkedData();
 	else if (_request->getRequestBuffer().size() - _request->getBodyIndex()  == util::stoui(_request->getContentLength()))
 	{
 		const std::string method = _request->getMethod();
@@ -73,6 +73,7 @@ bool Client::sendData(const struct kevent& tevent)
 	_sendIndex += byteWrite;
 	if (_sendIndex == responseBufferSize)
 	{
+		stamp();
 		deleteSocketWriteEvent();
 		clearClient();
 		addSocketReadEvent();
@@ -125,5 +126,5 @@ void Client::stamp() const
 		color = RED;
 	else 
 		color = GREEN;
-    std::cerr << color << util::getDate() << " : "<< _request->getHost() << " " << _request->getMethod() << " " << _request->getVersion() << " "<< _stateCode << " " << _reasonPhrase << RESET << std::endl;
+    std::cerr << color << util::getDate() << " : "<< _request->getHost() << " " << _request->getMethod() << " " << _request->getConvertRequestPath() << " "<< _stateCode << " " << _reasonPhrase << RESET << std::endl;
 }

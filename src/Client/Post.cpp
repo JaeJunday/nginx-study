@@ -7,7 +7,7 @@ void Client::handlePost()
 	_request->setRequestBody(requestBody);
 	_request->setBodyTotalSize(requestBody.size());
 	if (_request->getLocation()->_clientMaxBodySize.empty() == false &&
-		_request->getBodyTotalSize() > util::stoui(_request->getLocation()->_clientMaxBodySize))
+		static_cast<uint32_t>(_request->getBodyTotalSize()) > util::stoui(_request->getLocation()->_clientMaxBodySize))
 		throw 413;
 	addPipeWriteEvent();
 	_request->setChunkedEnd(true);

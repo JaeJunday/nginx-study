@@ -55,7 +55,7 @@ class Request
 		void 					checkLimitExcept() const;
 		void				clearRequest();
 		// RequestChunked.cpp
-		void 				parsingChunkedData(Client* client);
+		void 				parsingChunkedData();
 		bool 					parseChunkedBody(char* requestBuffer, size_t requestBufferSize);
 		void 						handleChunkedEnd(size_t bodyStart);
 		void 						appendChunkedData(char* requestBuffer, size_t bodyStart, size_t bodySize);
