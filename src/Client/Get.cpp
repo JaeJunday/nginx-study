@@ -76,14 +76,15 @@ void Client::handleFile(const std::string& filePath, std::stringstream& body)
 void Client::handleDir(std::string& filePath, std::stringstream& body, DIR *dirStream)
 {
 	const Location* location = _request->getLocation();
+	const Server* server = _request->getServer();
 	
-	if (!location->_tryFiles.empty() && _request->getLocation()->_tryFiles != "/")
-		filePath += "/" + _request->getLocation()->_tryFiles;
-	if (!location->_index.empty())
-		filePath += "/" + _request->getLocation()->_index;
-	else if (!_request->getServer()->getRoot().empty())
-		filePath += "/" + _request->getServer()->getRoot();
-	if (_request->getLocation()->_autoindex == "on")
+	if (!location->_tryFiles.empty() && location->_tryFiles != "/")
+		filePath += "/" + location->_tryFiles;
+	else if (!location->_index.empty())
+		filePath += "/" + location->_index;
+	else if (!server->getIndex().empty())
+		filePath += "/" + server->getIndex();
+	if (location->_autoindex == "on")
 	{
 		handleAutoIndex(dirStream, body);
 		closedir(dirStream);

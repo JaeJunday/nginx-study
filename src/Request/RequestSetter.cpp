@@ -39,7 +39,10 @@ void Request::setFieldLine(std::string& fieldLine)
 	{
 		size_t mid = token[1].find(":");
 		if (mid == std::string::npos)
+		{
 			token[1] += ":80";
+			mid = token[1].find(":");
+		}
 		_host = std::string(token[1], 0, mid);
 		_port = util::stoui(std::string(token[1], mid + 1, token[1].size() - (mid + 1)));
 	}

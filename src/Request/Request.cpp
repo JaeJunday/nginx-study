@@ -133,6 +133,9 @@ std::string Request::findLocationPath()
 			path.erase(0, length);
 		path = _server->getRoot() + path;
 	}
+	size_t pathLength = path.length();
+	if (pathLength > 0 && path[pathLength - 1] == '/')
+		path.erase(pathLength - 1, 1);
 	return path;
 }
 
@@ -151,6 +154,11 @@ void Request::checkLimitExcept() const
 			++i;
 		}
 		if (i == limitSize)
+			throw 405;
+	}
+	else
+	{
+		if (_method == "DELETE")
 			throw 405;
 	}
 }
