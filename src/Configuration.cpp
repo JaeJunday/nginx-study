@@ -114,7 +114,7 @@ void Configuration::setCheckList(std::vector<std::string> &token, int *checklist
 
 void Configuration::checkSyntax(int *checkList, int size)
 {
-	int prev = 1;
+	int prev = 0;
 	int cur;
 
 	for(int i = 0; i < size; ++i)
