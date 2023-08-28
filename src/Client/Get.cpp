@@ -10,7 +10,6 @@ void Client::handleGet()
 	std::string relativePath = "." + _request->getConvertRequestPath();
 	DIR *dirStream = opendir(relativePath.c_str());
 	std::stringstream body;
-	
 	if (dirStream == NULL) 
 		handleFile(relativePath, body);
 	else
@@ -77,13 +76,13 @@ void Client::handleDir(std::string& filePath, std::stringstream& body, DIR *dirS
 	
 	if (!location->_tryFiles.empty() && _request->getLocation()->_tryFiles != "/")
 		filePath += "/" + _request->getLocation()->_tryFiles;
-	else if (!location->_index.empty())
+	if (!location->_index.empty())
 		filePath += "/" + _request->getLocation()->_index;
 	else if (!_request->getServer()->getRoot().empty())
 		filePath += "/" + _request->getServer()->getRoot();
-	else if (_request->getLocation()->_autoindex == "on")
+	if (_request->getLocation()->_autoindex == "on")
 	{
-		handleAutoIndex(dirStream, body);	
+		handleAutoIndex(dirStream, body);
 		closedir(dirStream);
 		return;
 	}
