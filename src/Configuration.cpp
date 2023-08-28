@@ -121,7 +121,7 @@ void Configuration::checkSyntax(int *checkList, int size)
 	{ 
 		cur = checkList[i];
 		if (prev == cur && !(prev == token::PATH || prev == token::CLOSE_BRACKET || prev == token::VALUE))
-			std::logic_error("Error: Token Duplicate error");
+			throw std::logic_error("Error: Token Duplicate error");
 		if (prev == token::VALUE && (cur == token::LOCATION || cur == token::CLOSE_BRACKET))
 			throw std::logic_error("Error: Token Semicolon error");
 		if (prev == token::KEY && cur == token::SEMICOLON)
