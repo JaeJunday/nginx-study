@@ -27,18 +27,10 @@ void Client::handleError(int errnum)
 	switch (errnum) {
 		case 400:
 			_reasonPhrase = "Bad Request"; break;
-		case 401:
-			_reasonPhrase = "Unauthorized"; break;
-		case 403:
-			_reasonPhrase = "Forbidden"; break;
 		case 404:
 			_reasonPhrase = "Not Found"; break;
 		case 405:
 			_reasonPhrase = "Method Not Allowed"; break;
-		case 408:
-			_reasonPhrase = "Request Timeout"; break;
-		case 411:
-			_reasonPhrase = "Length Required"; break;
 		case 413:
 			_reasonPhrase = "Content Too Large"; break;
 		case 500:

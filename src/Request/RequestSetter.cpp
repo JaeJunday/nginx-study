@@ -11,14 +11,11 @@ void Request::setRequestLine(std::string& requestLine)
 	std::vector<std::string> token = util::getToken(requestLine, " ");
 
 	if (token.size() != 3)
-	{
-		std::cerr << "Error: Request Line size error" << std::endl;
 		throw 400;
-	}
 	if (!(token[0] == "GET" || token[0] == "DELETE" || token[0] == "POST" || token[0] == "PUT"))
 		throw 405;
 	if (token[2] != "HTTP/1.1")
-		throw 400;
+		throw 505;
 	_method = token[0];
 	_requestPath = token[1];
 	_version = token[2];
@@ -30,11 +27,11 @@ void Request::setFieldLine(std::string& fieldLine)
 	std::vector<std::string> token = util::getToken(fieldLine, ": ");
 	token[1].erase(0, 1);
 	if (token.size() != 2)
-		throw 401;
+		throw 400;
 	if (token[0].empty() || token[1].empty())
-		throw 402;
+		throw 400;
 	if (token[0].find(' ') != std::string::npos)
-		throw 403;
+		throw 400;
 	if (token[0] == "Host") 
 	{
 		size_t mid = token[1].find(":");
