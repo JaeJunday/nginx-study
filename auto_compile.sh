@@ -18,6 +18,7 @@ B_Purple='\033[0;95m'
 B_Cyan='\033[0;96m'
 B_White='\033[0;97m'
 Bold='\033[1m'
+Italic='\033[3m'
 Reset='\033[0m'
 
 # Makefile에서 정의한 프로젝트 이름을 읽어오는 함수
@@ -55,9 +56,9 @@ function compile_file() {
         NAME=$(echo "$name_line" | sed -E 's/^NAME\s*=\s*//; s/^[[:space:]]+//')
         THIRD=$(echo "$NAME" | awk '{print $3}')
         if [ -f "$THIRD" ]; then
-            echo -e "${Green}${Bold}Compile succeeded ! ${Reset}" >&2
+            echo -e "${Green}${Italic}Compile Success${Reset}" >&2
         else
-            echo -e "${B_Red}${Bold}Compile failed: Executable '$THIRD' not found!" >&2
+            echo -e "${B_Red}Compile failed: Executable '$THIRD' not found!" >&2
         fi
     else
         echo -e "${B_Purple}Compile failed: non-zero exit code!${Reset}" >&2

@@ -1,4 +1,4 @@
-#강 Webserv
+# Webserv
 
 | Tag name           | Description |
 |:-------------------|:------------|
@@ -16,26 +16,13 @@
 |**Rename**          |파일 혹은 폴더명을 수정하거나 옮기는 작업만인 경우|
 |**Remove**          |파일을 삭제하는 작업만 수행한 경우|
 
->
-- TODO LIST
->
-	- CGI
-	- POST 청크
-	- delete 메소드
-	- 오류마다 처리
-	- auto index
-	- redirection
 
-	- 테스트
-
-location
-
-* ./src/pages/
-* ./src/pages/src
-* ./src/pages/src/pages/
-* /src/other
-
-request
-
-* ./src/pages/index.html
-
+test list
+- Timeout 시 에러페이지를 보내야하는가?
+* tester
+* get
+* post
+* chunked
+* delete
+* py timeout while(loop)
+* ciege test

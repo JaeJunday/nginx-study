@@ -24,3 +24,6 @@ webserv
 
 #server log
 log.txt
+
+#
+/public
