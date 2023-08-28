@@ -126,6 +126,6 @@ namespace timer
 {
     enum TIMER
     {
-        TIMEOUT = 30
+        TIMEOUT = 60
     };
 }

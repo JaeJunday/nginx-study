@@ -32,6 +32,11 @@ std::vector<std::string> Configuration::getVectorLine(const std::string& filePat
 		getline(file, line);
 		totalLine += line;
 	} 
+	if (totalLine.empty())
+	{	
+		file.close();
+		throw std::logic_error("Error: File size error");
+	}
 	token = getToken(totalLine, "\t\r\v\n {};");
 	file.close();
 	return token;

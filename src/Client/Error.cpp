@@ -56,7 +56,7 @@ void Client::handleError(int errnum)
 	{
 		body << file.rdbuf();
 		_contentLength += body.str().length();
-		file.close();
 		pushErrorBuffer(body.str(), _stateCode);
 	}
+	file.close();
 }

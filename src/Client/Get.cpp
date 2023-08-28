@@ -10,7 +10,7 @@ void Client::handleGet()
 	std::string relativePath = "." + _request->getConvertRequestPath();
 	DIR *dirStream = opendir(relativePath.c_str());
 	std::stringstream body;
-	if (dirStream == NULL) 
+	if (dirStream == NULL)
 		handleFile(relativePath, body);
 	else
 		handleDir(relativePath, body, dirStream);
@@ -63,7 +63,10 @@ void Client::handleFile(const std::string& filePath, std::stringstream& body)
 
 	file.open(filePath.c_str());
 	if (file.is_open() == false)
+	{
+		file.close();
 		throw 404;
+	}
 	body << file.rdbuf();
 	_contentType = util::findContentType(filePath);
 	_contentLength += body.str().length();
@@ -86,8 +89,8 @@ void Client::handleDir(std::string& filePath, std::stringstream& body, DIR *dirS
 		closedir(dirStream);
 		return;
 	}
-	handleFile(filePath, body);
 	closedir(dirStream);
+	handleFile(filePath, body);
 }
 
 void Client::handleAutoIndex(DIR* dirStream, std::stringstream& body)

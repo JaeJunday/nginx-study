@@ -9,7 +9,7 @@ int main(int argc, char **argv)
         std::cerr << "Error: Invalid number of arguments" << std::endl;
         return EXIT_ERROR;
     }
-    std::string filename = "conf/default.copy.conf";
+    std::string filename = "conf/default.conf";
     if (argc == 2)
         filename = argv[1];
     Operation operation;

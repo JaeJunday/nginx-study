@@ -211,7 +211,6 @@ bool Operation::handleReadEvent(const struct kevent &tevent)
 			delete[] buffer;
 			return false;
 		}
-		delete[] buffer;
 	}
 	else if(tevent.ident == static_cast<uintptr_t>(client->getReadFd()))
 		client->readPipe(static_cast<size_t>(tevent.data));

@@ -53,6 +53,7 @@ void Request::handleRequest(const struct kevent& tevent, char* buffer)
 	Client* client = reinterpret_cast<Client*>(tevent.udata);
 	
 	_requestBuffer.append(buffer, tevent.data);
+	delete[] buffer;
 	if (_state == request::READY)
 		parsingHeader();
 	if (_state == request::CREATE)

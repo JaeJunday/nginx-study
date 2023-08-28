@@ -101,7 +101,7 @@ void Client::clearClient()
 	_request->clearRequest();
 	_chunkedFilename.clear();
 	_stateCode = 200;
-	_reasonPhrase.clear();
+	_reasonPhrase = "OK";
 	_contentType.clear();
 	_contentLength = 0;
 	_responseBuffer.str("");
